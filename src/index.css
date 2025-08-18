@@ -2,41 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Winvision Design System - Professional pharmaceutical management interface
+All colors MUST be HSL format for proper theming.
 */
 
 @layer base {
   :root {
+    /* Core Brand Colors - Professional medical blue palette */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 28% 17%;
 
+    /* Card & Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 28% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Medical Blue */
+    --primary: 214 95% 43%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 214 95% 38%;
+    --primary-light: 214 95% 93%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Professional Gray */
+    --secondary: 210 13% 94%;
+    --secondary-foreground: 215 28% 17%;
+    --secondary-hover: 210 13% 90%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted Colors */
+    --muted: 210 13% 97%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Success Green */
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 142 76% 94%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 94%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 95%;
 
-    --radius: 0.5rem;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 95%;
+
+    /* Info Colors */
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --info-light: 199 89% 95%;
+
+    /* Border & Input */
+    --border: 214 31% 91%;
+    --input: 214 31% 91%;
+    --ring: 214 95% 43%;
+
+    /* Gradient Definitions */
+    --gradient-primary: linear-gradient(135deg, hsl(214 95% 43%), hsl(214 95% 35%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
+    --gradient-hero: linear-gradient(135deg, hsl(214 95% 43%) 0%, hsl(199 89% 48%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 13% 97%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(215 28% 17% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(215 28% 17% / 0.1), 0 2px 4px -1px hsl(215 28% 17% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(215 28% 17% / 0.1), 0 4px 6px -2px hsl(215 28% 17% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(215 28% 17% / 0.1), 0 10px 10px -5px hsl(215 28% 17% / 0.04);
+    --shadow-primary: 0 10px 30px -10px hsl(214 95% 43% / 0.3);
+
+    /* Animation & Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-out;
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
