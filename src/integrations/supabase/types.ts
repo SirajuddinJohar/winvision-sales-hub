@@ -14,7 +14,307 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      doctors: {
+        Row: {
+          area: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          monthly_target: number | null
+          name: string
+          specialty: string
+          updated_at: string | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          monthly_target?: number | null
+          name: string
+          specialty: string
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          monthly_target?: number | null
+          name?: string
+          specialty?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          description: string | null
+          expense_date: string
+          expense_type: string
+          id: string
+          mr_id: string | null
+          status: Database["public"]["Enums"]["expense_status"] | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string
+          expense_type: string
+          id?: string
+          mr_id?: string | null
+          status?: Database["public"]["Enums"]["expense_status"] | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string
+          expense_type?: string
+          id?: string
+          mr_id?: string | null
+          status?: Database["public"]["Enums"]["expense_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_mr_id_fkey"
+            columns: ["mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          doctor_id: string | null
+          id: string
+          mr_id: string | null
+          order_date: string | null
+          pharmacy_id: string | null
+          product_id: string | null
+          quantity: number
+          total_amount: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          order_date?: string | null
+          pharmacy_id?: string | null
+          product_id?: string | null
+          quantity: number
+          total_amount?: number | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          order_date?: string | null
+          pharmacy_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_mr_id_fkey"
+            columns: ["mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacies: {
+        Row: {
+          address: string
+          contact_person: string | null
+          created_at: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          price: number
+          stock: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          price: number
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      targets: {
+        Row: {
+          achieved_value: number | null
+          created_at: string | null
+          doctor_id: string | null
+          id: string
+          mr_id: string | null
+          target_month: string
+          target_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          achieved_value?: number | null
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          target_month: string
+          target_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          achieved_value?: number | null
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          target_month?: string
+          target_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "targets_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "targets_mr_id_fkey"
+            columns: ["mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +323,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      expense_status: "pending" | "approved" | "rejected"
+      user_role: "admin" | "mr"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +451,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      expense_status: ["pending", "approved", "rejected"],
+      user_role: ["admin", "mr"],
+    },
   },
 } as const
