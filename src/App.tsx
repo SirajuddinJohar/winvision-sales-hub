@@ -8,6 +8,10 @@ import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
+import Orders from "./pages/Orders";
+import Doctors from "./pages/Doctors";
+import Targets from "./pages/Targets";
+import Reporting from "./pages/Reporting";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +28,10 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="doctors" element={<Doctors />} />
+              <Route path="targets" element={<Targets />} />
+              <Route path="reporting" element={<Reporting />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

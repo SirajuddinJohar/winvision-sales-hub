@@ -57,6 +57,7 @@ const DashboardLayout = () => {
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'mr'] },
     { icon: Receipt, label: 'Expenses', path: '/dashboard/expenses', roles: ['admin', 'mr'] },
     { icon: Target, label: 'Targets', path: '/dashboard/targets', roles: ['admin', 'mr'] },
+    { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting', roles: ['admin', 'mr'] },
   ];
 
   const filteredNavigation = navigationItems.filter(item => 
