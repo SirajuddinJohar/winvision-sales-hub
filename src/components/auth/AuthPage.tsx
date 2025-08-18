@@ -65,11 +65,26 @@ const AuthPage = () => {
 
   const fillDemoCredentials = (role: 'admin' | 'mr') => {
     if (role === 'admin') {
-      setLoginEmail('admin@winvision.com');
-      setLoginPassword('123456');
+      setLoginEmail('demo.admin@winvision.com');
+      setLoginPassword('admin123456');
     } else {
-      setLoginEmail('mr@winvision.com');
-      setLoginPassword('123456');
+      setLoginEmail('demo.mr@winvision.com');
+      setLoginPassword('mr123456');
+    }
+  };
+
+  const createDemoAccounts = async () => {
+    setLoading(true);
+    try {
+      // Create admin demo account
+      await signUp('demo.admin@winvision.com', 'admin123456', 'Demo Admin', 'admin');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create MR demo account  
+      await signUp('demo.mr@winvision.com', 'mr123456', 'Demo MR', 'mr');
+    } catch (error) {
+      console.error('Error creating demo accounts:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,8 +158,8 @@ const AuthPage = () => {
                   </Button>
                 </form>
 
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-3">Demo Accounts:</p>
+                <div className="text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">Demo Accounts:</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -163,6 +178,15 @@ const AuthPage = () => {
                       MR Demo
                     </Button>
                   </div>
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={createDemoAccounts}
+                    disabled={loading}
+                    className="text-xs text-muted-foreground"
+                  >
+                    Create Demo Accounts (if needed)
+                  </Button>
                 </div>
               </TabsContent>
               
