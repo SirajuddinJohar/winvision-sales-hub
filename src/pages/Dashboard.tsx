@@ -41,7 +41,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
 
-        // Fetch doctors count
+        // Fetch doctors count - now properly filtered by RLS (assigned doctors only for MRs)
         const { count: doctorsCount } = await supabase
           .from('doctors')
           .select('*', { count: 'exact', head: true });
@@ -55,40 +55,37 @@ const Dashboard = () => {
           productsCount = count || 0;
         }
 
-        // Fetch orders count
-        let ordersQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
-        if (!isAdmin && profile?.id) {
-          ordersQuery = ordersQuery.eq('mr_id', profile.id);
-        }
-        const { count: ordersCount } = await ordersQuery;
+        // Fetch orders count - now properly filtered by RLS (own orders for MRs)
+        const { count: ordersCount } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true });
 
-        // Fetch pending expenses count
-        let expensesQuery = supabase
+        // Fetch pending expenses count - now properly filtered by RLS
+        const { count: pendingExpensesCount } = await supabase
           .from('expenses')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
-        if (!isAdmin && profile?.id) {
-          expensesQuery = expensesQuery.eq('mr_id', profile.id);
-        }
-        const { count: pendingExpensesCount } = await expensesQuery;
 
-        // Calculate monthly revenue
+        // Calculate monthly revenue - now properly filtered by RLS
         const currentMonth = new Date().toISOString().slice(0, 7);
-        let revenueQuery = supabase
+        const { data: revenueData } = await supabase
           .from('orders')
           .select('total_amount')
           .gte('order_date', `${currentMonth}-01`)
           .lt('order_date', `${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().slice(0, 10)}`);
         
-        if (!isAdmin && profile?.id) {
-          revenueQuery = revenueQuery.eq('mr_id', profile.id);
-        }
-        
-        const { data: revenueData } = await revenueQuery;
         const monthlyRevenue = revenueData?.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) || 0;
 
-        // Calculate target achievement (dummy calculation for now)
-        const targetAchievement = Math.floor(Math.random() * 100) + 50; // This should be calculated based on actual targets
+        // Calculate target achievement based on actual targets - now properly filtered by RLS
+        const { data: targetsData } = await supabase
+          .from('targets')
+          .select('target_value, achieved_value')
+          .gte('target_month', `${currentMonth}-01`)
+          .lt('target_month', `${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().slice(0, 10)}`);
+
+        const totalTarget = targetsData?.reduce((sum, target) => sum + (Number(target.target_value) || 0), 0) || 0;
+        const totalAchieved = targetsData?.reduce((sum, target) => sum + (Number(target.achieved_value) || 0), 0) || 0;
+        const targetAchievement = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
 
         setStats({
           totalDoctors: doctorsCount || 0,
@@ -105,8 +102,10 @@ const Dashboard = () => {
       }
     };
 
-    fetchStats();
-  }, [isAdmin, profile?.id]);
+    if (profile) {
+      fetchStats();
+    }
+  }, [isAdmin, profile]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

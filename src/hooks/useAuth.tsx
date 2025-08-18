@@ -128,6 +128,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // Enhanced password validation
+      if (password.length < 8) {
+        toast({
+          title: "Password Too Short",
+          description: "Password must be at least 8 characters long.",
+          variant: "destructive",
+        });
+        return { error: new Error("Password too short") };
+      }
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
