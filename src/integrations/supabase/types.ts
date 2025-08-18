@@ -17,35 +17,48 @@ export type Database = {
       doctors: {
         Row: {
           area: string
+          assigned_mr_id: string | null
           created_at: string | null
           created_by: string | null
           id: string
           monthly_target: number | null
           name: string
           specialty: string
+          territory: string | null
           updated_at: string | null
         }
         Insert: {
           area: string
+          assigned_mr_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           monthly_target?: number | null
           name: string
           specialty: string
+          territory?: string | null
           updated_at?: string | null
         }
         Update: {
           area?: string
+          assigned_mr_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           monthly_target?: number | null
           name?: string
           specialty?: string
+          territory?: string | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "doctors_assigned_mr_id_fkey"
+            columns: ["assigned_mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doctors_created_by_fkey"
             columns: ["created_by"]
@@ -65,7 +78,7 @@ export type Database = {
           expense_date: string
           expense_type: string
           id: string
-          mr_id: string | null
+          mr_id: string
           status: Database["public"]["Enums"]["expense_status"] | null
         }
         Insert: {
@@ -77,7 +90,7 @@ export type Database = {
           expense_date?: string
           expense_type: string
           id?: string
-          mr_id?: string | null
+          mr_id: string
           status?: Database["public"]["Enums"]["expense_status"] | null
         }
         Update: {
@@ -89,7 +102,7 @@ export type Database = {
           expense_date?: string
           expense_type?: string
           id?: string
-          mr_id?: string | null
+          mr_id?: string
           status?: Database["public"]["Enums"]["expense_status"] | null
         }
         Relationships: [
@@ -109,39 +122,75 @@ export type Database = {
           },
         ]
       }
+      mr_pharmacy_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          mr_id: string | null
+          pharmacy_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mr_id?: string | null
+          pharmacy_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mr_id?: string | null
+          pharmacy_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mr_pharmacy_assignments_mr_id_fkey"
+            columns: ["mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mr_pharmacy_assignments_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string | null
-          doctor_id: string | null
+          doctor_id: string
           id: string
-          mr_id: string | null
+          mr_id: string
           order_date: string | null
-          pharmacy_id: string | null
-          product_id: string | null
+          pharmacy_id: string
+          product_id: string
           quantity: number
           total_amount: number | null
           unit_price: number
         }
         Insert: {
           created_at?: string | null
-          doctor_id?: string | null
+          doctor_id: string
           id?: string
-          mr_id?: string | null
+          mr_id: string
           order_date?: string | null
-          pharmacy_id?: string | null
-          product_id?: string | null
+          pharmacy_id: string
+          product_id: string
           quantity: number
           total_amount?: number | null
           unit_price: number
         }
         Update: {
           created_at?: string | null
-          doctor_id?: string | null
+          doctor_id?: string
           id?: string
-          mr_id?: string | null
+          mr_id?: string
           order_date?: string | null
-          pharmacy_id?: string | null
-          product_id?: string | null
+          pharmacy_id?: string
+          product_id?: string
           quantity?: number
           total_amount?: number | null
           unit_price?: number
@@ -246,7 +295,7 @@ export type Database = {
           created_at: string | null
           doctor_id: string | null
           id: string
-          mr_id: string | null
+          mr_id: string
           target_month: string
           target_value: number
           updated_at: string | null
@@ -256,7 +305,7 @@ export type Database = {
           created_at?: string | null
           doctor_id?: string | null
           id?: string
-          mr_id?: string | null
+          mr_id: string
           target_month: string
           target_value: number
           updated_at?: string | null
@@ -266,7 +315,7 @@ export type Database = {
           created_at?: string | null
           doctor_id?: string | null
           id?: string
-          mr_id?: string | null
+          mr_id?: string
           target_month?: string
           target_value?: number
           updated_at?: string | null
@@ -320,7 +369,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       expense_status: "pending" | "approved" | "rejected"
