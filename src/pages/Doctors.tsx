@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, User, MapPin, Target } from 'lucide-react';
+import { Plus, User, MapPin, Target, Edit, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import DoctorForm from '@/components/doctors/DoctorForm';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface Doctor {
   id: string;
@@ -19,8 +22,11 @@ interface Doctor {
 
 const Doctors = () => {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
 
   useEffect(() => {
     fetchDoctors();
@@ -52,6 +58,50 @@ const Doctors = () => {
     }).format(amount);
   };
 
+  const handleAddDoctor = () => {
+    setEditingDoctor(null);
+    setShowForm(true);
+  };
+
+  const handleEditDoctor = (doctor: Doctor) => {
+    setEditingDoctor(doctor);
+    setShowForm(true);
+  };
+
+  const handleDeleteDoctor = async (doctorId: string) => {
+    if (!confirm('Are you sure you want to delete this doctor?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', doctorId);
+
+      if (error) throw error;
+
+      toast({ title: "Doctor deleted successfully" });
+      fetchDoctors();
+    } catch (error) {
+      console.error('Error deleting doctor:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete doctor", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    setEditingDoctor(null);
+    fetchDoctors();
+  };
+
+  const handleFormCancel = () => {
+    setShowForm(false);
+    setEditingDoctor(null);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -80,12 +130,10 @@ const Doctors = () => {
             Manage your assigned doctors and their information
           </p>
         </div>
-        {profile?.role === 'admin' && (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Doctor
-          </Button>
-        )}
+        <Button onClick={handleAddDoctor}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Doctor
+        </Button>
       </div>
 
       {doctors.length === 0 ? (
@@ -132,16 +180,44 @@ const Doctors = () => {
                   </div>
                 )}
 
-                <div className="pt-2 border-t">
+                <div className="pt-2 border-t flex justify-between items-center">
                   <p className="text-xs text-muted-foreground">
                     Added: {new Date(doctor.created_at).toLocaleDateString()}
                   </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditDoctor(doctor)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    {profile?.role === 'admin' && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteDoctor(doctor.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DoctorForm
+            doctor={editingDoctor}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

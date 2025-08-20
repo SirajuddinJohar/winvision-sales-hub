@@ -4,8 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Package, Calendar, DollarSign } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Package, Calendar, DollarSign, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import OrderForm from '@/components/orders/OrderForm';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface Order {
   id: string;
@@ -25,12 +29,25 @@ interface Order {
     name: string;
     address: string;
   };
+  mr?: {
+    name: string;
+    email: string;
+  };
 }
 
 const Orders = () => {
   const { profile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [filters, setFilters] = useState({
+    doctor: '',
+    pharmacy: '',
+    dateFrom: '',
+    dateTo: '',
+  });
+
+  const isAdmin = profile?.role === 'admin';
 
   useEffect(() => {
     fetchOrders();
@@ -57,27 +74,64 @@ const Orders = () => {
           pharmacies:pharmacy_id (
             name,
             address
+          ),
+          users:mr_id (
+            name,
+            email
           )
         `)
         .order('order_date', { ascending: false });
+
+      // Apply filters if admin
+      if (isAdmin) {
+        if (filters.dateFrom) {
+          query = query.gte('order_date', filters.dateFrom);
+        }
+        if (filters.dateTo) {
+          query = query.lte('order_date', filters.dateTo);
+        }
+      }
 
       const { data, error } = await query;
 
       if (error) throw error;
 
       // Transform the data to match our interface
-      const transformedOrders = (data || []).map(order => ({
+      let transformedOrders = (data || []).map(order => ({
         ...order,
         product: order.products,
         doctor: order.doctors,
-        pharmacy: order.pharmacies
+        pharmacy: order.pharmacies,
+        mr: order.users
       }));
+
+      // Apply client-side filters for names (since we can't easily filter on nested fields)
+      if (isAdmin && filters.doctor) {
+        transformedOrders = transformedOrders.filter(order => 
+          order.doctor?.name?.toLowerCase().includes(filters.doctor.toLowerCase())
+        );
+      }
+      if (isAdmin && filters.pharmacy) {
+        transformedOrders = transformedOrders.filter(order => 
+          order.pharmacy?.name?.toLowerCase().includes(filters.pharmacy.toLowerCase())
+        );
+      }
+
       setOrders(transformedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    fetchOrders();
+  };
+
+  const handleFormCancel = () => {
+    setShowForm(false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -115,13 +169,68 @@ const Orders = () => {
             Manage and track all orders
           </p>
         </div>
-        {profile?.role === 'admin' && (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Order
-          </Button>
-        )}
+        <Button onClick={() => setShowForm(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Order
+        </Button>
       </div>
+
+      {isAdmin && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Input
+                  placeholder="Filter by doctor..."
+                  value={filters.doctor}
+                  onChange={(e) => setFilters(prev => ({ ...prev, doctor: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Filter by pharmacy..."
+                  value={filters.pharmacy}
+                  onChange={(e) => setFilters(prev => ({ ...prev, pharmacy: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Input
+                  type="date"
+                  placeholder="From date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Input
+                  type="date"
+                  placeholder="To date"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={fetchOrders}>Apply Filters</Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setFilters({ doctor: '', pharmacy: '', dateFrom: '', dateTo: '' });
+                  fetchOrders();
+                }}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {orders.length === 0 ? (
         <Card>
@@ -168,7 +277,7 @@ const Orders = () => {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm font-medium">Doctor</p>
                     <p className="text-sm text-muted-foreground">
@@ -181,12 +290,29 @@ const Orders = () => {
                       {order.pharmacy?.name || 'N/A'}
                     </p>
                   </div>
+                  {isAdmin && order.mr && (
+                    <div>
+                      <p className="text-sm font-medium">Medical Rep</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.mr?.name} ({order.mr?.email})
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <OrderForm
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

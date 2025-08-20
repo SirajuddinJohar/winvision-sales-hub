@@ -250,7 +250,7 @@ const Dashboard = () => {
                   <Users className="h-4 w-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">Doctor profile updated</p>
+                  <p className="font-medium text-sm">Doctor updated</p>
                   <p className="text-xs text-muted-foreground">4 hours ago</p>
                 </div>
               </div>
@@ -279,10 +279,12 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/doctors'}>
                 <div className="text-center">
                   <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">Add Doctor</p>
+                  <p className="font-medium text-sm">
+                    {isAdmin ? 'Manage Doctors' : 'Doctor Activity'}
+                  </p>
                 </div>
               </Card>
               {isAdmin && (
@@ -293,16 +295,18 @@ const Dashboard = () => {
                   </div>
                 </Card>
               )}
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/orders'}>
                 <div className="text-center">
                   <ShoppingCart className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">New Order</p>
+                  <p className="font-medium text-sm">Place Order</p>
                 </div>
               </Card>
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/expenses'}>
                 <div className="text-center">
                   <Receipt className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">Add Expense</p>
+                  <p className="font-medium text-sm">
+                    {isAdmin ? 'Review Expenses' : 'Add Expense'}
+                  </p>
                 </div>
               </Card>
             </div>

@@ -10,6 +10,7 @@ import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
+import Expenses from "./pages/Expenses";
 import Targets from "./pages/Targets";
 import Reporting from "./pages/Reporting";
 import NotFound from "./pages/NotFound";
@@ -28,8 +29,9 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
-              <Route path="orders" element={<Orders />} />
               <Route path="doctors" element={<Doctors />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="expenses" element={<Expenses />} />
               <Route path="targets" element={<Targets />} />
               <Route path="reporting" element={<Reporting />} />
             </Route>
