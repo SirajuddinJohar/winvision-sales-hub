@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Plus, Target as TargetIcon, TrendingUp, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import TargetFormModal from '@/components/modals/TargetFormModal';
 
 interface Target {
   id: string;
@@ -20,13 +21,22 @@ interface Target {
   } | null;
 }
 
+interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
 const Targets = () => {
   const { profile } = useAuth();
   const [targets, setTargets] = useState<Target[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTargetForm, setShowTargetForm] = useState(false);
 
   useEffect(() => {
     fetchTargets();
+    fetchDoctors();
   }, [profile]);
 
   const fetchTargets = async () => {
@@ -60,6 +70,20 @@ const Targets = () => {
       console.error('Error fetching targets:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDoctors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, name, specialty')
+        .order('name');
+
+      if (error) throw error;
+      setDoctors(data || []);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
     }
   };
 
@@ -110,7 +134,7 @@ const Targets = () => {
             Track your sales targets and achievements
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowTargetForm(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Set Target
         </Button>
@@ -198,6 +222,14 @@ const Targets = () => {
           })}
         </div>
       )}
+
+      {/* Target Form Modal */}
+      <TargetFormModal
+        open={showTargetForm}
+        onOpenChange={setShowTargetForm}
+        doctors={doctors}
+        onSuccess={fetchTargets}
+      />
     </div>
   );
 };
