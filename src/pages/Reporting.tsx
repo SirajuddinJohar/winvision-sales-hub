@@ -43,8 +43,8 @@ const Reporting = () => {
   const { profile } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
-  const [selectedPharmacy, setSelectedPharmacy] = useState<string>('');
+   const [selectedDoctor, setSelectedDoctor] = useState<string>('all');
+   const [selectedPharmacy, setSelectedPharmacy] = useState<string>('all');
   const [reportEntries, setReportEntries] = useState<ReportEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [entriesLoading, setEntriesLoading] = useState(false);
@@ -53,13 +53,13 @@ const Reporting = () => {
     fetchInitialData();
   }, []);
 
-  useEffect(() => {
-    if (selectedDoctor || selectedPharmacy) {
-      fetchReportEntries();
-    } else {
-      setReportEntries([]);
-    }
-  }, [selectedDoctor, selectedPharmacy]);
+   useEffect(() => {
+     if (selectedDoctor !== 'all' || selectedPharmacy !== 'all') {
+       fetchReportEntries();
+     } else {
+       setReportEntries([]);
+     }
+   }, [selectedDoctor, selectedPharmacy]);
 
   const fetchInitialData = async () => {
     try {
@@ -104,12 +104,12 @@ const Reporting = () => {
         `)
         .order('order_date', { ascending: false });
 
-      if (selectedDoctor) {
-        query = query.eq('doctor_id', selectedDoctor);
-      }
-      if (selectedPharmacy) {
-        query = query.eq('pharmacy_id', selectedPharmacy);
-      }
+       if (selectedDoctor && selectedDoctor !== 'all') {
+         query = query.eq('doctor_id', selectedDoctor);
+       }
+       if (selectedPharmacy && selectedPharmacy !== 'all') {
+         query = query.eq('pharmacy_id', selectedPharmacy);
+       }
 
       const { data, error } = await query;
 
@@ -191,8 +191,8 @@ const Reporting = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a doctor..." />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Doctors</SelectItem>
+                 <SelectContent>
+                   <SelectItem value="all">All Doctors</SelectItem>
                   {doctors.map((doctor) => (
                     <SelectItem key={doctor.id} value={doctor.id}>
                       {doctor.name} - {doctor.specialty}
@@ -208,8 +208,8 @@ const Reporting = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a pharmacy..." />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Pharmacies</SelectItem>
+                 <SelectContent>
+                   <SelectItem value="all">All Pharmacies</SelectItem>
                   {pharmacies.map((pharmacy) => (
                     <SelectItem key={pharmacy.id} value={pharmacy.id}>
                       {pharmacy.name}
@@ -220,15 +220,15 @@ const Reporting = () => {
             </div>
           </div>
 
-          {(selectedDoctor || selectedPharmacy) && (
+          {(selectedDoctor !== 'all' || selectedPharmacy !== 'all') && (
             <div className="mt-4 flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  setSelectedDoctor('');
-                  setSelectedPharmacy('');
-                }}
+                 onClick={() => {
+                   setSelectedDoctor('all');
+                   setSelectedPharmacy('all');
+                 }}
               >
                 Clear Filters
               </Button>
@@ -308,11 +308,11 @@ const Reporting = () => {
           ) : reportEntries.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                {selectedDoctor || selectedPharmacy
-                  ? 'No entries found for the selected filters'
-                  : 'Select a doctor or pharmacy to generate a report'}
-              </p>
+               <p className="text-muted-foreground">
+                 {selectedDoctor !== 'all' || selectedPharmacy !== 'all'
+                   ? 'No entries found for the selected filters'
+                   : 'Select a doctor or pharmacy to generate a report'}
+               </p>
             </div>
           ) : (
             <div className="space-y-4">
