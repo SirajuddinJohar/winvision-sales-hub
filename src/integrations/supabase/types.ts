@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas: {
+        Row: {
+          area_name: string
+          created_at: string
+          distance: number
+          from_location: string
+          id: string
+          to_location: string
+          updated_at: string
+        }
+        Insert: {
+          area_name: string
+          created_at?: string
+          distance: number
+          from_location: string
+          id?: string
+          to_location: string
+          updated_at?: string
+        }
+        Update: {
+          area_name?: string
+          created_at?: string
+          distance?: number
+          from_location?: string
+          id?: string
+          to_location?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           area: string
@@ -73,37 +103,46 @@ export type Database = {
           amount: number
           approved_at: string | null
           approved_by: string | null
+          area_id: string | null
           created_at: string | null
           description: string | null
           expense_date: string
           expense_type: string
           id: string
           mr_id: string
+          other_expenses: number | null
           status: Database["public"]["Enums"]["expense_status"] | null
+          travel_allowance: number | null
         }
         Insert: {
           amount: number
           approved_at?: string | null
           approved_by?: string | null
+          area_id?: string | null
           created_at?: string | null
           description?: string | null
           expense_date?: string
           expense_type: string
           id?: string
           mr_id: string
+          other_expenses?: number | null
           status?: Database["public"]["Enums"]["expense_status"] | null
+          travel_allowance?: number | null
         }
         Update: {
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          area_id?: string | null
           created_at?: string | null
           description?: string | null
           expense_date?: string
           expense_type?: string
           id?: string
           mr_id?: string
+          other_expenses?: number | null
           status?: Database["public"]["Enums"]["expense_status"] | null
+          travel_allowance?: number | null
         }
         Relationships: [
           {
@@ -111,6 +150,13 @@ export type Database = {
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
             referencedColumns: ["id"]
           },
           {

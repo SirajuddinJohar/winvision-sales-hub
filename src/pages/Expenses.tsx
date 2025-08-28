@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Receipt, Calendar, DollarSign, Check, X, Loader2 } from 'lucide-react';
+import { Plus, Receipt, Calendar, DollarSign, Check, X, Loader2, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import AreaForm from '@/components/forms/AreaForm';
 
 interface Expense {
   id: string;
@@ -30,10 +31,19 @@ interface Expense {
   } | null;
 }
 
+interface Area {
+  id: string;
+  area_name: string;
+  from_location: string;
+  to_location: string;
+  distance: number;
+}
+
 interface ExpenseFormData {
   expense_date: string;
-  expense_type: string;
-  amount: number;
+  area_id: string;
+  travel_allowance: number;
+  other_expenses: number;
   description: string;
 }
 
@@ -41,20 +51,25 @@ const Expenses = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showAreaForm, setShowAreaForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const isAdmin = profile?.role === 'admin';
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ExpenseFormData>({
+  const { register, handleSubmit, control, formState: { errors }, reset } = useForm<ExpenseFormData>({
     defaultValues: {
       expense_date: new Date().toISOString().split('T')[0],
+      travel_allowance: 0,
+      other_expenses: 0,
     }
   });
 
   useEffect(() => {
     fetchExpenses();
+    fetchAreas();
   }, [profile]);
 
   const fetchExpenses = async () => {
@@ -66,6 +81,12 @@ const Expenses = () => {
           users:mr_id (
             name,
             email
+          ),
+          areas:area_id (
+            area_name,
+            from_location,
+            to_location,
+            distance
           )
         `)
         .order('created_at', { ascending: false });
@@ -95,14 +116,40 @@ const Expenses = () => {
     }
   };
 
+  const fetchAreas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('*')
+        .order('area_name');
+
+      if (error) throw error;
+      setAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to fetch areas", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const onSubmit = async (data: ExpenseFormData) => {
     try {
       setSubmitting(true);
       
+      const totalAmount = Number(data.travel_allowance) + Number(data.other_expenses);
+      
       const expenseData = {
-        ...data,
+        expense_date: data.expense_date,
+        area_id: data.area_id,
+        travel_allowance: Number(data.travel_allowance),
+        other_expenses: Number(data.other_expenses),
+        amount: totalAmount,
+        expense_type: 'travel_and_other',
+        description: data.description,
         mr_id: profile?.id,
-        amount: Number(data.amount),
       };
 
       const { error } = await supabase
@@ -111,7 +158,10 @@ const Expenses = () => {
         
       if (error) throw error;
       
-      toast({ title: "Expense added successfully" });
+      toast({ 
+        title: "Expense Added Successfully ✅", 
+        description: "Your expense has been submitted for approval." 
+      });
       reset();
       setShowForm(false);
       fetchExpenses();
@@ -192,6 +242,18 @@ const Expenses = () => {
     );
   }
 
+  if (showAreaForm) {
+    return (
+      <AreaForm 
+        onClose={() => setShowAreaForm(false)} 
+        onSave={() => {
+          setShowAreaForm(false);
+          fetchAreas();
+        }} 
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -202,10 +264,16 @@ const Expenses = () => {
           </p>
         </div>
         {!isAdmin && (
-          <Button onClick={() => setShowForm(!showForm)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Expense
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowAreaForm(true)}>
+              <MapPin className="mr-2 h-4 w-4" />
+              Add Area
+            </Button>
+            <Button onClick={() => setShowForm(!showForm)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Expense
+            </Button>
+          </div>
         )}
       </div>
 
@@ -213,13 +281,13 @@ const Expenses = () => {
         <Card>
           <CardHeader>
             <CardTitle>Add New Expense</CardTitle>
-            <CardDescription>Submit your expense for approval</CardDescription>
+            <CardDescription>Submit your travel and other expenses for approval</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="expense_date">Date *</Label>
+                  <Label htmlFor="expense_date">Expense Date *</Label>
                   <Input
                     id="expense_date"
                     type="date"
@@ -231,40 +299,64 @@ const Expenses = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expense_type">Category *</Label>
-                  <Select onValueChange={(value) => register('expense_type').onChange({ target: { value } })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="travel">Travel</SelectItem>
-                      <SelectItem value="meals">Meals</SelectItem>
-                      <SelectItem value="accommodation">Accommodation</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="medical_samples">Medical Samples</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.expense_type && (
-                    <p className="text-sm text-destructive">Category is required</p>
+                  <Label htmlFor="area_id">Today Working Area *</Label>
+                  <Controller
+                    name="area_id"
+                    control={control}
+                    rules={{ required: 'Please select a working area' }}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select working area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {areas.map((area) => (
+                            <SelectItem key={area.id} value={area.id}>
+                              {area.area_name} ({area.from_location} → {area.to_location})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.area_id && (
+                    <p className="text-sm text-destructive">{errors.area_id.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (₹) *</Label>
+                  <Label htmlFor="travel_allowance">Travel Allowance (TA) Amount (₹) *</Label>
                   <Input
-                    id="amount"
+                    id="travel_allowance"
                     type="number"
                     step="0.01"
                     min="0"
-                    {...register('amount', { 
-                      required: 'Amount is required',
+                    {...register('travel_allowance', { 
+                      required: 'Travel allowance is required',
                       min: { value: 0, message: 'Amount must be positive' }
                     })}
                     placeholder="0.00"
                   />
-                  {errors.amount && (
-                    <p className="text-sm text-destructive">{errors.amount.message}</p>
+                  {errors.travel_allowance && (
+                    <p className="text-sm text-destructive">{errors.travel_allowance.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="other_expenses">Other Expenses Amount (₹) *</Label>
+                  <Input
+                    id="other_expenses"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register('other_expenses', { 
+                      required: 'Other expenses amount is required',
+                      min: { value: 0, message: 'Amount must be positive' }
+                    })}
+                    placeholder="0.00"
+                  />
+                  {errors.other_expenses && (
+                    <p className="text-sm text-destructive">{errors.other_expenses.message}</p>
                   )}
                 </div>
 
@@ -273,7 +365,7 @@ const Expenses = () => {
                   <Textarea
                     id="description"
                     {...register('description')}
-                    placeholder="Brief description of the expense"
+                    placeholder="Brief description of the expenses"
                     rows={3}
                   />
                 </div>
@@ -282,7 +374,7 @@ const Expenses = () => {
               <div className="flex gap-3 pt-4">
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Submit Expense
+                  Add Expense
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
