@@ -12,7 +12,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Receipt, Calendar, DollarSign, Check, X, Loader2, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import AreaForm from '@/components/forms/AreaForm';
+import AreaForm from '@/components/areas/AreaForm';
 
 interface Expense {
   id: string;
@@ -25,9 +25,18 @@ interface Expense {
   approved_at?: string;
   approved_by?: string;
   mr_id: string;
+  area_id?: string;
+  travel_allowance?: number;
+  other_expenses?: number;
   users?: {
     name: string;
     email: string;
+  } | null;
+  areas?: {
+    area_name: string;
+    from_location: string;
+    to_location: string;
+    distance: number;
   } | null;
 }
 
@@ -100,6 +109,9 @@ const Expenses = () => {
         ...expense,
         users: expense.users && typeof expense.users === 'object' && !Array.isArray(expense.users) 
           ? expense.users 
+          : null,
+        areas: expense.areas && typeof expense.areas === 'object' && !Array.isArray(expense.areas) 
+          ? expense.areas 
           : null
       }));
 
@@ -245,8 +257,7 @@ const Expenses = () => {
   if (showAreaForm) {
     return (
       <AreaForm 
-        onClose={() => setShowAreaForm(false)} 
-        onSave={() => {
+        onBack={() => {
           setShowAreaForm(false);
           fetchAreas();
         }} 
@@ -402,10 +413,15 @@ const Expenses = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Receipt className="h-5 w-5" />
                       {expense.expense_type.replace('_', ' ').toUpperCase()}
+                      {expense.areas && (
+                        <Badge variant="outline" className="ml-2">
+                          {expense.areas.area_name}
+                        </Badge>
+                      )}
                     </CardTitle>
-            <CardDescription>
-              {isAdmin && expense.users ? `${expense.users.name} (${expense.users.email})` : 'Your expense'}
-            </CardDescription>
+                    <CardDescription>
+                      {isAdmin && expense.users ? `${expense.users.name} (${expense.users.email})` : 'Your expense'}
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-3">
                     {getStatusBadge(expense.status)}
@@ -416,21 +432,41 @@ const Expenses = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       {new Date(expense.expense_date).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{formatCurrency(expense.amount)}</span>
-                  </div>
+                  
+                  {expense.travel_allowance && expense.travel_allowance > 0 && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">TA: {formatCurrency(expense.travel_allowance)}</span>
+                    </div>
+                  )}
+                  
+                  {expense.other_expenses && expense.other_expenses > 0 && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Others: {formatCurrency(expense.other_expenses)}</span>
+                    </div>
+                  )}
+                  
                   <div className="text-sm text-muted-foreground">
                     Submitted: {new Date(expense.created_at).toLocaleDateString()}
                   </div>
                 </div>
+
+                {expense.areas && (
+                  <div className="mb-4 p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-medium">Working Area: {expense.areas.area_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {expense.areas.from_location} → {expense.areas.to_location} ({expense.areas.distance} km)
+                    </p>
+                  </div>
+                )}
 
                 {expense.description && (
                   <div className="mb-4">
