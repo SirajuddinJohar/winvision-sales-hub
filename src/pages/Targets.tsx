@@ -41,12 +41,12 @@ const Targets = () => {
 
   const fetchTargets = async () => {
     try {
-      let query = supabase
+      // First fetch targets with doctor info
+      const { data: targetsData, error: targetsError } = await supabase
         .from('targets')
         .select(`
           id,
           target_value,
-          achieved_value,
           target_month,
           created_at,
           doctors:doctor_id (
@@ -56,16 +56,27 @@ const Targets = () => {
         `)
         .order('target_month', { ascending: false });
 
-      const { data, error } = await query;
+      if (targetsError) throw targetsError;
 
-      if (error) throw error;
+      // Calculate achieved values for each target
+      const targetsWithAchievement = await Promise.all(
+        (targetsData || []).map(async (target) => {
+          const { data: achievedValue, error } = await supabase
+            .rpc('calculate_target_achievement', { target_id_param: target.id });
+          
+          if (error) {
+            console.error('Error calculating achievement for target:', target.id, error);
+          }
 
-      // Transform the data to match our interface
-      const transformedTargets = (data || []).map(target => ({
-        ...target,
-        doctor: target.doctors
-      }));
-      setTargets(transformedTargets);
+          return {
+            ...target,
+            doctor: target.doctors,
+            achieved_value: achievedValue || 0
+          };
+        })
+      );
+
+      setTargets(targetsWithAchievement);
     } catch (error) {
       console.error('Error fetching targets:', error);
     } finally {
@@ -75,10 +86,16 @@ const Targets = () => {
 
   const fetchDoctors = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctors')
-        .select('id, name, specialty')
-        .order('name');
+        .select('id, name, specialty');
+
+      // If user is not admin, only fetch doctors assigned to them
+      if (profile?.role !== 'admin') {
+        query = query.eq('assigned_mr_id', profile?.id);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
       setDoctors(data || []);
