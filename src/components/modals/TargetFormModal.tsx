@@ -16,20 +16,29 @@ interface Doctor {
   specialty: string;
 }
 
+interface MR {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface TargetFormData {
   target_value: number;
   target_month: string;
+  target_type: 'mr' | 'doctor';
   doctor_id?: string;
+  mr_id?: string;
 }
 
 interface TargetFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   doctors: Doctor[];
+  mrs?: MR[];
   onSuccess: () => void;
 }
 
-const TargetFormModal = ({ open, onOpenChange, doctors, onSuccess }: TargetFormModalProps) => {
+const TargetFormModal = ({ open, onOpenChange, doctors, mrs, onSuccess }: TargetFormModalProps) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -37,10 +46,13 @@ const TargetFormModal = ({ open, onOpenChange, doctors, onSuccess }: TargetFormM
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<TargetFormData>({
     defaultValues: {
       target_month: new Date().toISOString().slice(0, 7), // Current month in YYYY-MM format
+      target_type: profile?.role === 'admin' ? 'mr' : 'doctor',
     }
   });
 
+  const selectedTargetType = watch('target_type');
   const selectedDoctorId = watch('doctor_id');
+  const selectedMrId = watch('mr_id');
 
   const onSubmit = async (data: TargetFormData) => {
     try {
@@ -49,9 +61,10 @@ const TargetFormModal = ({ open, onOpenChange, doctors, onSuccess }: TargetFormM
       const targetData = {
         target_value: Number(data.target_value),
         target_month: data.target_month + '-01', // Convert YYYY-MM to YYYY-MM-01
-        doctor_id: data.doctor_id || null,
-        mr_id: profile?.id,
-        achieved_value: 0,
+        target_type: data.target_type,
+        doctor_id: data.target_type === 'doctor' ? (data.doctor_id || null) : null,
+        mr_id: data.target_type === 'mr' ? data.mr_id : profile?.id,
+        created_by: profile?.id,
       };
 
       const { error } = await supabase
@@ -89,11 +102,28 @@ const TargetFormModal = ({ open, onOpenChange, doctors, onSuccess }: TargetFormM
         <DialogHeader>
           <DialogTitle>Set New Target</DialogTitle>
           <DialogDescription>
-            Set a sales target for yourself or for a specific doctor
+            {profile?.role === 'admin' 
+              ? 'Set monthly targets for MRs or doctor targets' 
+              : 'Set sales targets for your assigned doctors'}
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {profile?.role === 'admin' && (
+            <div className="space-y-2">
+              <Label htmlFor="target_type">Target Type *</Label>
+              <Select onValueChange={(value: 'mr' | 'doctor') => setValue('target_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select target type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mr">MR Monthly Target</SelectItem>
+                  <SelectItem value="doctor">Doctor Target</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="target_month">Target Month *</Label>
             <Input
@@ -124,22 +154,45 @@ const TargetFormModal = ({ open, onOpenChange, doctors, onSuccess }: TargetFormM
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="doctor_id">Doctor (Optional)</Label>
-            <Select onValueChange={(value) => setValue('doctor_id', value === 'general' ? undefined : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select doctor or general target" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">General Target (All Doctors)</SelectItem>
-                {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>
-                    {doctor.name} - {doctor.specialty}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {selectedTargetType === 'mr' && profile?.role === 'admin' && (
+            <div className="space-y-2">
+              <Label htmlFor="mr_id">Medical Representative *</Label>
+              <Select onValueChange={(value) => setValue('mr_id', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select MR" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mrs?.map((mr) => (
+                    <SelectItem key={mr.id} value={mr.id}>
+                      {mr.name} ({mr.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.mr_id && (
+                <p className="text-sm text-destructive">Please select an MR</p>
+              )}
+            </div>
+          )}
+
+          {selectedTargetType === 'doctor' && (
+            <div className="space-y-2">
+              <Label htmlFor="doctor_id">Doctor (Optional)</Label>
+              <Select onValueChange={(value) => setValue('doctor_id', value === 'general' ? undefined : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select doctor or general target" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General Target (All Doctors)</SelectItem>
+                  {doctors.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id}>
+                      {doctor.name} - {doctor.specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" disabled={submitting}>

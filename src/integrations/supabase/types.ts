@@ -339,30 +339,36 @@ export type Database = {
         Row: {
           achieved_value: number | null
           created_at: string | null
+          created_by: string | null
           doctor_id: string | null
           id: string
           mr_id: string
           target_month: string
+          target_type: string
           target_value: number
           updated_at: string | null
         }
         Insert: {
           achieved_value?: number | null
           created_at?: string | null
+          created_by?: string | null
           doctor_id?: string | null
           id?: string
           mr_id: string
           target_month: string
+          target_type?: string
           target_value: number
           updated_at?: string | null
         }
         Update: {
           achieved_value?: number | null
           created_at?: string | null
+          created_by?: string | null
           doctor_id?: string | null
           id?: string
           mr_id?: string
           target_month?: string
+          target_type?: string
           target_value?: number
           updated_at?: string | null
         }

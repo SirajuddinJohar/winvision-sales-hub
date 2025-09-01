@@ -15,6 +15,7 @@ interface Target {
   achieved_value: number;
   target_month: string;
   created_at: string;
+  target_type: 'mr' | 'doctor';
   doctor: {
     name: string;
     specialty: string;
@@ -27,16 +28,26 @@ interface Doctor {
   specialty: string;
 }
 
+interface MR {
+  id: string;
+  name: string;
+  email: string;
+}
+
 const Targets = () => {
   const { profile } = useAuth();
   const [targets, setTargets] = useState<Target[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [mrs, setMrs] = useState<MR[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTargetForm, setShowTargetForm] = useState(false);
 
   useEffect(() => {
     fetchTargets();
     fetchDoctors();
+    if (profile?.role === 'admin') {
+      fetchMRs();
+    }
   }, [profile]);
 
   const fetchTargets = async () => {
@@ -49,6 +60,7 @@ const Targets = () => {
           target_value,
           target_month,
           created_at,
+          target_type,
           doctors:doctor_id (
             name,
             specialty
@@ -71,7 +83,8 @@ const Targets = () => {
           return {
             ...target,
             doctor: target.doctors,
-            achieved_value: achievedValue || 0
+            achieved_value: achievedValue || 0,
+            target_type: target.target_type as 'mr' | 'doctor'
           };
         })
       );
@@ -101,6 +114,21 @@ const Targets = () => {
       setDoctors(data || []);
     } catch (error) {
       console.error('Error fetching doctors:', error);
+    }
+  };
+
+  const fetchMRs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .eq('role', 'mr')
+        .order('name');
+
+      if (error) throw error;
+      setMrs(data || []);
+    } catch (error) {
+      console.error('Error fetching MRs:', error);
     }
   };
 
@@ -185,7 +213,9 @@ const Targets = () => {
                           })}
                         </CardTitle>
                         <CardDescription>
-                          {target.doctor?.name || 'General Target'}
+                          {target.target_type === 'mr' 
+                            ? 'Monthly MR Target' 
+                            : target.doctor?.name || 'General Doctor Target'}
                         </CardDescription>
                       </div>
                     </div>
@@ -245,6 +275,7 @@ const Targets = () => {
         open={showTargetForm}
         onOpenChange={setShowTargetForm}
         doctors={doctors}
+        mrs={mrs}
         onSuccess={fetchTargets}
       />
     </div>
