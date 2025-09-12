@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalDoctors: 0,
@@ -279,7 +281,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/doctors'}>
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/doctors')}>
                 <div className="text-center">
                   <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                   <p className="font-medium text-sm">
@@ -288,20 +290,20 @@ const Dashboard = () => {
                 </div>
               </Card>
               {isAdmin && (
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/products')}>
                   <div className="text-center">
                     <Package className="h-8 w-8 text-green-600 mx-auto mb-2" />
                     <p className="font-medium text-sm">Add Product</p>
                   </div>
                 </Card>
               )}
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/orders'}>
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/orders')}>
                 <div className="text-center">
                   <ShoppingCart className="h-8 w-8 text-purple-600 mx-auto mb-2" />
                   <p className="font-medium text-sm">Place Order</p>
                 </div>
               </Card>
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/dashboard/expenses'}>
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/expenses')}>
                 <div className="text-center">
                   <Receipt className="h-8 w-8 text-orange-600 mx-auto mb-2" />
                   <p className="font-medium text-sm">
