@@ -63,12 +63,14 @@ All colors MUST be HSL format for proper theming.
     --ring: 220 70% 50%;
 
     /* Professional Gradient Definitions */
-    --gradient-primary: linear-gradient(135deg, hsl(220 70% 50%), hsl(220 70% 42%));
-    --gradient-secondary: linear-gradient(135deg, hsl(220 10% 46%), hsl(220 10% 38%));
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
-    --gradient-hero: linear-gradient(135deg, hsl(220 70% 50%) 0%, hsl(180 50% 45%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(220 85% 60%) 0%, hsl(220 75% 50%) 50%, hsl(240 70% 45%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(260 15% 55%) 0%, hsl(250 20% 45%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 80% 45%) 0%, hsl(142 76% 36%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 85% 60%) 0%, hsl(180 60% 50%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
-    --gradient-elegant: linear-gradient(145deg, hsl(220 70% 50%) 0%, hsl(220 70% 40%) 50%, hsl(180 50% 45%) 100%);
+    --gradient-elegant: linear-gradient(135deg, hsl(280 70% 55%) 0%, hsl(220 85% 60%) 50%, hsl(180 70% 50%) 100%);
+    --gradient-warning: linear-gradient(135deg, hsl(38 95% 60%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-info: linear-gradient(135deg, hsl(199 95% 60%) 0%, hsl(199 89% 48%) 100%);
 
     /* Professional Shadows */
     --shadow-sm: 0 1px 3px 0 hsl(220 20% 14% / 0.08);
