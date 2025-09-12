@@ -8,41 +8,41 @@ All colors MUST be HSL format for proper theming.
 
 @layer base {
   :root {
-    /* Core Brand Colors - Professional medical blue palette */
-    --background: 0 0% 100%;
-    --foreground: 215 28% 17%;
+    /* Core Brand Colors - Professional deep blue palette */
+    --background: 220 14% 96%;
+    --foreground: 220 20% 14%;
 
     /* Card & Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
+    --card-foreground: 220 20% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
+    --popover-foreground: 220 20% 14%;
 
-    /* Primary - Medical Blue */
-    --primary: 214 95% 43%;
+    /* Primary - Professional Deep Blue */
+    --primary: 220 70% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 214 95% 38%;
-    --primary-light: 214 95% 93%;
+    --primary-hover: 220 70% 45%;
+    --primary-light: 220 70% 95%;
 
-    /* Secondary - Professional Gray */
-    --secondary: 210 13% 94%;
-    --secondary-foreground: 215 28% 17%;
-    --secondary-hover: 210 13% 90%;
+    /* Secondary - Sophisticated Gray */
+    --secondary: 220 10% 46%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 220 10% 40%;
 
     /* Muted Colors */
-    --muted: 210 13% 97%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 46%;
 
-    /* Accent - Success Green */
-    --accent: 142 76% 36%;
+    /* Accent - Professional Teal */
+    --accent: 180 50% 45%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 142 76% 94%;
+    --accent-light: 180 50% 95%;
 
     /* Status Colors */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 76% 94%;
+    --success-light: 142 76% 95%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -58,26 +58,30 @@ All colors MUST be HSL format for proper theming.
     --info-light: 199 89% 95%;
 
     /* Border & Input */
-    --border: 214 31% 91%;
-    --input: 214 31% 91%;
-    --ring: 214 95% 43%;
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 220 70% 50%;
 
-    /* Gradient Definitions */
-    --gradient-primary: linear-gradient(135deg, hsl(214 95% 43%), hsl(214 95% 35%));
+    /* Professional Gradient Definitions */
+    --gradient-primary: linear-gradient(135deg, hsl(220 70% 50%), hsl(220 70% 42%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 10% 46%), hsl(220 10% 38%));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%));
-    --gradient-hero: linear-gradient(135deg, hsl(214 95% 43%) 0%, hsl(199 89% 48%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 13% 97%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 70% 50%) 0%, hsl(180 50% 45%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
+    --gradient-elegant: linear-gradient(145deg, hsl(220 70% 50%) 0%, hsl(220 70% 40%) 50%, hsl(180 50% 45%) 100%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(215 28% 17% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 28% 17% / 0.1), 0 2px 4px -1px hsl(215 28% 17% / 0.06);
-    --shadow-lg: 0 10px 15px -3px hsl(215 28% 17% / 0.1), 0 4px 6px -2px hsl(215 28% 17% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(215 28% 17% / 0.1), 0 10px 10px -5px hsl(215 28% 17% / 0.04);
-    --shadow-primary: 0 10px 30px -10px hsl(214 95% 43% / 0.3);
+    /* Professional Shadows */
+    --shadow-sm: 0 1px 3px 0 hsl(220 20% 14% / 0.08);
+    --shadow-md: 0 4px 12px -2px hsl(220 20% 14% / 0.12), 0 2px 6px -1px hsl(220 20% 14% / 0.08);
+    --shadow-lg: 0 12px 24px -4px hsl(220 20% 14% / 0.15), 0 6px 12px -2px hsl(220 20% 14% / 0.08);
+    --shadow-xl: 0 24px 48px -8px hsl(220 20% 14% / 0.18), 0 12px 24px -4px hsl(220 20% 14% / 0.10);
+    --shadow-primary: 0 12px 32px -6px hsl(220 70% 50% / 0.35);
+    --shadow-elegant: 0 8px 32px -4px hsl(220 70% 50% / 0.25), 0 0 0 1px hsl(220 70% 50% / 0.05);
 
-    /* Animation & Transitions */
+    /* Smooth Professional Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s ease-out;
+    --transition-elegant: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
     --radius: 0.75rem;
 
