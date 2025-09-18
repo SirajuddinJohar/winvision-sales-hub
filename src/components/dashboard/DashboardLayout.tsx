@@ -53,7 +53,7 @@ const DashboardLayout = () => {
   const navigationItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'mr'] },
     { icon: Users, label: 'Doctors', path: '/dashboard/doctors', roles: ['admin', 'mr'] },
-    { icon: Package, label: 'Products', path: '/dashboard/products', roles: ['admin'] },
+    { icon: Package, label: 'Products', path: '/dashboard/products', roles: ['admin', 'mr'] },
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'mr'] },
     { icon: Receipt, label: 'Expenses', path: '/dashboard/expenses', roles: ['admin', 'mr'] },
     { icon: Target, label: 'Targets', path: '/dashboard/targets', roles: ['admin', 'mr'] },
