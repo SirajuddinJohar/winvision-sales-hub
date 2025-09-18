@@ -223,36 +223,75 @@ const Targets = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Progress</span>
-                      <span className="text-sm text-muted-foreground">
-                        {achievementPercentage.toFixed(1)}%
-                      </span>
+                      <span className="text-sm font-medium">Monthly Progress</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-primary">
+                          {achievementPercentage.toFixed(1)}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">completed</span>
+                      </div>
                     </div>
-                    <Progress value={achievementPercentage} className="h-2" />
+                    
+                    {/* Enhanced Progress Bar */}
+                    <div className="relative">
+                      <Progress value={achievementPercentage} className="h-3 bg-gradient-to-r from-muted to-muted/50" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-medium text-white drop-shadow-sm">
+                          {achievementPercentage >= 10 ? `₹${(target.achieved_value / 1000).toFixed(0)}K` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Labels */}
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>₹0</span>
+                      <span className="font-medium">Target: {formatCurrency(target.target_value)}</span>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Target</p>
-                      <p className="text-lg font-semibold">
+                  {/* Achievement Stats */}
+                  <div className="grid grid-cols-3 gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Target</p>
+                      <p className="text-sm font-semibold text-primary">
                         {formatCurrency(target.target_value)}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Achieved</p>
-                      <p className="text-lg font-semibold text-green-600">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Achieved</p>
+                      <p className="text-sm font-semibold text-green-600">
                         {formatCurrency(target.achieved_value)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Remaining</p>
+                      <p className="text-sm font-semibold text-orange-600">
+                        {formatCurrency(Math.max(0, target.target_value - target.achieved_value))}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Remaining: {formatCurrency(Math.max(0, target.target_value - target.achieved_value))}
-                    </span>
+                  {/* Progress Indicator */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className={`h-4 w-4 ${
+                        achievementPercentage >= 75 ? 'text-green-500' : 
+                        achievementPercentage >= 50 ? 'text-yellow-500' : 'text-red-500'
+                      }`} />
+                      <span className="text-sm font-medium">
+                        {achievementPercentage >= 100 ? '🎉 Target Achieved!' : 
+                         achievementPercentage >= 75 ? '🚀 Almost There!' :
+                         achievementPercentage >= 50 ? '💪 Good Progress' : 
+                         '📈 Keep Going!'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {achievementPercentage < 100 && 
+                        `${((target.target_value - target.achieved_value) / target.target_value * 100).toFixed(0)}% to go`
+                      }
+                    </div>
                   </div>
 
                   {target.doctor && (
