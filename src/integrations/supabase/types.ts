@@ -44,6 +44,72 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_working: {
+        Row: {
+          created_at: string
+          distributor_id: string | null
+          doctor_id: string
+          id: string
+          mr_id: string
+          order_details: Json | null
+          sample_details: Json | null
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          distributor_id?: string | null
+          doctor_id: string
+          id?: string
+          mr_id: string
+          order_details?: Json | null
+          sample_details?: Json | null
+          updated_at?: string
+          work_date?: string
+        }
+        Update: {
+          created_at?: string
+          distributor_id?: string | null
+          doctor_id?: string
+          id?: string
+          mr_id?: string
+          order_details?: Json | null
+          sample_details?: Json | null
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
+      Distributors: {
+        Row: {
+          address: string
+          contact_person: string | null
+          created_at: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           area: string
@@ -199,7 +265,7 @@ export type Database = {
             foreignKeyName: "mr_pharmacy_assignments_pharmacy_id_fkey"
             columns: ["pharmacy_id"]
             isOneToOne: false
-            referencedRelation: "pharmacies"
+            referencedRelation: "Distributors"
             referencedColumns: ["id"]
           },
         ]
@@ -260,7 +326,7 @@ export type Database = {
             foreignKeyName: "orders_pharmacy_id_fkey"
             columns: ["pharmacy_id"]
             isOneToOne: false
-            referencedRelation: "pharmacies"
+            referencedRelation: "Distributors"
             referencedColumns: ["id"]
           },
           {
@@ -272,36 +338,6 @@ export type Database = {
           },
         ]
       }
-      pharmacies: {
-        Row: {
-          address: string
-          contact_person: string | null
-          created_at: string | null
-          id: string
-          name: string
-          phone: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          address: string
-          contact_person?: string | null
-          created_at?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          address?: string
-          contact_person?: string | null
-          created_at?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           category: string
@@ -310,6 +346,7 @@ export type Database = {
           id: string
           name: string
           price: number
+          product_type: string
           stock: number | null
           updated_at: string | null
         }
@@ -320,6 +357,7 @@ export type Database = {
           id?: string
           name: string
           price: number
+          product_type?: string
           stock?: number | null
           updated_at?: string | null
         }
@@ -330,6 +368,7 @@ export type Database = {
           id?: string
           name?: string
           price?: number
+          product_type?: string
           stock?: number | null
           updated_at?: string | null
         }

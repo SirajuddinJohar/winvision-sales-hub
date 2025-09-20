@@ -13,7 +13,8 @@ import {
   BarChart3,
   LogOut,
   Menu,
-  User
+  User,
+  Calendar
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -57,6 +58,7 @@ const DashboardLayout = () => {
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'mr'] },
     { icon: Receipt, label: 'Expenses', path: '/dashboard/expenses', roles: ['admin', 'mr'] },
     { icon: Target, label: 'Targets', path: '/dashboard/targets', roles: ['admin', 'mr'] },
+    { icon: Calendar, label: 'Daily Working', path: '/dashboard/daily-working', roles: ['mr'] },
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting', roles: ['admin', 'mr'] },
   ];
 

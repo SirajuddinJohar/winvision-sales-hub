@@ -68,7 +68,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
 
         // Fetch pharmacies
         const { data: pharmaciesData } = await supabase
-          .from('pharmacies')
+          .from('Distributors')
           .select('id, name, address')
           .order('name');
 

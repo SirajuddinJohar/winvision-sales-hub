@@ -65,7 +65,7 @@ const Reporting = () => {
     try {
       const [doctorsResponse, pharmaciesResponse] = await Promise.all([
         supabase.from('doctors').select('id, name, specialty, area').order('name'),
-        supabase.from('pharmacies').select('id, name, address').order('name')
+        supabase.from('Distributors').select('id, name, address').order('name')
       ]);
 
       if (doctorsResponse.error) throw doctorsResponse.error;
