@@ -156,7 +156,7 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
         product_id: order.product_id,
         quantity: order.order_qty,
         unit_price: order.price,
-        total_amount: order.order_qty * order.price,
+        // total_amount is a generated column, don't insert it
         mr_id: user?.id,
         order_date: new Date().toISOString().split('T')[0]
       }));

@@ -80,16 +80,7 @@ const SampleEntry = ({ doctorName, onNext, onBack }: SampleEntryProps) => {
   const handleNext = async () => {
     const samplesGiven = sampleItems.filter(item => item.qty_given > 0);
     
-    if (samplesGiven.length === 0) {
-      toast({
-        title: "No samples entered",
-        description: "Please enter at least one sample quantity to continue",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Update stock levels in database
+    // Update stock levels in database only for samples that were given
     try {
       for (const sample of samplesGiven) {
         const newStock = sample.current_stock - sample.qty_given;
@@ -102,7 +93,8 @@ const SampleEntry = ({ doctorName, onNext, onBack }: SampleEntryProps) => {
         if (error) throw error;
       }
 
-      onNext(samplesGiven);
+      // Pass all sample items (including zero quantities) to maintain data structure
+      onNext(sampleItems);
     } catch (error) {
       console.error('Error updating stock:', error);
       toast({
