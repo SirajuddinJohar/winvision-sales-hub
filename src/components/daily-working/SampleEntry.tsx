@@ -80,28 +80,32 @@ const SampleEntry = ({ doctorName, onNext, onBack }: SampleEntryProps) => {
   const handleNext = async () => {
     const samplesGiven = sampleItems.filter(item => item.qty_given > 0);
     
-    // Update stock levels in database only for samples that were given
     try {
-      for (const sample of samplesGiven) {
-        const newStock = sample.current_stock - sample.qty_given;
-        
-        const { error } = await supabase
-          .from('products')
-          .update({ stock: newStock })
-          .eq('id', sample.product_id);
+      // Update stock levels in database only for samples that were given
+      if (samplesGiven.length > 0) {
+        for (const sample of samplesGiven) {
+          const newStock = sample.current_stock - sample.qty_given;
+          
+          const { error } = await supabase
+            .from('products')
+            .update({ stock: newStock })
+            .eq('id', sample.product_id);
 
-        if (error) throw error;
+          if (error) throw error;
+        }
       }
 
-      // Pass all sample items (including zero quantities) to maintain data structure
+      // Always proceed to next step, regardless of whether samples were given
       onNext(sampleItems);
     } catch (error) {
       console.error('Error updating stock:', error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to update stock levels",
         variant: "destructive"
       });
+      // Still proceed to next step even if stock update fails
+      onNext(sampleItems);
     }
   };
 

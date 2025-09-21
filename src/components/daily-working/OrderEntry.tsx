@@ -215,7 +215,7 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
             <SelectTrigger>
               <SelectValue placeholder="Choose a distributor..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border shadow-md z-50">
               {distributors.map((distributor) => (
                 <SelectItem key={distributor.id} value={distributor.id}>
                   <div className="flex items-center gap-2">
