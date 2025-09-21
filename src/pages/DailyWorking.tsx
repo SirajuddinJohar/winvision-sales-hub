@@ -17,7 +17,7 @@ interface Doctor {
 }
 
 const DoctorsListScreen = ({ onDoctorSelect }: { onDoctorSelect: (doctor: Doctor) => void }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,7 +25,7 @@ const DoctorsListScreen = ({ onDoctorSelect }: { onDoctorSelect: (doctor: Doctor
 
   useEffect(() => {
     fetchDoctors();
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
     const filtered = doctors.filter(doctor =>
@@ -37,13 +37,19 @@ const DoctorsListScreen = ({ onDoctorSelect }: { onDoctorSelect: (doctor: Doctor
   }, [doctors, searchTerm]);
 
   const fetchDoctors = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('doctors')
-        .select('id, name, specialty, area')
-        .eq('assigned_mr_id', user.id);
+        .select('id, name, specialty, area');
+
+      // MRs see only their assigned doctors, Admins see all doctors
+      if (profile.role === 'mr') {
+        query = query.eq('assigned_mr_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setDoctors(data || []);
