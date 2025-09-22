@@ -83,8 +83,13 @@ export type Database = {
       Distributors: {
         Row: {
           address: string
+          city: string | null
           contact_person: string | null
           created_at: string | null
+          created_by: string | null
+          dl_number_part1: string | null
+          dl_number_part2: string | null
+          gstin: string | null
           id: string
           name: string
           phone: string | null
@@ -92,8 +97,13 @@ export type Database = {
         }
         Insert: {
           address: string
+          city?: string | null
           contact_person?: string | null
           created_at?: string | null
+          created_by?: string | null
+          dl_number_part1?: string | null
+          dl_number_part2?: string | null
+          gstin?: string | null
           id?: string
           name: string
           phone?: string | null
@@ -101,8 +111,13 @@ export type Database = {
         }
         Update: {
           address?: string
+          city?: string | null
           contact_person?: string | null
           created_at?: string | null
+          created_by?: string | null
+          dl_number_part1?: string | null
+          dl_number_part2?: string | null
+          gstin?: string | null
           id?: string
           name?: string
           phone?: string | null
