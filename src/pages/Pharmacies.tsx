@@ -51,7 +51,7 @@ const Pharmacies = () => {
   const fetchPharmacies = async () => {
     try {
       let query = supabase
-        .from('Distributors')
+        .from('pharmacies')
         .select('*')
         .order('name');
 
@@ -82,7 +82,7 @@ const Pharmacies = () => {
 
     try {
       const { error } = await supabase
-        .from('Distributors')
+        .from('pharmacies')
         .delete()
         .eq('id', pharmacyId);
 

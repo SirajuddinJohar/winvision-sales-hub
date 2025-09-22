@@ -10,6 +10,7 @@ import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
+import Distributors from "./pages/Distributors";
 import Pharmacies from "./pages/Pharmacies";
 import Products from "./pages/Products";
 import Expenses from "./pages/Expenses";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="doctors" element={<Doctors />} />
+              <Route path="distributors" element={<Distributors />} />
               <Route path="pharmacies" element={<Pharmacies />} />
               <Route path="products" element={<Products />} />
               <Route path="orders" element={<Orders />} />

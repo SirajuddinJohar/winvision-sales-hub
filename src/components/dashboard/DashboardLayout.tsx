@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { 
   Building2, 
   Users, 
+  Truck,
   Building,
   Package, 
   ShoppingCart, 
@@ -55,6 +56,7 @@ const DashboardLayout = () => {
   const navigationItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'mr'] },
     { icon: Users, label: 'Doctors', path: '/dashboard/doctors', roles: ['admin', 'mr'] },
+    { icon: Truck, label: 'Distributors', path: '/dashboard/distributors', roles: ['admin', 'mr'] },
     { icon: Building, label: 'Pharmacies', path: '/dashboard/pharmacies', roles: ['admin', 'mr'] },
     { icon: Package, label: 'Products', path: '/dashboard/products', roles: ['admin', 'mr'] },
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'mr'] },

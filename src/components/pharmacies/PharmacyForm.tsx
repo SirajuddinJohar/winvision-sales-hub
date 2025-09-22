@@ -56,7 +56,7 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
 
       if (pharmacy) {
         const { error } = await supabase
-          .from('Distributors')
+          .from('pharmacies')
           .update(pharmacyData)
           .eq('id', pharmacy.id);
           
@@ -64,7 +64,7 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
         toast({ title: "Pharmacy updated successfully" });
       } else {
         const { error } = await supabase
-          .from('Distributors')
+          .from('pharmacies')
           .insert([pharmacyData]);
           
         if (error) throw error;

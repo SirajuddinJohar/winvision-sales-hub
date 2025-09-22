@@ -353,6 +353,51 @@ export type Database = {
           },
         ]
       }
+      pharmacies: {
+        Row: {
+          address: string
+          city: string
+          contact_person: string
+          created_at: string
+          created_by: string | null
+          dl_number_part1: string
+          dl_number_part2: string
+          gstin: string | null
+          id: string
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          city: string
+          contact_person: string
+          created_at?: string
+          created_by?: string | null
+          dl_number_part1: string
+          dl_number_part2: string
+          gstin?: string | null
+          id?: string
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          contact_person?: string
+          created_at?: string
+          created_by?: string | null
+          dl_number_part1?: string
+          dl_number_part2?: string
+          gstin?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
