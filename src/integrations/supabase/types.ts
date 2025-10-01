@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_calls: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          mr_id: string
+          status: string
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          mr_id: string
+          status?: string
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          mr_id?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_working: {
         Row: {
           created_at: string
