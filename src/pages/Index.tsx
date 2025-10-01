@@ -1,91 +1,52 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Building2, Users, Package, BarChart3, ArrowRight } from 'lucide-react';
+import { Target, Calendar, Users, Building2, Truck, Package, ShoppingCart, BarChart3 } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
-  const features = [
-    {
-      icon: Users,
-      title: 'Doctor Management',
-      description: 'Manage doctor profiles, specialties, and monthly targets'
-    },
-    {
-      icon: Package,
-      title: 'Product Catalog',
-      description: 'Track pharmaceutical products and inventory'
-    },
-    {
-      icon: BarChart3,
-      title: 'Sales Analytics',
-      description: 'Monitor performance and target achievements'
-    }
+  // Redirect to auth if not logged in
+  if (!user) {
+    navigate('/auth');
+    return null;
+  }
+
+  const navigationItems = [
+    { icon: Target, label: 'Targets', path: '/dashboard/targets' },
+    { icon: Calendar, label: 'Daily Working', path: '/dashboard/daily-working' },
+    { icon: Users, label: 'Doctors', path: '/dashboard/doctors' },
+    { icon: Building2, label: 'Pharmacies', path: '/dashboard/pharmacies' },
+    { icon: Truck, label: 'Distributors', path: '/dashboard/distributors' },
+    { icon: Package, label: 'Products', path: '/dashboard/products' },
+    { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders' },
+    { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting' }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-6">
-            <div className="p-4 rounded-xl bg-white/10 backdrop-blur-sm">
-              <Building2 className="h-12 w-12 text-white" />
-            </div>
-          </div>
-          <h1 className="text-5xl font-bold text-white mb-6">
-            Winvision
+    <div className="min-h-screen bg-gradient-to-br from-success/5 to-background p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Urdu Greeting */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2" dir="rtl">
+            مرحبا، {profile?.name || 'User'}
           </h1>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Professional pharmaceutical management system for administrators and medical representatives
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <Button 
-                onClick={() => navigate('/dashboard')}
-                size="lg"
-                className="bg-white text-primary hover:bg-white/90"
-              >
-                Go to Dashboard
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            ) : (
-              <>
-                <Button 
-                  onClick={() => navigate('/auth')}
-                  size="lg"
-                  className="bg-white text-primary hover:bg-white/90"
-                >
-                  Get Started
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
-                <Button 
-                  onClick={() => navigate('/auth')}
-                  variant="outline"
-                  size="lg"
-                  className="border-white text-white hover:bg-white/10"
-                >
-                  Sign In
-                </Button>
-              </>
-            )}
-          </div>
+          <p className="text-muted-foreground">Welcome to Winvision</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {features.map((feature, index) => (
-            <Card key={index} className="p-6 bg-white/95 backdrop-blur-sm border-0 shadow-xl">
-              <div className="text-center">
-                <div className="p-3 rounded-lg bg-primary-light inline-block mb-4">
-                  <feature.icon className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            </Card>
+        {/* Navigation Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {navigationItems.map((item) => (
+            <Button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-card/80 text-foreground border border-border shadow-lg rounded-2xl transition-all hover:shadow-xl hover:scale-105"
+              variant="outline"
+            >
+              <item.icon className="h-8 w-8 text-success" />
+              <span className="text-base font-semibold">{item.label}</span>
+            </Button>
           ))}
         </div>
       </div>
