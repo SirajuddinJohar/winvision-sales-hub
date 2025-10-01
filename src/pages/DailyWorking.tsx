@@ -3,10 +3,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Stethoscope, Store, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import SampleEntry from '@/components/daily-working/SampleEntry';
+import OrderEntry from '@/components/daily-working/OrderEntry';
 
 interface CallTarget {
   id: string;
@@ -31,6 +32,9 @@ const DailyWorking = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<CallStats>({ total: 0, doctors: 0, pharmacies: 0 });
   const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
+  const [currentView, setCurrentView] = useState<'list' | 'sample' | 'order'>('list');
+  const [selectedTarget, setSelectedTarget] = useState<CallTarget | null>(null);
+  const [sampleData, setSampleData] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -134,8 +138,58 @@ const DailyWorking = () => {
     }
   };
 
-  const handleMarkComplete = async (target: CallTarget) => {
-    if (!user) return;
+  const handleTargetClick = async (target: CallTarget) => {
+    // For doctors, go to sample/order flow
+    if (target.type === 'doctor') {
+      setSelectedTarget(target);
+      setCurrentView('sample');
+    } 
+    // For pharmacies, mark complete directly
+    else if (target.type === 'pharmacy') {
+      if (!user) return;
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { error } = await supabase
+          .from('daily_calls')
+          .upsert({
+            mr_id: user.id,
+            target_id: target.id,
+            target_type: target.type,
+            date: today,
+            status: 'complete'
+          }, {
+            onConflict: 'mr_id,target_id,date'
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Call marked complete",
+          description: `${target.name} has been marked as completed`
+        });
+
+        await fetchTargetsAndCalls();
+
+      } catch (error) {
+        console.error('Error marking call complete:', error);
+        toast({
+          title: "Error",
+          description: "Failed to mark call as complete",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleSampleNext = (samples: any[]) => {
+    setSampleData(samples);
+    setCurrentView('order');
+  };
+
+  const handleOrderComplete = async () => {
+    if (!user || !selectedTarget) return;
 
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -145,8 +199,8 @@ const DailyWorking = () => {
         .from('daily_calls')
         .upsert({
           mr_id: user.id,
-          target_id: target.id,
-          target_type: target.type,
+          target_id: selectedTarget.id,
+          target_type: selectedTarget.type,
           date: today,
           status: 'complete'
         }, {
@@ -155,13 +209,16 @@ const DailyWorking = () => {
 
       if (error) throw error;
 
-      // Refresh data
-      await fetchTargetsAndCalls();
-
       toast({
         title: "Call marked complete",
-        description: `${target.name} has been marked as completed`
+        description: `${selectedTarget.name} has been marked as completed`
       });
+
+      // Reset to list view and refresh data
+      setCurrentView('list');
+      setSelectedTarget(null);
+      setSampleData([]);
+      await fetchTargetsAndCalls();
 
     } catch (error) {
       console.error('Error marking call complete:', error);
@@ -170,6 +227,16 @@ const DailyWorking = () => {
         description: "Failed to mark call as complete",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleBack = () => {
+    if (currentView === 'order') {
+      setCurrentView('sample');
+    } else if (currentView === 'sample') {
+      setCurrentView('list');
+      setSelectedTarget(null);
+      setSampleData([]);
     }
   };
 
@@ -195,6 +262,31 @@ const DailyWorking = () => {
     );
   }
 
+  // Sample Entry View
+  if (currentView === 'sample' && selectedTarget && selectedTarget.type === 'doctor') {
+    return (
+      <SampleEntry
+        doctorName={selectedTarget.name}
+        onNext={handleSampleNext}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  // Order Entry View
+  if (currentView === 'order' && selectedTarget && selectedTarget.type === 'doctor') {
+    return (
+      <OrderEntry
+        doctorId={selectedTarget.id}
+        doctorName={selectedTarget.name}
+        sampleData={sampleData}
+        onComplete={handleOrderComplete}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  // List View
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -249,9 +341,13 @@ const DailyWorking = () => {
 
         <TabsContent value="pending" className="space-y-3 mt-4">
           {filteredTargets.map((target) => (
-            <Card key={target.id} className="p-4">
+            <Card 
+              key={target.id} 
+              className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => handleTargetClick(target)}
+            >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                   <div className={`p-2 rounded-lg ${target.type === 'doctor' ? 'bg-blue-100' : 'bg-green-100'}`}>
                     {target.type === 'doctor' ? (
                       <Stethoscope className="h-5 w-5 text-blue-600" />
@@ -261,7 +357,7 @@ const DailyWorking = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{target.name}</h3>
+                      <h3 className="font-semibold text-foreground hover:text-primary">{target.name}</h3>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
                         {target.type === 'doctor' ? '🩺 Doctor' : '🏪 Pharmacy'}
                       </span>
@@ -270,12 +366,6 @@ const DailyWorking = () => {
                     {target.area && <p className="text-xs text-muted-foreground">{target.area}</p>}
                   </div>
                 </div>
-                <Button 
-                  onClick={() => handleMarkComplete(target)}
-                  size="sm"
-                >
-                  Mark Done
-                </Button>
               </div>
             </Card>
           ))}
