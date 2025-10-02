@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TargetFormModal from '@/components/modals/TargetFormModal';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Target {
   id: string;
@@ -268,15 +269,12 @@ const Targets = () => {
   // Show new interface for MR users
   if (profile?.role === 'mr') {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Targets</h1>
-            <p className="text-muted-foreground">
-              Track your sales targets and achievements
-            </p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background">
+        <PageHeader 
+          title="Targets" 
+          description="Track your sales targets and achievements"
+        />
+        <div className="p-4 md:p-6 space-y-6">
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
@@ -489,6 +487,7 @@ const Targets = () => {
             fetchMrMonthlyTarget();
           }}
         />
+        </div>
       </div>
     );
   }

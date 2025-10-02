@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DistributorForm from '@/components/distributors/DistributorForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Distributor {
   id: string;
@@ -129,19 +130,18 @@ const Distributors = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Distributors</h1>
-          <p className="text-muted-foreground">
-            Manage your distributor network and contacts
-          </p>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Distributors" 
+        description="Manage your distributor network and contacts"
+      />
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={handleAddDistributor}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Distributor
+          </Button>
         </div>
-        <Button onClick={handleAddDistributor}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Distributor
-        </Button>
-      </div>
 
       {/* Search Bar */}
       <div className="relative">
@@ -233,6 +233,7 @@ const Distributors = () => {
           />
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };

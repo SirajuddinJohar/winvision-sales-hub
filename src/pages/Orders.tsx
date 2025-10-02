@@ -10,6 +10,7 @@ import { Plus, Package, Calendar, DollarSign, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import OrderForm from '@/components/orders/OrderForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Order {
   id: string;
@@ -161,19 +162,18 @@ const Orders = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Orders</h1>
-          <p className="text-muted-foreground">
-            Manage and track all orders
-          </p>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Orders" 
+        description="Manage and track all orders"
+      />
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Order
+          </Button>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Order
-        </Button>
-      </div>
 
       {isAdmin && (
         <Card className="mb-6">
@@ -313,6 +313,7 @@ const Orders = () => {
           />
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };

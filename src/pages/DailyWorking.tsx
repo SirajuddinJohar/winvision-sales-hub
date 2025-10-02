@@ -8,6 +8,7 @@ import { Search, Stethoscope, Store, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SampleEntry from '@/components/daily-working/SampleEntry';
 import OrderEntry from '@/components/daily-working/OrderEntry';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface CallTarget {
   id: string;
@@ -265,8 +266,11 @@ const DailyWorking = () => {
   // Sample Entry View
   if (currentView === 'sample' && selectedTarget && selectedTarget.type === 'doctor') {
     return (
-      <SampleEntry
-        doctorName={selectedTarget.name}
+      <div className="min-h-screen bg-background">
+        <PageHeader title="Sample Entry" description={`Record samples for ${selectedTarget.name}`} />
+        <div className="p-4 md:p-6">
+          <SampleEntry
+            doctorName={selectedTarget.name}
         onNext={handleSampleNext}
         onBack={handleBack}
       />
@@ -414,6 +418,7 @@ const DailyWorking = () => {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };

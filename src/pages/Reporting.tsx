@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { FileText, Filter, Calendar, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Doctor {
   id: string;
@@ -162,15 +163,12 @@ const Reporting = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Reporting</h1>
-          <p className="text-muted-foreground">
-            Generate reports based on doctors and pharmacies
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Reporting" 
+        description="Generate reports based on doctors and pharmacies"
+      />
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Filters */}
       <Card>
@@ -352,6 +350,7 @@ const Reporting = () => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

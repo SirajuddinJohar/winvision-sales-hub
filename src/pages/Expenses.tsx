@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Receipt, Calendar, DollarSign, Check, X, Loader2, MapPin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import AreaForm from '@/components/areas/AreaForm';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Expense {
   id: string;
@@ -266,16 +267,14 @@ const Expenses = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? 'Manage expense approvals and reports' : 'Track your expense submissions'}
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Expenses" 
+        description={isAdmin ? 'Manage expense approvals and reports' : 'Track your expense submissions'}
+      />
+      <div className="p-4 md:p-6 space-y-6">
         {!isAdmin && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setShowAreaForm(true)}>
               <MapPin className="mr-2 h-4 w-4" />
               Add Area
@@ -286,7 +285,6 @@ const Expenses = () => {
             </Button>
           </div>
         )}
-      </div>
 
       {showForm && !isAdmin && (
         <Card>
@@ -506,6 +504,7 @@ const Expenses = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

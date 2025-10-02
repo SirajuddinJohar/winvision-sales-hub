@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
-import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
@@ -31,18 +30,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="doctors" element={<Doctors />} />
-              <Route path="distributors" element={<Distributors />} />
-              <Route path="pharmacies" element={<Pharmacies />} />
-              <Route path="products" element={<Products />} />
-              <Route path="orders" element={<Orders />} />
-              <Route path="expenses" element={<Expenses />} />
-              <Route path="targets" element={<Targets />} />
-              <Route path="daily-working" element={<DailyWorking />} />
-              <Route path="reporting" element={<Reporting />} />
-            </Route>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/doctors" element={<Doctors />} />
+            <Route path="/dashboard/distributors" element={<Distributors />} />
+            <Route path="/dashboard/pharmacies" element={<Pharmacies />} />
+            <Route path="/dashboard/products" element={<Products />} />
+            <Route path="/dashboard/orders" element={<Orders />} />
+            <Route path="/dashboard/expenses" element={<Expenses />} />
+            <Route path="/dashboard/targets" element={<Targets />} />
+            <Route path="/dashboard/daily-working" element={<DailyWorking />} />
+            <Route path="/dashboard/reporting" element={<Reporting />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

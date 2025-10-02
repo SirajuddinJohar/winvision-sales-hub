@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import PharmacyForm from '@/components/pharmacies/PharmacyForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Pharmacy {
   id: string;
@@ -132,19 +133,18 @@ const Pharmacies = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Pharmacies</h1>
-          <p className="text-muted-foreground">
-            Manage pharmacy information and contacts
-          </p>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Pharmacies" 
+        description="Manage pharmacy information and contacts"
+      />
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={handleAddPharmacy}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Pharmacy
+          </Button>
         </div>
-        <Button onClick={handleAddPharmacy}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Pharmacy
-        </Button>
-      </div>
 
       {/* Search Bar */}
       <div className="relative">
@@ -239,6 +239,7 @@ const Pharmacies = () => {
           />
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };

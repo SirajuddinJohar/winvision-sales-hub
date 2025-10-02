@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Package, DollarSign, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Product {
   id: string;
@@ -176,25 +177,24 @@ const Products = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Products</h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? 'Manage your product catalog' : 'View available products'}
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Products" 
+        description={isAdmin ? 'Manage your product catalog' : 'View available products'}
+      />
+      <div className="p-4 md:p-6 space-y-6">
         {isAdmin && (
-          <Button onClick={() => {
-            setEditingProduct(null);
-            reset();
-            setShowForm(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setEditingProduct(null);
+              reset();
+              setShowForm(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </div>
         )}
-      </div>
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -353,6 +353,7 @@ const Products = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

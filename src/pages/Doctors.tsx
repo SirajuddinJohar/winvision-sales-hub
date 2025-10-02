@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DoctorForm from '@/components/doctors/DoctorForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Doctor {
   id: string;
@@ -122,19 +123,18 @@ const Doctors = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Doctors</h1>
-          <p className="text-muted-foreground">
-            Manage your assigned doctors and their information
-          </p>
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Doctors" 
+        description="Manage your assigned doctors and their information"
+      />
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={handleAddDoctor}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Doctor
+          </Button>
         </div>
-        <Button onClick={handleAddDoctor}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Doctor
-        </Button>
-      </div>
 
       {doctors.length === 0 ? (
         <Card>
@@ -218,6 +218,7 @@ const Doctors = () => {
           />
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
