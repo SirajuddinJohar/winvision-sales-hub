@@ -271,37 +271,37 @@ const DailyWorking = () => {
         <div className="p-4 md:p-6">
           <SampleEntry
             doctorName={selectedTarget.name}
-        onNext={handleSampleNext}
-        onBack={handleBack}
-      />
+            onNext={handleSampleNext}
+            onBack={handleBack}
+          />
+        </div>
+      </div>
     );
   }
 
   // Order Entry View
   if (currentView === 'order' && selectedTarget && selectedTarget.type === 'doctor') {
     return (
-      <OrderEntry
-        doctorId={selectedTarget.id}
-        doctorName={selectedTarget.name}
-        sampleData={sampleData}
-        onComplete={handleOrderComplete}
-        onBack={handleBack}
-      />
+      <div className="min-h-screen bg-background">
+        <PageHeader title="Order Entry" description={`Record orders for ${selectedTarget.name}`} />
+        <div className="p-4 md:p-6">
+          <OrderEntry
+            doctorId={selectedTarget.id}
+            doctorName={selectedTarget.name}
+            sampleData={sampleData}
+            onComplete={handleOrderComplete}
+            onBack={handleBack}
+          />
+        </div>
+      </div>
     );
   }
 
   // List View
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Daily Working</h1>
-          <p className="text-muted-foreground">Track your daily doctor and pharmacy calls</p>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {new Date().toLocaleDateString()}
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader title="Daily Working" description="Track your daily doctor and pharmacy calls" />
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Call Stats */}
       <div className="grid grid-cols-3 gap-4">
@@ -418,7 +418,7 @@ const DailyWorking = () => {
           )}
         </TabsContent>
       </Tabs>
-      </div>
+    </div>
     </div>
   );
 };
