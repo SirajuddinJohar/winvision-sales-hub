@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Target, Calendar, Users, Building2, Truck, Package, ShoppingCart, BarChart3 } from 'lucide-react';
+import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3 } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,38 +14,56 @@ const Index = () => {
   }
 
   const navigationItems = [
-    { icon: Target, label: 'Targets', path: '/dashboard/targets' },
-    { icon: Calendar, label: 'Daily Working', path: '/dashboard/daily-working' },
+    { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Doctors', path: '/dashboard/doctors' },
-    { icon: Building2, label: 'Pharmacies', path: '/dashboard/pharmacies' },
     { icon: Truck, label: 'Distributors', path: '/dashboard/distributors' },
+    { icon: Building2, label: 'Pharmacies', path: '/dashboard/pharmacies' },
     { icon: Package, label: 'Products', path: '/dashboard/products' },
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders' },
+    { icon: DollarSign, label: 'Expenses', path: '/dashboard/expenses' },
+    { icon: Target, label: 'Targets', path: '/dashboard/targets' },
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting' }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-success/5 to-background p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Urdu Greeting */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2" dir="rtl">
-            مرحبا، {profile?.name || 'User'}
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-6">
+      <div className="w-full max-w-5xl">
+        {/* Top: Logo and Heading */}
+        <div className="text-center mb-12">
+          <div className="mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-card shadow-xl mb-4">
+              <Package className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+            Winvision
           </h1>
-          <p className="text-muted-foreground">Welcome to Winvision</p>
+          <p className="text-xl text-white/90 font-medium">MR Dashboard</p>
         </div>
 
-        {/* Navigation Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Center: User Info Card */}
+        <div className="bg-card rounded-3xl shadow-2xl p-8 mb-8 text-center">
+          <div className="mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              {profile?.name || 'User'}
+            </h2>
+          </div>
+          <p className="text-muted-foreground font-medium">
+            {profile?.role === 'admin' ? 'Administrator' : 'Medical Representative'}
+          </p>
+        </div>
+
+        {/* Navigation Buttons Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {navigationItems.map((item) => (
             <Button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-card/80 text-foreground border border-border shadow-lg rounded-2xl transition-all hover:shadow-xl hover:scale-105"
+              className="h-28 md:h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-primary hover:text-primary-foreground text-foreground border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 group"
               variant="outline"
             >
-              <item.icon className="h-8 w-8 text-success" />
-              <span className="text-base font-semibold">{item.label}</span>
+              <item.icon className="h-7 w-7 md:h-8 md:w-8 text-primary group-hover:text-primary-foreground transition-colors" />
+              <span className="text-sm md:text-base font-semibold">{item.label}</span>
             </Button>
           ))}
         </div>
