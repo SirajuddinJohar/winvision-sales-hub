@@ -41,7 +41,7 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
             title="Home"
           >
