@@ -521,6 +521,139 @@ export type Database = {
           },
         ]
       }
+      tour_plan_days: {
+        Row: {
+          areas: Json | null
+          created_at: string
+          date: number
+          id: string
+          is_holiday: boolean | null
+          is_weekly_off: boolean | null
+          remarks: string | null
+          tour_plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          areas?: Json | null
+          created_at?: string
+          date: number
+          id?: string
+          is_holiday?: boolean | null
+          is_weekly_off?: boolean | null
+          remarks?: string | null
+          tour_plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          areas?: Json | null
+          created_at?: string
+          date?: number
+          id?: string
+          is_holiday?: boolean | null
+          is_weekly_off?: boolean | null
+          remarks?: string | null
+          tour_plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_plan_days_tour_plan_id_fkey"
+            columns: ["tour_plan_id"]
+            isOneToOne: false
+            referencedRelation: "tour_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_plan_edit_requests: {
+        Row: {
+          admin_id: string | null
+          admin_remarks: string | null
+          admin_response_at: string | null
+          created_at: string
+          id: string
+          request_reason: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["edit_request_status"]
+          tour_plan_id: string
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          admin_remarks?: string | null
+          admin_response_at?: string | null
+          created_at?: string
+          id?: string
+          request_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["edit_request_status"]
+          tour_plan_id: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          admin_remarks?: string | null
+          admin_response_at?: string | null
+          created_at?: string
+          id?: string
+          request_reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["edit_request_status"]
+          tour_plan_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_plan_edit_requests_tour_plan_id_fkey"
+            columns: ["tour_plan_id"]
+            isOneToOne: false
+            referencedRelation: "tour_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_plans: {
+        Row: {
+          approval_message: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          locked_at: string | null
+          month: number
+          status: Database["public"]["Enums"]["tour_plan_status"]
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          approval_message?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          month: number
+          status?: Database["public"]["Enums"]["tour_plan_status"]
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          approval_message?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          month?: number
+          status?: Database["public"]["Enums"]["tour_plan_status"]
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -567,7 +700,9 @@ export type Database = {
       }
     }
     Enums: {
+      edit_request_status: "pending" | "approved" | "rejected"
       expense_status: "pending" | "approved" | "rejected"
+      tour_plan_status: "draft" | "locked" | "approved"
       user_role: "admin" | "mr"
     }
     CompositeTypes: {
@@ -696,7 +831,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      edit_request_status: ["pending", "approved", "rejected"],
       expense_status: ["pending", "approved", "rejected"],
+      tour_plan_status: ["draft", "locked", "approved"],
       user_role: ["admin", "mr"],
     },
   },
