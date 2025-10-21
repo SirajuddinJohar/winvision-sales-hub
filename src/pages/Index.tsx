@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3 } from 'lucide-react';
+import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3, ClipboardList } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ const Index = () => {
 
   const navigationItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
+    { icon: ClipboardList, label: 'Daily Working', path: '/dashboard/daily-working' },
     { icon: Users, label: 'Doctors', path: '/dashboard/doctors' },
     { icon: Truck, label: 'Distributors', path: '/dashboard/distributors' },
     { icon: Building2, label: 'Pharmacies', path: '/dashboard/pharmacies' },
