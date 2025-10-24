@@ -618,6 +618,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           created_at: string
+          edit_until: string | null
           id: string
           locked_at: string | null
           month: number
@@ -631,6 +632,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          edit_until?: string | null
           id?: string
           locked_at?: string | null
           month: number
@@ -644,6 +646,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
+          edit_until?: string | null
           id?: string
           locked_at?: string | null
           month?: number
@@ -691,13 +694,10 @@ export type Database = {
         Returns: number
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       edit_request_status: "pending" | "approved" | "rejected"

@@ -113,11 +113,15 @@ const TourPlanRequests = () => {
 
     // If approved, unlock the tour plan
     if (actionType === 'approve') {
+      // Set edit window to 24 hours from now
+      const editUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      
       const { error: planError } = await supabase
         .from('tour_plans')
         .update({ 
-          status: 'draft',
-          locked_at: null
+          status: 'approved',
+          locked_at: null,
+          edit_until: editUntil.toISOString()
         })
         .eq('id', selectedRequest.tour_plan_id);
 

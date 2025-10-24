@@ -21,6 +21,7 @@ interface TourPlan {
   approval_message?: string;
   locked_at?: string;
   approved_at?: string;
+  edit_until?: string | null;
 }
 
 interface TourPlanDay {
@@ -55,6 +56,17 @@ const MonthlyTourPlan = () => {
   const [remarks, setRemarks] = useState('');
   const [isHoliday, setIsHoliday] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
+
+  // Helper function to check if plan can be edited
+  const canEditPlan = (plan: TourPlan | null): boolean => {
+    if (!plan) return false;
+    // Initial draft with no edit_until restriction
+    if (plan.status === 'draft' && !plan.edit_until) return true;
+    // Time-based edit window is active
+    if (plan.edit_until && new Date(plan.edit_until) > new Date()) return true;
+    return false;
+  };
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                       'July', 'August', 'September', 'October', 'November', 'December'];
@@ -62,6 +74,7 @@ const MonthlyTourPlan = () => {
   useEffect(() => {
     fetchAreas();
     fetchTourPlan();
+    checkAndUnlockForFirstOfMonth();
   }, [selectedYear, selectedMonth]);
 
   const fetchAreas = async () => {
@@ -107,8 +120,19 @@ const MonthlyTourPlan = () => {
       } else {
         setPlanDays(daysData || []);
       }
+
+      // Check for pending edit requests
+      const { data: requestData } = await supabase
+        .from('tour_plan_edit_requests')
+        .select('status')
+        .eq('tour_plan_id', planData.id)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      setHasPendingRequest(!!requestData);
     } else {
       setPlanDays([]);
+      setHasPendingRequest(false);
     }
     
     setLoading(false);
@@ -136,7 +160,7 @@ const MonthlyTourPlan = () => {
   };
 
   const handleDateClick = (date: number) => {
-    if (tourPlan?.status === 'locked' || tourPlan?.status === 'approved') {
+    if (!canEditPlan(tourPlan)) {
       toast({ 
         title: 'Plan is locked', 
         description: 'Request edit permission from admin to make changes',
@@ -206,7 +230,8 @@ const MonthlyTourPlan = () => {
         .from('tour_plans')
         .update({ 
           status: 'locked',
-          locked_at: new Date().toISOString()
+          locked_at: new Date().toISOString(),
+          edit_until: null
         })
         .eq('id', currentPlan.id);
 
@@ -225,6 +250,15 @@ const MonthlyTourPlan = () => {
   const handleRequestEdit = async () => {
     if (!tourPlan) return;
 
+    if (hasPendingRequest) {
+      toast({
+        title: "Request Already Pending",
+        description: "You already have a pending edit request for this tour plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('tour_plan_edit_requests')
       .insert({
@@ -236,7 +270,63 @@ const MonthlyTourPlan = () => {
     if (error) {
       toast({ title: 'Error requesting edit', variant: 'destructive' });
     } else {
+      setHasPendingRequest(true);
       toast({ title: 'Edit request sent to admin' });
+    }
+  };
+
+  const checkAndUnlockForFirstOfMonth = async () => {
+    const today = new Date();
+    const currentDateNum = today.getDate();
+    
+    // Only unlock if it's the 1st of the month
+    if (currentDateNum !== 1) return;
+    
+    try {
+      if (!user?.id) return;
+
+      // Check if tour plan exists for this month
+      const { data: planData } = await supabase
+        .from('tour_plans')
+        .select('id, edit_until')
+        .eq('user_id', user.id)
+        .eq('month', selectedMonth)
+        .eq('year', selectedYear)
+        .maybeSingle();
+
+      if (!planData) return;
+
+      // Check if already unlocked for today
+      if (planData.edit_until) {
+        const editUntil = new Date(planData.edit_until);
+        if (editUntil > today) {
+          // Already unlocked, no need to update
+          return;
+        }
+      }
+
+      // Set edit window to 24 hours from midnight
+      const midnight = new Date(today);
+      midnight.setHours(0, 0, 0, 0);
+      const unlockUntil = new Date(midnight.getTime() + 24 * 60 * 60 * 1000);
+
+      await supabase
+        .from('tour_plans')
+        .update({
+          status: 'draft',
+          edit_until: unlockUntil.toISOString(),
+        })
+        .eq('id', planData.id);
+
+      // Refresh tour plan data
+      fetchTourPlan();
+
+      toast({
+        title: "Plan Unlocked",
+        description: "Your tour plan is now editable for 24 hours",
+      });
+    } catch (error) {
+      console.error('Error checking first of month unlock:', error);
     }
   };
 
@@ -317,10 +407,10 @@ const MonthlyTourPlan = () => {
           <div className="flex gap-4 mb-6">
             <Button 
               onClick={handleRequestEdit}
-              disabled={!tourPlan || tourPlan.status === 'draft'}
+              disabled={!tourPlan || canEditPlan(tourPlan) || hasPendingRequest}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
             >
-              Request Edit
+              {hasPendingRequest ? "Request Pending" : "Request Edit"}
             </Button>
             <Button 
               onClick={() => navigate('/')}
@@ -332,14 +422,25 @@ const MonthlyTourPlan = () => {
           </div>
 
           {/* Status Box */}
-          {tourPlan?.status === 'approved' && (
+          {tourPlan && canEditPlan(tourPlan) && tourPlan.edit_until && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded text-center mb-4">
+              ✏️ Edit window active - You can edit until {new Date(tourPlan.edit_until).toLocaleString()}
+            </div>
+          )}
+          
+          {tourPlan?.status === 'approved' && !canEditPlan(tourPlan) && (
             <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded text-center">
               ✓ Your Tour Plan is approved
             </div>
           )}
-          {tourPlan?.status === 'locked' && (
+          {tourPlan?.status === 'locked' && !canEditPlan(tourPlan) && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded text-center">
-              ⏳ Your Tour Plan is awaiting approval
+              ⏳ Your Tour Plan is locked - Request edit to make changes
+            </div>
+          )}
+          {hasPendingRequest && (
+            <div className="bg-orange-100 border border-orange-400 text-orange-800 px-4 py-3 rounded text-center mt-4">
+              📋 Your edit request is pending admin approval
             </div>
           )}
         </div>
