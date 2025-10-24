@@ -248,7 +248,16 @@ const MonthlyTourPlan = () => {
   };
 
   const handleRequestEdit = async () => {
-    if (!tourPlan) return;
+    console.log('Request Edit clicked', { tourPlan, hasPendingRequest, canEdit: canEditPlan(tourPlan) });
+    
+    if (!tourPlan) {
+      toast({
+        title: "No Tour Plan",
+        description: "Please create a tour plan first by adding dates.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (hasPendingRequest) {
       toast({
@@ -259,19 +268,41 @@ const MonthlyTourPlan = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('tour_plan_edit_requests')
-      .insert({
-        tour_plan_id: tourPlan.id,
-        user_id: user?.id,
-        request_reason: 'Request to edit tour plan'
-      });
+    try {
+      const { data, error } = await supabase
+        .from('tour_plan_edit_requests')
+        .insert({
+          tour_plan_id: tourPlan.id,
+          user_id: user?.id,
+          request_reason: 'Request to edit tour plan',
+          status: 'pending'
+        })
+        .select()
+        .single();
 
-    if (error) {
-      toast({ title: 'Error requesting edit', variant: 'destructive' });
-    } else {
+      if (error) {
+        console.error('Error creating request:', error);
+        toast({ 
+          title: 'Error requesting edit', 
+          description: error.message,
+          variant: 'destructive' 
+        });
+        return;
+      }
+
+      console.log('Request created successfully:', data);
       setHasPendingRequest(true);
-      toast({ title: 'Edit request sent to admin' });
+      toast({ 
+        title: 'Edit request sent', 
+        description: 'Your request has been sent to the admin for approval.' 
+      });
+    } catch (error) {
+      console.error('Exception in handleRequestEdit:', error);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to send edit request',
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -406,11 +437,21 @@ const MonthlyTourPlan = () => {
           {/* Buttons */}
           <div className="flex gap-4 mb-6">
             <Button 
-              onClick={handleRequestEdit}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log('Button clicked - Debug info:', {
+                  hasTourPlan: !!tourPlan,
+                  tourPlanStatus: tourPlan?.status,
+                  canEdit: canEditPlan(tourPlan),
+                  hasPending: hasPendingRequest,
+                  shouldBeDisabled: !tourPlan || canEditPlan(tourPlan) || hasPendingRequest
+                });
+                handleRequestEdit();
+              }}
               disabled={!tourPlan || canEditPlan(tourPlan) || hasPendingRequest}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {hasPendingRequest ? "Request Pending" : "Request Edit"}
+              {hasPendingRequest ? "Request Pending ⏳" : "Request Edit 📝"}
             </Button>
             <Button 
               onClick={() => navigate('/')}
@@ -421,28 +462,73 @@ const MonthlyTourPlan = () => {
             </Button>
           </div>
 
-          {/* Status Box */}
-          {tourPlan && canEditPlan(tourPlan) && tourPlan.edit_until && (
-            <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded text-center mb-4">
-              ✏️ Edit window active - You can edit until {new Date(tourPlan.edit_until).toLocaleString()}
-            </div>
-          )}
-          
-          {tourPlan?.status === 'approved' && !canEditPlan(tourPlan) && (
-            <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded text-center">
-              ✓ Your Tour Plan is approved
-            </div>
-          )}
-          {tourPlan?.status === 'locked' && !canEditPlan(tourPlan) && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded text-center">
-              ⏳ Your Tour Plan is locked - Request edit to make changes
-            </div>
-          )}
-          {hasPendingRequest && (
-            <div className="bg-orange-100 border border-orange-400 text-orange-800 px-4 py-3 rounded text-center mt-4">
-              📋 Your edit request is pending admin approval
-            </div>
-          )}
+          {/* Status Messages */}
+          <div className="space-y-3">
+            {/* Edit Window Active */}
+            {tourPlan && canEditPlan(tourPlan) && tourPlan.edit_until && (
+              <div className="bg-blue-100 border-2 border-blue-400 text-blue-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✏️</span>
+                  <div>
+                    <div className="font-semibold">Edit Window Active</div>
+                    <div className="text-sm">You can edit until {new Date(tourPlan.edit_until).toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Pending Request Status */}
+            {hasPendingRequest && (
+              <div className="bg-orange-100 border-2 border-orange-400 text-orange-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📋</span>
+                  <div>
+                    <div className="font-semibold">Request Pending</div>
+                    <div className="text-sm">Your edit request is awaiting admin approval</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Approved Status */}
+            {tourPlan?.status === 'approved' && !canEditPlan(tourPlan) && !hasPendingRequest && (
+              <div className="bg-green-100 border-2 border-green-400 text-green-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✓</span>
+                  <div>
+                    <div className="font-semibold">Tour Plan Approved</div>
+                    <div className="text-sm">Your tour plan has been approved by admin</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Locked Status */}
+            {tourPlan?.status === 'locked' && !canEditPlan(tourPlan) && !hasPendingRequest && (
+              <div className="bg-yellow-100 border-2 border-yellow-400 text-yellow-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🔒</span>
+                  <div>
+                    <div className="font-semibold">Tour Plan Locked</div>
+                    <div className="text-sm">Request edit permission to make changes</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Draft Status - First Day */}
+            {tourPlan?.status === 'draft' && planDays.length === 0 && (
+              <div className="bg-blue-100 border-2 border-blue-400 text-blue-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📝</span>
+                  <div>
+                    <div className="font-semibold">Start Your Tour Plan</div>
+                    <div className="text-sm">Click on any date to begin planning. The plan will lock after you save the first day.</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Calendar Grid */}
