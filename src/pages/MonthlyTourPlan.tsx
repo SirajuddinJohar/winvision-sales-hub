@@ -57,6 +57,13 @@ const MonthlyTourPlan = () => {
   const [isHoliday, setIsHoliday] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [lastRequest, setLastRequest] = useState<{
+    id: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requested_at: string;
+    admin_response_at?: string | null;
+    admin_remarks?: string | null;
+  } | null>(null);
 
   // Helper function to check if plan can be edited
   const canEditPlan = (plan: TourPlan | null): boolean => {
@@ -72,10 +79,11 @@ const MonthlyTourPlan = () => {
                       'July', 'August', 'September', 'October', 'November', 'December'];
 
   useEffect(() => {
+    if (!user?.id) return;
     fetchAreas();
     fetchTourPlan();
     checkAndUnlockForFirstOfMonth();
-  }, [selectedYear, selectedMonth]);
+  }, [selectedYear, selectedMonth, user?.id]);
 
   const fetchAreas = async () => {
     const { data, error } = await supabase
@@ -92,6 +100,16 @@ const MonthlyTourPlan = () => {
 
   const fetchTourPlan = async () => {
     setLoading(true);
+
+    if (!user?.id) {
+      setLoading(false);
+      setTourPlan(null);
+      setPlanDays([]);
+      setHasPendingRequest(false);
+      setLastRequest(null);
+      return;
+    }
+
     const { data: planData, error: planError } = await supabase
       .from('tour_plans')
       .select('*')
@@ -121,18 +139,21 @@ const MonthlyTourPlan = () => {
         setPlanDays(daysData || []);
       }
 
-      // Check for pending edit requests
-      const { data: requestData } = await supabase
+      // Fetch the most recent edit request
+      const { data: lastReq } = await supabase
         .from('tour_plan_edit_requests')
-        .select('status')
+        .select('id, status, requested_at, admin_response_at, admin_remarks')
         .eq('tour_plan_id', planData.id)
-        .eq('status', 'pending')
+        .order('requested_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      setHasPendingRequest(!!requestData);
+      setLastRequest(lastReq || null);
+      setHasPendingRequest(lastReq?.status === 'pending');
     } else {
       setPlanDays([]);
       setHasPendingRequest(false);
+      setLastRequest(null);
     }
     
     setLoading(false);
@@ -250,15 +271,6 @@ const MonthlyTourPlan = () => {
   const handleRequestEdit = async () => {
     console.log('Request Edit clicked', { tourPlan, hasPendingRequest, canEdit: canEditPlan(tourPlan) });
     
-    if (!tourPlan) {
-      toast({
-        title: "No Tour Plan",
-        description: "Please create a tour plan first by adding dates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (hasPendingRequest) {
       toast({
         title: "Request Already Pending",
@@ -268,16 +280,24 @@ const MonthlyTourPlan = () => {
       return;
     }
 
+    // Auto-create plan if it doesn't exist
+    let currentPlan = tourPlan;
+    if (!currentPlan) {
+      currentPlan = await createTourPlan();
+      if (!currentPlan) return;
+      setTourPlan(currentPlan);
+    }
+
     try {
       const { data, error } = await supabase
         .from('tour_plan_edit_requests')
         .insert({
-          tour_plan_id: tourPlan.id,
+          tour_plan_id: currentPlan.id,
           user_id: user?.id,
           request_reason: 'Request to edit tour plan',
           status: 'pending'
         })
-        .select()
+        .select('id, status, requested_at, admin_response_at, admin_remarks')
         .single();
 
       if (error) {
@@ -291,6 +311,7 @@ const MonthlyTourPlan = () => {
       }
 
       console.log('Request created successfully:', data);
+      setLastRequest(data);
       setHasPendingRequest(true);
       toast({ 
         title: 'Edit request sent', 
@@ -448,7 +469,7 @@ const MonthlyTourPlan = () => {
                 });
                 handleRequestEdit();
               }}
-              disabled={!tourPlan || canEditPlan(tourPlan) || hasPendingRequest}
+              disabled={canEditPlan(tourPlan) || hasPendingRequest}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {hasPendingRequest ? "Request Pending ⏳" : "Request Edit 📝"}
@@ -464,6 +485,19 @@ const MonthlyTourPlan = () => {
 
           {/* Status Messages */}
           <div className="space-y-3">
+            {/* No Tour Plan Info */}
+            {!tourPlan && (
+              <div className="bg-blue-50 border-2 border-blue-300 text-blue-800 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">ℹ️</span>
+                  <div>
+                    <div className="font-semibold">No Tour Plan Yet</div>
+                    <div className="text-sm">Click any date to create your tour plan or use "Request Edit" to ask admin to open editing</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Edit Window Active */}
             {tourPlan && canEditPlan(tourPlan) && tourPlan.edit_until && (
               <div className="bg-blue-100 border-2 border-blue-400 text-blue-900 px-4 py-3 rounded-lg">
@@ -477,14 +511,54 @@ const MonthlyTourPlan = () => {
               </div>
             )}
             
-            {/* Pending Request Status */}
-            {hasPendingRequest && (
+            {/* Request Pending */}
+            {lastRequest?.status === 'pending' && (
               <div className="bg-orange-100 border-2 border-orange-400 text-orange-900 px-4 py-3 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📋</span>
+                  <span className="text-xl">⏳</span>
                   <div>
                     <div className="font-semibold">Request Pending</div>
+                    <div className="text-sm">Sent at {new Date(lastRequest.requested_at).toLocaleString()}</div>
                     <div className="text-sm">Your edit request is awaiting admin approval</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Request Approved */}
+            {lastRequest?.status === 'approved' && (
+              <div className="bg-green-100 border-2 border-green-400 text-green-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <div className="font-semibold">Request Accepted</div>
+                    {tourPlan?.edit_until && (
+                      <div className="text-sm">Edit window active until {new Date(tourPlan.edit_until).toLocaleString()}</div>
+                    )}
+                    {lastRequest.admin_response_at && (
+                      <div className="text-sm">Approved at {new Date(lastRequest.admin_response_at).toLocaleString()}</div>
+                    )}
+                    {lastRequest.admin_remarks && (
+                      <div className="text-sm mt-1 italic">Admin: "{lastRequest.admin_remarks}"</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Request Rejected */}
+            {lastRequest?.status === 'rejected' && (
+              <div className="bg-red-100 border-2 border-red-400 text-red-900 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">❌</span>
+                  <div>
+                    <div className="font-semibold">Request Rejected</div>
+                    {lastRequest.admin_response_at && (
+                      <div className="text-sm">Responded at {new Date(lastRequest.admin_response_at).toLocaleString()}</div>
+                    )}
+                    {lastRequest.admin_remarks && (
+                      <div className="text-sm mt-1 italic">Admin: "{lastRequest.admin_remarks}"</div>
+                    )}
                   </div>
                 </div>
               </div>
