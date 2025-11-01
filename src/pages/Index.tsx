@@ -24,6 +24,7 @@ const Index = () => {
     { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders' },
     { icon: DollarSign, label: 'Expenses', path: '/dashboard/expenses' },
     { icon: Target, label: 'Targets', path: '/dashboard/targets' },
+    { icon: BarChart3, label: 'My Performance', path: '/dashboard/my-performance' },
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting' }
   ];
 
