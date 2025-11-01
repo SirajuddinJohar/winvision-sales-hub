@@ -109,21 +109,13 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
   };
 
   const handleDone = async () => {
-    if (!selectedDistributor) {
-      toast({
-        title: "Distributor required",
-        description: "Please select a distributor to continue",
-        variant: "destructive"
-      });
-      return;
-    }
-
     const ordersToPlace = orderItems.filter(item => item.order_qty > 0);
     
-    if (ordersToPlace.length === 0) {
+    // If there are orders, distributor is required
+    if (ordersToPlace.length > 0 && !selectedDistributor) {
       toast({
-        title: "No orders entered",
-        description: "Please enter at least one order quantity to continue",
+        title: "Distributor required",
+        description: "Please select a distributor when placing orders",
         variant: "destructive"
       });
       return;
@@ -132,40 +124,43 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
     setSaving(true);
     
     try {
-      // Save daily working record
-      const dailyWorkingRecord = {
-        doctor_id: doctorId,
-        mr_id: user?.id!,
-        distributor_id: selectedDistributor,
-        sample_details: sampleData as any,
-        order_details: ordersToPlace as any
-      };
+      // Only save daily working record and orders if there are orders to place
+      if (ordersToPlace.length > 0) {
+        // Save daily working record
+        const dailyWorkingRecord = {
+          doctor_id: doctorId,
+          mr_id: user?.id!,
+          distributor_id: selectedDistributor,
+          sample_details: sampleData as any,
+          order_details: ordersToPlace as any
+        };
 
-      const { data: dailyWorkingData, error: dailyWorkingError } = await supabase
-        .from('daily_working')
-        .insert(dailyWorkingRecord)
-        .select()
-        .single();
+        const { data: dailyWorkingData, error: dailyWorkingError } = await supabase
+          .from('daily_working')
+          .insert(dailyWorkingRecord)
+          .select()
+          .single();
 
-      if (dailyWorkingError) throw dailyWorkingError;
+        if (dailyWorkingError) throw dailyWorkingError;
 
-      // Create individual order records
-      const orderRecords = ordersToPlace.map(order => ({
-        doctor_id: doctorId,
-        pharmacy_id: selectedDistributor, // Using distributor as pharmacy for now
-        product_id: order.product_id,
-        quantity: order.order_qty,
-        unit_price: order.price,
-        // total_amount is a generated column, don't insert it
-        mr_id: user?.id,
-        order_date: new Date().toISOString().split('T')[0]
-      }));
+        // Create individual order records
+        const orderRecords = ordersToPlace.map(order => ({
+          doctor_id: doctorId,
+          pharmacy_id: selectedDistributor, // Using distributor as pharmacy for now
+          product_id: order.product_id,
+          quantity: order.order_qty,
+          unit_price: order.price,
+          // total_amount is a generated column, don't insert it
+          mr_id: user?.id,
+          order_date: new Date().toISOString().split('T')[0]
+        }));
 
-      const { error: ordersError } = await supabase
-        .from('orders')
-        .insert(orderRecords);
+        const { error: ordersError } = await supabase
+          .from('orders')
+          .insert(orderRecords);
 
-      if (ordersError) throw ordersError;
+        if (ordersError) throw ordersError;
+      }
 
       toast({
         title: "Success!",
