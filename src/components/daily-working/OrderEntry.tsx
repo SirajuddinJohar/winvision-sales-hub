@@ -111,7 +111,7 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
   const handleDone = async () => {
     const ordersToPlace = orderItems.filter(item => item.order_qty > 0);
     
-    // If there are orders, distributor is required
+    // Distributor is only required if orders are being placed
     if (ordersToPlace.length > 0 && !selectedDistributor) {
       toast({
         title: "Distributor required",

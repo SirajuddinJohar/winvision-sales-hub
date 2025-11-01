@@ -189,62 +189,6 @@ const DailyWorking = () => {
     setCurrentView('order');
   };
 
-  const handleCompleteWithoutOrder = async (samples: any[]) => {
-    if (!user || !selectedTarget) return;
-
-    try {
-      const today = new Date().toISOString().split('T')[0];
-
-      // Save daily working record with only samples
-      if (samples.filter(s => s.qty_given > 0).length > 0) {
-        const { error: dailyWorkingError } = await supabase
-          .from('daily_working')
-          .insert({
-            doctor_id: selectedTarget.id,
-            mr_id: user.id,
-            sample_details: samples as any,
-            order_details: [] as any
-          });
-
-        if (dailyWorkingError) throw dailyWorkingError;
-      }
-
-      // Mark call as complete
-      const { error } = await supabase
-        .from('daily_calls')
-        .upsert({
-          mr_id: user.id,
-          target_id: selectedTarget.id,
-          target_type: selectedTarget.type,
-          date: today,
-          status: 'complete'
-        }, {
-          onConflict: 'mr_id,target_id,date'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Call marked complete",
-        description: `${selectedTarget.name} has been marked as completed without order`
-      });
-
-      // Reset to list view and refresh data
-      setCurrentView('list');
-      setSelectedTarget(null);
-      setSampleData([]);
-      await fetchTargetsAndCalls();
-
-    } catch (error) {
-      console.error('Error marking call complete:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark call as complete",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleOrderComplete = async () => {
     if (!user || !selectedTarget) return;
 
@@ -329,7 +273,6 @@ const DailyWorking = () => {
             doctorName={selectedTarget.name}
             onNext={handleSampleNext}
             onBack={handleBack}
-            onCompleteWithoutOrder={handleCompleteWithoutOrder}
           />
         </div>
       </div>

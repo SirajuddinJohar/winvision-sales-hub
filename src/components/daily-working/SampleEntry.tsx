@@ -24,10 +24,9 @@ interface SampleEntryProps {
   doctorName: string;
   onNext: (sampleData: SampleItem[]) => void;
   onBack: () => void;
-  onCompleteWithoutOrder: (sampleData: SampleItem[]) => void;
 }
 
-const SampleEntry = ({ doctorName, onNext, onBack, onCompleteWithoutOrder }: SampleEntryProps) => {
+const SampleEntry = ({ doctorName, onNext, onBack }: SampleEntryProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sampleItems, setSampleItems] = useState<SampleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,16 +78,6 @@ const SampleEntry = ({ doctorName, onNext, onBack, onCompleteWithoutOrder }: Sam
   };
 
   const handleNext = async () => {
-    await updateStockLevels();
-    onNext(sampleItems);
-  };
-
-  const handleCompleteWithoutOrder = async () => {
-    await updateStockLevels();
-    onCompleteWithoutOrder(sampleItems);
-  };
-
-  const updateStockLevels = async () => {
     const samplesGiven = sampleItems.filter(item => item.qty_given > 0);
     
     try {
@@ -105,6 +94,9 @@ const SampleEntry = ({ doctorName, onNext, onBack, onCompleteWithoutOrder }: Sam
           if (error) throw error;
         }
       }
+
+      // Always proceed to next step, regardless of whether samples were given
+      onNext(sampleItems);
     } catch (error) {
       console.error('Error updating stock:', error);
       toast({
@@ -112,6 +104,8 @@ const SampleEntry = ({ doctorName, onNext, onBack, onCompleteWithoutOrder }: Sam
         description: "Failed to update stock levels",
         variant: "destructive"
       });
+      // Still proceed to next step even if stock update fails
+      onNext(sampleItems);
     }
   };
 
@@ -179,18 +173,9 @@ const SampleEntry = ({ doctorName, onNext, onBack, onCompleteWithoutOrder }: Sam
         <Button onClick={onBack} variant="outline">
           ← Back
         </Button>
-        <div className="flex gap-3">
-          <Button 
-            onClick={handleCompleteWithoutOrder} 
-            variant="outline"
-            className="border-green-600 text-green-600 hover:bg-green-50"
-          >
-            Done without Order ✓
-          </Button>
-          <Button onClick={handleNext} className="bg-primary hover:bg-primary/90">
-            Next (Add Order) →
-          </Button>
-        </div>
+        <Button onClick={handleNext} className="bg-primary hover:bg-primary/90">
+          Next →
+        </Button>
       </div>
     </div>
   );
