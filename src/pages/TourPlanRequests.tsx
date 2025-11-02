@@ -113,8 +113,10 @@ const TourPlanRequests = () => {
 
     // If approved, unlock the tour plan
     if (actionType === 'approve') {
-      // Set edit window to 24 hours from now
-      const editUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      // Set edit window until 12:00 AM (midnight) of the next day
+      const editUntil = new Date();
+      editUntil.setDate(editUntil.getDate() + 1);
+      editUntil.setHours(0, 0, 0, 0);
       
       const { error: planError } = await supabase
         .from('tour_plans')

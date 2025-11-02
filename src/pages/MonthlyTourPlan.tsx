@@ -55,6 +55,7 @@ const MonthlyTourPlan = () => {
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [remarks, setRemarks] = useState('');
   const [isHoliday, setIsHoliday] = useState(false);
+  const [isWeeklyOff, setIsWeeklyOff] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [lastRequest, setLastRequest] = useState<{
@@ -181,6 +182,16 @@ const MonthlyTourPlan = () => {
   };
 
   const handleDateClick = (date: number) => {
+    // Block editing if there's a pending request
+    if (hasPendingRequest) {
+      toast({ 
+        title: 'Edit Request Pending', 
+        description: 'Please wait for admin approval before making changes',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     if (!canEditPlan(tourPlan)) {
       toast({ 
         title: 'Plan is locked', 
@@ -195,6 +206,7 @@ const MonthlyTourPlan = () => {
     setSelectedAreas(dayData?.areas?.map((a: any) => a.id) || []);
     setRemarks(dayData?.remarks || '');
     setIsHoliday(dayData?.is_holiday || false);
+    setIsWeeklyOff(dayData?.is_weekly_off || false);
     setIsModalOpen(true);
   };
 
@@ -219,7 +231,7 @@ const MonthlyTourPlan = () => {
           areas: selectedAreaObjects,
           remarks,
           is_holiday: isHoliday,
-          is_weekly_off: new Date(selectedYear, selectedMonth - 1, selectedDate).getDay() === 0
+          is_weekly_off: isWeeklyOff
         })
         .eq('id', dayData.id);
 
@@ -236,7 +248,7 @@ const MonthlyTourPlan = () => {
           areas: selectedAreaObjects,
           remarks,
           is_holiday: isHoliday,
-          is_weekly_off: new Date(selectedYear, selectedMonth - 1, selectedDate).getDay() === 0
+          is_weekly_off: isWeeklyOff
         });
 
       if (error) {
@@ -357,10 +369,10 @@ const MonthlyTourPlan = () => {
         }
       }
 
-      // Set edit window to 24 hours from midnight
-      const midnight = new Date(today);
-      midnight.setHours(0, 0, 0, 0);
-      const unlockUntil = new Date(midnight.getTime() + 24 * 60 * 60 * 1000);
+      // Set edit window until 12:00 AM (midnight) of the next day
+      const unlockUntil = new Date(today);
+      unlockUntil.setDate(unlockUntil.getDate() + 1);
+      unlockUntil.setHours(0, 0, 0, 0);
 
       await supabase
         .from('tour_plans')
@@ -607,10 +619,9 @@ const MonthlyTourPlan = () => {
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Array.from({ length: getDaysInMonth() }, (_, i) => i + 1).map(date => {
+        {Array.from({ length: getDaysInMonth() }, (_, i) => i + 1).map(date => {
             const dayData = planDays.find(d => d.date === date);
             const dayName = getDayName(date);
-            const isWeeklyOff = dayName === 'Sun';
             
             return (
               <div
@@ -621,8 +632,8 @@ const MonthlyTourPlan = () => {
                 <div className="font-semibold text-sm mb-2">
                   {String(date).padStart(2, '0')} {dayName}
                 </div>
-                {isWeeklyOff ? (
-                  <div className="text-red-600 text-xs font-medium">Weekly Off</div>
+                {dayData?.is_weekly_off ? (
+                  <div className="text-purple-600 text-xs font-medium">Weekly Off</div>
                 ) : dayData?.is_holiday ? (
                   <div className="text-red-600 text-xs font-medium">Holiday</div>
                 ) : (
@@ -696,6 +707,17 @@ const MonthlyTourPlan = () => {
                 className="rounded"
               />
               <Label htmlFor="holiday">Mark as Holiday</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="weeklyOff"
+                checked={isWeeklyOff}
+                onChange={(e) => setIsWeeklyOff(e.target.checked)}
+                className="rounded"
+              />
+              <Label htmlFor="weeklyOff">Mark as Weekly Off</Label>
             </div>
           </div>
 
