@@ -113,6 +113,51 @@ export type Database = {
         }
         Relationships: []
       }
+      distributor_products: {
+        Row: {
+          created_at: string
+          distributor_id: string
+          id: string
+          product_id: string
+          ptr: number
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          distributor_id: string
+          id?: string
+          product_id: string
+          ptr?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          distributor_id?: string
+          id?: string
+          product_id?: string
+          ptr?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distributor_products_distributor_id_fkey"
+            columns: ["distributor_id"]
+            isOneToOne: false
+            referencedRelation: "Distributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distributor_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Distributors: {
         Row: {
           address: string

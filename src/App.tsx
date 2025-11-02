@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
 import Distributors from "./pages/Distributors";
+import DistributorDetails from "./pages/DistributorDetails";
 import Pharmacies from "./pages/Pharmacies";
 import Products from "./pages/Products";
 import Expenses from "./pages/Expenses";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/doctors" element={<Doctors />} />
             <Route path="/dashboard/distributors" element={<Distributors />} />
+            <Route path="/dashboard/distributors/:id" element={<DistributorDetails />} />
             <Route path="/dashboard/pharmacies" element={<Pharmacies />} />
             <Route path="/dashboard/products" element={<Products />} />
             <Route path="/dashboard/orders" element={<Orders />} />

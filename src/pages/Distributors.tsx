@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Truck, MapPin, Phone, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Truck, MapPin, Phone, Edit, Trash2, Search, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DistributorForm from '@/components/distributors/DistributorForm';
@@ -24,6 +25,7 @@ interface Distributor {
 const Distributors = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [filteredDistributors, setFilteredDistributors] = useState<Distributor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,12 +138,14 @@ const Distributors = () => {
         description="Manage your distributor network and contacts"
       />
       <div className="p-4 md:p-6 space-y-6">
-        <div className="flex justify-end">
-          <Button onClick={handleAddDistributor}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Distributor
-          </Button>
-        </div>
+        {profile?.role === 'admin' && (
+          <div className="flex justify-end">
+            <Button onClick={handleAddDistributor}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Distributor
+            </Button>
+          </div>
+        )}
 
       {/* Search Bar */}
       <div className="relative">
@@ -166,7 +170,11 @@ const Distributors = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredDistributors.map((distributor) => (
-            <Card key={distributor.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={distributor.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/dashboard/distributors/${distributor.id}`)}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -178,6 +186,7 @@ const Distributors = () => {
                       <CardDescription>{distributor.contact_person}</CardDescription>
                     </div>
                   </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -195,19 +204,19 @@ const Distributors = () => {
                   <p className="line-clamp-2">{distributor.address}</p>
                 </div>
 
-                <div className="pt-2 border-t flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
-                    Added: {new Date(distributor.created_at).toLocaleDateString()}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditDistributor(distributor)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {profile?.role === 'admin' && (
+                {profile?.role === 'admin' && (
+                  <div className="pt-2 border-t flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      Added: {new Date(distributor.created_at).toLocaleDateString()}
+                    </p>
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditDistributor(distributor)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="destructive"
@@ -215,9 +224,9 @@ const Distributors = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           ))}
