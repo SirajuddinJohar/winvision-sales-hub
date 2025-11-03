@@ -15,6 +15,7 @@ import Pharmacies from "./pages/Pharmacies";
 import Products from "./pages/Products";
 import Expenses from "./pages/Expenses";
 import Targets from "./pages/Targets";
+import MRTargetDetails from "./pages/MRTargetDetails";
 import Reporting from "./pages/Reporting";
 import DailyWorking from "./pages/DailyWorking";
 import MonthlyTourPlan from "./pages/MonthlyTourPlan";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/dashboard/orders" element={<Orders />} />
             <Route path="/dashboard/expenses" element={<Expenses />} />
             <Route path="/dashboard/targets" element={<Targets />} />
+            <Route path="/dashboard/targets/mr/:mrId" element={<MRTargetDetails />} />
             <Route path="/dashboard/daily-working" element={<DailyWorking />} />
             <Route path="/dashboard/reporting" element={<Reporting />} />
             <Route path="/dashboard/tour-plan" element={<MonthlyTourPlan />} />

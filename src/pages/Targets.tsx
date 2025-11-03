@@ -492,154 +492,170 @@ const Targets = () => {
     );
   }
 
-  // Original interface for admin users
+  // Admin interface - MR List View
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Targets</h1>
-          <p className="text-muted-foreground">
-            Track your sales targets and achievements
-          </p>
-        </div>
-        <Button onClick={() => setShowTargetForm(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Set Target
-        </Button>
-      </div>
-
-      {targets.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <TargetIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No targets set</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {targets.map((target) => {
-            const achievementPercentage = getAchievementPercentage(target.achieved_value, target.target_value);
-            
-            return (
-              <Card key={target.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <TargetIcon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {new Date(target.target_month).toLocaleDateString('en-US', { 
-                            month: 'long', 
-                            year: 'numeric' 
-                          })}
-                        </CardTitle>
-                        <CardDescription>
-                          {target.target_type === 'mr' 
-                            ? 'Monthly MR Target' 
-                            : target.doctor?.name || 'General Doctor Target'}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    {getStatusBadge(target.achieved_value, target.target_value)}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Monthly Progress</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-primary">
-                          {achievementPercentage.toFixed(1)}%
-                        </span>
-                        <span className="text-xs text-muted-foreground">completed</span>
-                      </div>
-                    </div>
-                    
-                    {/* Enhanced Progress Bar */}
-                    <div className="relative">
-                      <Progress value={achievementPercentage} className="h-3 bg-gradient-to-r from-muted to-muted/50" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-white drop-shadow-sm">
-                          {achievementPercentage >= 10 ? `₹${(target.achieved_value / 1000).toFixed(0)}K` : ''}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Labels */}
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>₹0</span>
-                      <span className="font-medium">Target: {formatCurrency(target.target_value)}</span>
-                    </div>
-                  </div>
-
-                  {/* Achievement Stats */}
-                  <div className="grid grid-cols-3 gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Target</p>
-                      <p className="text-sm font-semibold text-primary">
-                        {formatCurrency(target.target_value)}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Achieved</p>
-                      <p className="text-sm font-semibold text-green-600">
-                        {formatCurrency(target.achieved_value)}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Remaining</p>
-                      <p className="text-sm font-semibold text-orange-600">
-                        {formatCurrency(Math.max(0, target.target_value - target.achieved_value))}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Progress Indicator */}
-                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className={`h-4 w-4 ${
-                        achievementPercentage >= 75 ? 'text-green-500' : 
-                        achievementPercentage >= 50 ? 'text-yellow-500' : 'text-red-500'
-                      }`} />
-                      <span className="text-sm font-medium">
-                        {achievementPercentage >= 100 ? '🎉 Target Achieved!' : 
-                         achievementPercentage >= 75 ? '🚀 Almost There!' :
-                         achievementPercentage >= 50 ? '💪 Good Progress' : 
-                         '📈 Keep Going!'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {achievementPercentage < 100 && 
-                        `${((target.target_value - target.achieved_value) / target.target_value * 100).toFixed(0)}% to go`
-                      }
-                    </div>
-                  </div>
-
-                  {target.doctor && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {target.doctor.specialty}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Target Form Modal */}
-      <TargetFormModal
-        open={showTargetForm}
-        onOpenChange={setShowTargetForm}
-        doctors={doctors}
-        mrs={mrs}
-        onSuccess={fetchTargets}
+    <div className="min-h-screen bg-background">
+      <PageHeader 
+        title="Targets Management" 
+        description="Monitor MR performance and manage targets"
       />
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Medical Representatives</h2>
+          <Button onClick={() => setShowTargetForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Set Target
+          </Button>
+        </div>
+
+        {/* Summary Statistics */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Total MRs</p>
+                <p className="text-3xl font-bold text-primary">{mrs.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Targets Set</p>
+                <p className="text-3xl font-bold text-primary">{targets.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Achieved</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {targets.filter(t => getAchievementPercentage(t.achieved_value, t.target_value) >= 100).length}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Avg Progress</p>
+                <p className="text-3xl font-bold text-primary">
+                  {targets.length > 0 
+                    ? (targets.reduce((sum, t) => sum + getAchievementPercentage(t.achieved_value, t.target_value), 0) / targets.length).toFixed(0)
+                    : 0}%
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* MR List */}
+        {mrs.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <TargetIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No MRs found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {mrs.map((mr) => {
+              // Get current month's MR target
+              const currentDate = new Date();
+              const currentMonthStr = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+              
+              const mrMonthlyTargets = targets.filter(
+                t => t.target_type === 'mr' && 
+                t.target_month.startsWith(currentMonthStr)
+              );
+              
+              const mrDoctorTargets = targets.filter(
+                t => t.target_type === 'doctor'
+              );
+              
+              const mrTarget = mrMonthlyTargets[0];
+              const achievementPercentage = mrTarget 
+                ? getAchievementPercentage(mrTarget.achieved_value, mrTarget.target_value)
+                : 0;
+              
+              // Determine card color based on performance
+              const getCardColor = () => {
+                if (!mrTarget) return 'border-muted';
+                if (achievementPercentage >= 100) return 'border-green-500 bg-green-50/50 dark:bg-green-950/20';
+                if (achievementPercentage >= 75) return 'border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20';
+                if (achievementPercentage >= 50) return 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20';
+                return 'border-red-500 bg-red-50/50 dark:bg-red-950/20';
+              };
+
+              return (
+                <Card 
+                  key={mr.id} 
+                  className={`cursor-pointer hover:shadow-lg transition-all ${getCardColor()}`}
+                  onClick={() => window.location.href = `/dashboard/targets/mr/${mr.id}`}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{mr.name}</CardTitle>
+                        <CardDescription className="text-xs">{mr.email}</CardDescription>
+                      </div>
+                      {mrTarget && getStatusBadge(mrTarget.achieved_value, mrTarget.target_value)}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {mrTarget ? (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Monthly Target</span>
+                            <span className="font-medium">{formatCurrency(mrTarget.target_value)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Achieved</span>
+                            <span className="font-medium text-green-600">
+                              {formatCurrency(mrTarget.achieved_value)}
+                            </span>
+                          </div>
+                          <Progress value={achievementPercentage} className="h-2" />
+                          <div className="text-center">
+                            <span className="text-lg font-bold text-primary">
+                              {achievementPercentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">No monthly target set</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="text-sm text-muted-foreground">
+                        <TargetIcon className="inline h-4 w-4 mr-1" />
+                        Doctor Targets
+                      </div>
+                      <Badge variant="secondary">
+                        {mrDoctorTargets.length}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Target Form Modal */}
+        <TargetFormModal
+          open={showTargetForm}
+          onOpenChange={setShowTargetForm}
+          doctors={doctors}
+          mrs={mrs}
+          onSuccess={fetchTargets}
+        />
+      </div>
     </div>
   );
 };
