@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,13 +17,24 @@ interface CallReport {
   specialty?: string;
   area?: string;
   status: string;
+  mrName?: string;
+  mrEmail?: string;
+}
+
+interface MROption {
+  id: string;
+  name: string;
+  email: string;
 }
 
 const CallReports = () => {
   const { user } = useAuth();
+  const { isAdmin } = useRoleAccess();
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [selectedMrId, setSelectedMrId] = useState<string>('all');
+  const [mrsList, setMrsList] = useState<MROption[]>([]);
   const [reports, setReports] = useState<CallReport[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -43,10 +55,36 @@ const CallReports = () => {
   ];
 
   useEffect(() => {
+    if (isAdmin) {
+      fetchMRs();
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
     if (selectedYear && selectedMonth) {
       fetchCallReports();
     }
-  }, [selectedYear, selectedMonth, user]);
+  }, [selectedYear, selectedMonth, selectedMrId, user]);
+
+  const fetchMRs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .eq('role', 'mr')
+        .order('name');
+
+      if (error) throw error;
+      setMrsList(data || []);
+    } catch (error) {
+      console.error('Error fetching MRs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load MRs list",
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchCallReports = async () => {
     if (!user) return;
@@ -56,13 +94,23 @@ const CallReports = () => {
       const startDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1);
       const endDate = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0);
 
-      const { data: calls, error } = await supabase
+      let query = supabase
         .from('daily_calls')
-        .select('*')
-        .eq('mr_id', user.id)
+        .select('*, users!daily_calls_mr_id_fkey(name, email)')
         .gte('date', format(startDate, 'yyyy-MM-dd'))
         .lte('date', format(endDate, 'yyyy-MM-dd'))
         .order('date', { ascending: false });
+
+      // Filter by MR based on role and selection
+      if (isAdmin) {
+        if (selectedMrId && selectedMrId !== 'all') {
+          query = query.eq('mr_id', selectedMrId);
+        }
+      } else {
+        query = query.eq('mr_id', user.id);
+      }
+
+      const { data: calls, error } = await query;
 
       if (error) throw error;
 
@@ -83,6 +131,7 @@ const CallReports = () => {
       const pharmaciesMap = new Map((pharmaciesRes.data || []).map(p => [p.id, p]));
 
       const formattedReports: CallReport[] = (calls || []).map(call => {
+        const mrData = call.users as any;
         if (call.target_type === 'doctor') {
           const doctor = doctorsMap.get(call.target_id);
           return {
@@ -91,7 +140,9 @@ const CallReports = () => {
             targetType: 'doctor',
             specialty: doctor?.specialty,
             area: doctor?.area,
-            status: call.status
+            status: call.status,
+            mrName: mrData?.name,
+            mrEmail: mrData?.email
           };
         } else {
           const pharmacy = pharmaciesMap.get(call.target_id);
@@ -100,7 +151,9 @@ const CallReports = () => {
             targetName: pharmacy?.name || 'Unknown',
             targetType: 'pharmacy',
             area: pharmacy?.city,
-            status: call.status
+            status: call.status,
+            mrName: mrData?.name,
+            mrEmail: mrData?.email
           };
         }
       });
@@ -122,9 +175,22 @@ const CallReports = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Call Reports" description="View your monthly call reports" />
       <div className="p-4 md:p-6 space-y-6">
+        {/* Total Calls Count - Admin Only */}
+        {isAdmin && reports.length > 0 && (
+          <Card className="p-6 bg-primary/5 border-primary/20">
+            <div className="text-center">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Calls</h3>
+              <p className="text-4xl font-bold text-primary">{reports.length}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {selectedMrId === 'all' ? 'All MRs' : mrsList.find(mr => mr.id === selectedMrId)?.name || 'Selected MR'} - {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+              </p>
+            </div>
+          </Card>
+        )}
+
         {/* Filters */}
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <div>
               <label className="text-sm font-medium mb-2 block">Select Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -151,6 +217,24 @@ const CallReports = () => {
                 </SelectContent>
               </Select>
             </div>
+            {isAdmin && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Select MR</label>
+                <Select value={selectedMrId} onValueChange={setSelectedMrId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select MR" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All MRs</SelectItem>
+                    {mrsList.map(mr => (
+                      <SelectItem key={mr.id} value={mr.id}>
+                        {mr.name} ({mr.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -168,6 +252,7 @@ const CallReports = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    {isAdmin && selectedMrId === 'all' && <TableHead>MR Name</TableHead>}
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Specialty/Area</TableHead>
@@ -179,6 +264,14 @@ const CallReports = () => {
                     reports.map((report, index) => (
                       <TableRow key={index}>
                         <TableCell>{format(new Date(report.date), 'dd MMM yyyy')}</TableCell>
+                        {isAdmin && selectedMrId === 'all' && (
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{report.mrName || 'Unknown'}</span>
+                              <span className="text-xs text-muted-foreground">{report.mrEmail}</span>
+                            </div>
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium">{report.targetName}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs ${
@@ -203,7 +296,7 @@ const CallReports = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={isAdmin && selectedMrId === 'all' ? 6 : 5} className="text-center py-8 text-muted-foreground">
                         No call reports found for the selected period
                       </TableCell>
                     </TableRow>
