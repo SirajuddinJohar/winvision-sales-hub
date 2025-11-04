@@ -96,7 +96,7 @@ const CallReports = () => {
 
       let query = supabase
         .from('daily_calls')
-        .select('*, users!daily_calls_mr_id_fkey(name, email)')
+        .select('*')
         .gte('date', format(startDate, 'yyyy-MM-dd'))
         .lte('date', format(endDate, 'yyyy-MM-dd'))
         .order('date', { ascending: false });
@@ -113,6 +113,17 @@ const CallReports = () => {
       const { data: calls, error } = await query;
 
       if (error) throw error;
+
+      // Fetch MR details for the calls
+      const mrIds = [...new Set((calls || []).map(c => c.mr_id))];
+      const { data: mrsData, error: mrsError } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .in('id', mrIds);
+
+      if (mrsError) throw mrsError;
+
+      const mrsMap = new Map((mrsData || []).map(m => [m.id, m]));
 
       // Fetch doctor and pharmacy details
       const doctorIds = calls?.filter(c => c.target_type === 'doctor').map(c => c.target_id) || [];
@@ -131,7 +142,7 @@ const CallReports = () => {
       const pharmaciesMap = new Map((pharmaciesRes.data || []).map(p => [p.id, p]));
 
       const formattedReports: CallReport[] = (calls || []).map(call => {
-        const mrData = call.users as any;
+        const mrData = mrsMap.get(call.mr_id);
         if (call.target_type === 'doctor') {
           const doctor = doctorsMap.get(call.target_id);
           return {
