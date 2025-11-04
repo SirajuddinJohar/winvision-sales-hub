@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import PageHeader from '@/components/layout/PageHeader';
-import { Calendar } from 'lucide-react';
+import { Calendar, Trash2 } from 'lucide-react';
 
 interface TourPlan {
   id: string;
@@ -41,6 +43,7 @@ interface Area {
 
 const MonthlyTourPlan = () => {
   const { user, profile } = useAuth();
+  const { isAdmin } = useRoleAccess();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -58,6 +61,7 @@ const MonthlyTourPlan = () => {
   const [isWeeklyOff, setIsWeeklyOff] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [lastRequest, setLastRequest] = useState<{
     id: string;
     status: 'pending' | 'approved' | 'rejected';
@@ -394,6 +398,43 @@ const MonthlyTourPlan = () => {
     }
   };
 
+  const handleDeleteTourPlan = async () => {
+    if (!tourPlan) return;
+
+    try {
+      // First delete all tour plan days
+      const { error: daysError } = await supabase
+        .from('tour_plan_days')
+        .delete()
+        .eq('tour_plan_id', tourPlan.id);
+
+      if (daysError) throw daysError;
+
+      // Then delete the tour plan itself
+      const { error: planError } = await supabase
+        .from('tour_plans')
+        .delete()
+        .eq('id', tourPlan.id);
+
+      if (planError) throw planError;
+
+      toast({
+        title: 'Tour plan deleted',
+        description: 'The tour plan has been successfully deleted.',
+      });
+
+      setShowDeleteDialog(false);
+      fetchTourPlan();
+    } catch (error) {
+      console.error('Error deleting tour plan:', error);
+      toast({
+        title: 'Error deleting tour plan',
+        description: 'Failed to delete the tour plan. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getDaysInMonth = () => {
     return new Date(selectedYear, selectedMonth, 0).getDate();
   };
@@ -486,6 +527,16 @@ const MonthlyTourPlan = () => {
             >
               {hasPendingRequest ? "Request Pending ⏳" : "Request Edit 📝"}
             </Button>
+            {isAdmin && tourPlan && (
+              <Button 
+                onClick={() => setShowDeleteDialog(true)}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Plan
+              </Button>
+            )}
             <Button 
               onClick={() => navigate('/')}
               variant="outline"
@@ -731,6 +782,25 @@ const MonthlyTourPlan = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tour Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this tour plan for {monthNames[selectedMonth - 1]} {selectedYear}? 
+              This will permanently delete all planned days and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTourPlan} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
