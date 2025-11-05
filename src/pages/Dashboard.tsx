@@ -123,48 +123,48 @@ const Dashboard = () => {
       value: stats.totalDoctors,
       icon: Users,
       description: 'Registered doctors',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-primary',
+      bgColor: 'bg-primary-light',
     },
     ...(isAdmin ? [{
       title: 'Products',
       value: stats.totalProducts,
       icon: Package,
       description: 'Available products',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-success',
+      bgColor: 'bg-success-light',
     }] : []),
     {
       title: 'Orders',
       value: stats.totalOrders,
       icon: ShoppingCart,
       description: isAdmin ? 'Total orders' : 'My orders',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-accent',
+      bgColor: 'bg-accent-light',
     },
     {
       title: 'Pending Expenses',
       value: stats.pendingExpenses,
       icon: Receipt,
       description: 'Awaiting approval',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-warning',
+      bgColor: 'bg-warning-light',
     },
     {
       title: 'Monthly Revenue',
       value: formatCurrency(stats.monthlyRevenue),
       icon: DollarSign,
       description: 'This month',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
+      color: 'text-success',
+      bgColor: 'bg-success-light',
     },
     {
       title: 'Target Achievement',
       value: `${stats.targetAchievement}%`,
       icon: Target,
       description: 'This month',
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'text-info',
+      bgColor: 'bg-info-light',
     },
   ];
 
@@ -206,18 +206,18 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((card, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card key={index} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {card.title}
               </CardTitle>
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
+              <div className={`p-3 rounded-xl ${card.bgColor} shadow-sm`}>
+                <card.icon className={`h-6 w-6 ${card.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{card.value}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-foreground mb-1">{card.value}</div>
+              <p className="text-sm text-muted-foreground">
                 {card.description}
               </p>
             </CardContent>
@@ -237,31 +237,31 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-                <div className="p-2 rounded-lg bg-green-100">
-                  <ShoppingCart className="h-4 w-4 text-green-600" />
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
+                <div className="p-2.5 rounded-xl bg-success-light">
+                  <ShoppingCart className="h-5 w-5 text-success" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">New order placed</p>
+                  <p className="font-semibold text-sm text-foreground">New order placed</p>
                   <p className="text-xs text-muted-foreground">2 hours ago</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <Users className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
+                <div className="p-2.5 rounded-xl bg-primary-light">
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">Doctor updated</p>
+                  <p className="font-semibold text-sm text-foreground">Doctor updated</p>
                   <p className="text-xs text-muted-foreground">4 hours ago</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-                <div className="p-2 rounded-lg bg-orange-100">
-                  <Receipt className="h-4 w-4 text-orange-600" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
+                <div className="p-2.5 rounded-xl bg-warning-light">
+                  <Receipt className="h-5 w-5 text-warning" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">Expense submitted</p>
+                  <p className="font-semibold text-sm text-foreground">Expense submitted</p>
                   <p className="text-xs text-muted-foreground">6 hours ago</p>
                 </div>
               </div>
@@ -281,32 +281,40 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/doctors')}>
+              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-primary" onClick={() => navigate('/dashboard/doctors')}>
                 <div className="text-center">
-                  <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">
+                  <div className="p-3 rounded-xl bg-primary-light inline-block mb-3">
+                    <Users className="h-7 w-7 text-primary" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">
                     {isAdmin ? 'Manage Doctors' : 'Doctor Activity'}
                   </p>
                 </div>
               </Card>
               {isAdmin && (
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/products')}>
+                <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-success" onClick={() => navigate('/dashboard/products')}>
                   <div className="text-center">
-                    <Package className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-medium text-sm">Add Product</p>
+                    <div className="p-3 rounded-xl bg-success-light inline-block mb-3">
+                      <Package className="h-7 w-7 text-success" />
+                    </div>
+                    <p className="font-semibold text-sm text-foreground">Add Product</p>
                   </div>
                 </Card>
               )}
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/orders')}>
+              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-accent" onClick={() => navigate('/dashboard/orders')}>
                 <div className="text-center">
-                  <ShoppingCart className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">Place Order</p>
+                  <div className="p-3 rounded-xl bg-accent-light inline-block mb-3">
+                    <ShoppingCart className="h-7 w-7 text-accent" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">Place Order</p>
                 </div>
               </Card>
-              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/dashboard/expenses')}>
+              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-warning" onClick={() => navigate('/dashboard/expenses')}>
                 <div className="text-center">
-                  <Receipt className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                  <p className="font-medium text-sm">
+                  <div className="p-3 rounded-xl bg-warning-light inline-block mb-3">
+                    <Receipt className="h-7 w-7 text-warning" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">
                     {isAdmin ? 'Review Expenses' : 'Add Expense'}
                   </p>
                 </div>

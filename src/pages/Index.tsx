@@ -41,31 +41,33 @@ const Index = () => {
   const allItems = [...filteredNavItems, ...adminItems];
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-6 animate-fade-in">
       <div className="w-full max-w-5xl">
         {/* Top: Logo and Heading */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 animate-slide-up">
           <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-card shadow-xl mb-4">
-              <Package className="h-10 w-10 text-primary" />
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-card shadow-2xl mb-6 animate-scale-in">
+              <Package className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-3 drop-shadow-2xl tracking-tight">
             Winvision
           </h1>
-          <p className="text-xl text-white/90 font-medium">MR Dashboard</p>
+          <p className="text-xl md:text-2xl text-white/95 font-semibold">Pharmaceutical Management System</p>
         </div>
 
         {/* Center: User Info Card */}
-        <div className="bg-card rounded-3xl shadow-2xl p-8 mb-8 text-center">
-          <div className="mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <div className="bg-card rounded-3xl shadow-2xl p-8 mb-10 text-center backdrop-blur-sm bg-opacity-95 border-2 border-white/20 animate-scale-in">
+          <div className="mb-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
               {profile?.name || 'User'}
             </h2>
           </div>
-          <p className="text-muted-foreground font-medium">
-            {profile?.role === 'admin' ? 'Administrator' : 'Medical Representative'}
-          </p>
+          <div className="inline-block px-6 py-2 rounded-full bg-gradient-primary shadow-lg">
+            <p className="text-white font-bold text-sm tracking-wide">
+              {profile?.role === 'admin' ? 'ADMINISTRATOR' : 'MEDICAL REPRESENTATIVE'}
+            </p>
+          </div>
         </div>
 
         {/* Navigation Buttons Grid */}
@@ -74,11 +76,11 @@ const Index = () => {
             <Button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="h-28 md:h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-primary hover:text-primary-foreground text-foreground border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 group"
+              className="h-28 md:h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-gradient-primary hover:text-white text-foreground border-0 shadow-xl rounded-2xl transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 group"
               variant="outline"
             >
-              <item.icon className="h-7 w-7 md:h-8 md:w-8 text-primary group-hover:text-primary-foreground transition-colors" />
-              <span className="text-sm md:text-base font-semibold">{item.label}</span>
+              <item.icon className="h-7 w-7 md:h-8 md:w-8 text-primary group-hover:text-white transition-colors" />
+              <span className="text-sm md:text-base font-bold">{item.label}</span>
             </Button>
           ))}
         </div>

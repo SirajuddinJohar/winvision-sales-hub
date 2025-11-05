@@ -26,13 +26,13 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-background border-b border-border mb-6">
-      <div className="flex items-center justify-between px-4 py-4">
+    <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border shadow-sm mb-6">
+      <div className="flex items-center justify-between px-4 md:px-6 py-4">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">{title}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{title}</h1>
             {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <p className="text-sm text-muted-foreground font-medium mt-0.5">{description}</p>
             )}
           </div>
         </div>
@@ -42,7 +42,7 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
-            className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+            className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
             title="Home"
           >
             <Home className="h-5 w-5" />
@@ -50,24 +50,28 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+              >
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 shadow-lg">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{profile?.name}</p>
+                  <p className="text-sm font-semibold text-foreground">{profile?.name}</p>
                   <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                  <p className="text-xs text-primary font-medium">
+                  <p className="text-xs text-primary font-bold mt-1">
                     {profile?.role === 'admin' ? 'Administrator' : 'Medical Rep'}
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                <span className="font-medium">Sign Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

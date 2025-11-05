@@ -81,29 +81,29 @@ const DashboardLayout = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-border transform transition-transform duration-300 z-50 md:translate-x-0 ${
+      <div className={`fixed left-0 top-0 h-full w-64 bg-card border-r border-border shadow-lg transform transition-transform duration-300 z-50 md:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border bg-gradient-card">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-primary">
+            <div className="p-2.5 rounded-xl bg-gradient-primary shadow-primary">
               <Building2 className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Winvision</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Winvision</h1>
+              <p className="text-xs text-muted-foreground font-medium">
                 {isAdmin ? 'Admin Panel' : 'MR Dashboard'}
               </p>
             </div>
           </div>
         </div>
 
-        <nav className="p-4 space-y-2 flex-1">
+        <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto">
           {filteredNavigation.map((item) => (
             <Button
               key={item.path}
               variant="ghost"
-              className="w-full justify-start gap-3 h-12"
+              className="w-full justify-start gap-3 h-11 font-medium hover:bg-primary/10 hover:text-primary transition-all duration-200"
               onClick={() => {
                 navigate(item.path);
                 setSidebarOpen(false);
@@ -115,16 +115,16 @@ const DashboardLayout = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border">
-          <Card className="p-4 mb-4">
+        <div className="p-4 border-t border-border bg-gradient-card">
+          <Card className="p-4 mb-4 bg-gradient-card border-l-4 border-l-primary shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary-light">
+              <div className="p-2.5 rounded-xl bg-primary-light shadow-sm">
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{profile.name}</p>
+                <p className="font-semibold text-sm truncate text-foreground">{profile.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
-                <p className="text-xs text-primary font-medium">
+                <p className="text-xs text-primary font-semibold mt-0.5">
                   {profile.role === 'admin' ? 'Administrator' : 'Medical Rep'}
                 </p>
               </div>
@@ -133,7 +133,7 @@ const DashboardLayout = () => {
           
           <Button
             variant="outline"
-            className="w-full justify-start gap-3"
+            className="w-full justify-start gap-3 font-medium"
             onClick={handleSignOut}
           >
             <LogOut className="h-5 w-5" />
@@ -145,8 +145,8 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <div className="md:ml-64">
         {/* Top Bar */}
-        <div className="sticky top-0 z-30 bg-white border-b border-border">
-          <div className="flex items-center justify-between px-4 py-3">
+        <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm backdrop-blur-sm bg-opacity-95">
+          <div className="flex items-center justify-between px-4 md:px-6 py-4">
             <Button
               variant="ghost"
               size="sm"
@@ -158,10 +158,10 @@ const DashboardLayout = () => {
             
             <div className="flex items-center gap-4">
               <div className="hidden md:block">
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-lg font-bold text-foreground tracking-tight">
                   Welcome back, {profile.name}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground font-medium">
                   {isAdmin ? 'Manage your pharmaceutical operations' : 'Track your targets and activities'}
                 </p>
               </div>
