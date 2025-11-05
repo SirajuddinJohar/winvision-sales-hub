@@ -83,6 +83,18 @@ const MonthlyTourPlan = () => {
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                       'July', 'August', 'September', 'October', 'November', 'December'];
 
+  // Redirect admin users away from this page
+  useEffect(() => {
+    if (profile && isAdmin) {
+      navigate('/dashboard');
+      toast({
+        title: 'Access Restricted',
+        description: 'This page is only for MR users',
+        variant: 'destructive'
+      });
+    }
+  }, [profile, isAdmin, navigate, toast]);
+
   useEffect(() => {
     if (!user?.id) return;
     fetchAreas();
