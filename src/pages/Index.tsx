@@ -16,7 +16,7 @@ const Index = () => {
   const navigationItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: ClipboardList, label: 'Daily Working', path: '/dashboard/daily-working' },
-    { icon: CalendarDays, label: 'Monthly Tour Plan', path: '/dashboard/tour-plan' },
+    { icon: CalendarDays, label: 'Monthly Tour Plan', path: '/dashboard/tour-plan', mrOnly: true },
     { icon: Users, label: 'Doctors', path: '/dashboard/doctors' },
     { icon: Truck, label: 'Distributors', path: '/dashboard/distributors' },
     { icon: Building2, label: 'Pharmacies', path: '/dashboard/pharmacies' },
@@ -28,12 +28,17 @@ const Index = () => {
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting' }
   ];
 
+  // Filter out MR-only items for admin users
+  const filteredNavItems = navigationItems.filter(item => 
+    !(item.mrOnly && profile?.role === 'admin')
+  );
+
   // Admin-only items
   const adminItems = profile?.role === 'admin' ? [
     { icon: CalendarDays, label: 'Tour Plan Requests', path: '/dashboard/tour-plan-requests' }
   ] : [];
 
-  const allItems = [...navigationItems, ...adminItems];
+  const allItems = [...filteredNavItems, ...adminItems];
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-6">
