@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { 
   Users, 
   Package, 
@@ -24,6 +26,19 @@ interface DashboardStats {
   targetAchievement: number;
 }
 
+interface SalesTrendData {
+  date: string;
+  revenue: number;
+  orders: number;
+}
+
+interface TargetData {
+  month: string;
+  target: number;
+  achieved: number;
+  achievement: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -36,6 +51,8 @@ const Dashboard = () => {
     targetAchievement: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [salesTrend, setSalesTrend] = useState<SalesTrendData[]>([]);
+  const [targetData, setTargetData] = useState<TargetData[]>([]);
 
   const isAdmin = profile?.role === 'admin';
 
@@ -98,6 +115,67 @@ const Dashboard = () => {
           monthlyRevenue,
           targetAchievement,
         });
+
+        // Fetch sales trend data (last 7 days)
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return date.toISOString().slice(0, 10);
+        });
+
+        const salesTrendData = await Promise.all(
+          last7Days.map(async (date) => {
+            const { data: dayOrders } = await supabase
+              .from('orders')
+              .select('total_amount')
+              .gte('order_date', date)
+              .lt('order_date', new Date(new Date(date).getTime() + 86400000).toISOString().slice(0, 10));
+
+            const revenue = dayOrders?.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) || 0;
+            const orders = dayOrders?.length || 0;
+
+            return {
+              date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              revenue: Math.round(revenue),
+              orders
+            };
+          })
+        );
+        setSalesTrend(salesTrendData);
+
+        // Fetch target data (last 6 months)
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - (5 - i));
+          return {
+            start: new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10),
+            end: new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString().slice(0, 10),
+            label: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+          };
+        });
+
+        const targetChartData = await Promise.all(
+          last6Months.map(async (month) => {
+            const { data: monthTargets } = await supabase
+              .from('targets')
+              .select('target_value, achieved_value')
+              .gte('target_month', month.start)
+              .lt('target_month', month.end);
+
+            const target = monthTargets?.reduce((sum, t) => sum + (Number(t.target_value) || 0), 0) || 0;
+            const achieved = monthTargets?.reduce((sum, t) => sum + (Number(t.achieved_value) || 0), 0) || 0;
+            const achievement = target > 0 ? Math.round((achieved / target) * 100) : 0;
+
+            return {
+              month: month.label,
+              target: Math.round(target),
+              achieved: Math.round(achieved),
+              achievement
+            };
+          })
+        );
+        setTargetData(targetChartData);
+
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
       } finally {
@@ -223,6 +301,217 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Trend Chart */}
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Sales Trend
+            </CardTitle>
+            <CardDescription>Revenue and orders over the last 7 days</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                revenue: {
+                  label: "Revenue",
+                  color: "hsl(var(--primary))",
+                },
+                orders: {
+                  label: "Orders",
+                  color: "hsl(var(--accent))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={salesTrend}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="hsl(var(--primary))" 
+                    fillOpacity={1} 
+                    fill="url(#colorRevenue)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Target Achievement Chart */}
+        <Card className="border-l-4 border-l-success">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-success" />
+              Target vs Achievement
+            </CardTitle>
+            <CardDescription>Performance over the last 6 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                target: {
+                  label: "Target",
+                  color: "hsl(var(--muted-foreground))",
+                },
+                achieved: {
+                  label: "Achieved",
+                  color: "hsl(var(--success))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={targetData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Bar 
+                    dataKey="target" 
+                    fill="hsl(var(--muted))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="achieved" 
+                    fill="hsl(var(--success))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Performance Metrics Chart */}
+        <Card className="border-l-4 border-l-accent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-accent" />
+              Daily Orders
+            </CardTitle>
+            <CardDescription>Order volume trend over the last week</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                orders: {
+                  label: "Orders",
+                  color: "hsl(var(--accent))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={salesTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="orders" 
+                    stroke="hsl(var(--accent))" 
+                    strokeWidth={3}
+                    dot={{ fill: "hsl(var(--accent))", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Achievement Percentage Chart */}
+        <Card className="border-l-4 border-l-info">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-info" />
+              Achievement Rate
+            </CardTitle>
+            <CardDescription>Target achievement percentage by month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                achievement: {
+                  label: "Achievement %",
+                  color: "hsl(var(--info))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={targetData}>
+                  <defs>
+                    <linearGradient id="colorAchievement" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--info))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--info))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    domain={[0, 100]}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="achievement" 
+                    stroke="hsl(var(--info))" 
+                    fillOpacity={1} 
+                    fill="url(#colorAchievement)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
