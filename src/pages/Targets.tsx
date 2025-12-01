@@ -19,6 +19,7 @@ interface Target {
   target_month: string;
   created_at: string;
   target_type: 'mr' | 'doctor';
+  mr_id: string;
   doctor: {
     name: string;
     specialty: string;
@@ -83,6 +84,7 @@ const Targets = () => {
           target_month,
           created_at,
           target_type,
+          mr_id,
           doctors:doctor_id (
             name,
             specialty
@@ -143,8 +145,13 @@ const Targets = () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email')
-        .eq('role', 'mr')
+        .select(`
+          id, 
+          name, 
+          email,
+          user_roles!inner(role)
+        `)
+        .eq('user_roles.role', 'mr')
         .order('name');
 
       if (error) throw error;
@@ -565,16 +572,16 @@ const Targets = () => {
               const currentDate = new Date();
               const currentMonthStr = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
               
-              const mrMonthlyTargets = targets.filter(
+              const mrTarget = targets.find(
                 t => t.target_type === 'mr' && 
+                t.mr_id === mr.id &&
                 t.target_month.startsWith(currentMonthStr)
               );
               
               const mrDoctorTargets = targets.filter(
-                t => t.target_type === 'doctor'
+                t => t.target_type === 'doctor' && 
+                t.mr_id === mr.id
               );
-              
-              const mrTarget = mrMonthlyTargets[0];
               const achievementPercentage = mrTarget 
                 ? getAchievementPercentage(mrTarget.achieved_value, mrTarget.target_value)
                 : 0;
