@@ -123,13 +123,16 @@ const Targets = () => {
 
   const fetchDoctors = async () => {
     try {
+      // Don't fetch if profile is not loaded yet
+      if (!profile) return;
+      
       let query = supabase
         .from('doctors')
         .select('id, name, specialty');
 
       // If user is not admin, only fetch doctors assigned to them
-      if (profile?.role !== 'admin') {
-        query = query.eq('assigned_mr_id', profile?.id);
+      if (profile.role !== 'admin') {
+        query = query.eq('assigned_mr_id', profile.id);
       }
 
       const { data, error } = await query.order('name');
@@ -143,27 +146,30 @@ const Targets = () => {
 
   const fetchMRs = async () => {
     try {
+      // First get user IDs with MR role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'mr');
+
+      if (roleError) throw roleError;
+      
+      if (!roleData || roleData.length === 0) {
+        setMrs([]);
+        return;
+      }
+
+      const mrUserIds = roleData.map(r => r.user_id);
+
+      // Then fetch user details for those IDs
       const { data, error } = await supabase
         .from('users')
-        .select(`
-          id, 
-          name, 
-          email,
-          user_roles!inner(role)
-        `)
-        .eq('user_roles.role', 'mr')
+        .select('id, name, email')
+        .in('id', mrUserIds)
         .order('name');
 
       if (error) throw error;
-      
-      // Map to flat structure for dropdown compatibility
-      const flatData = (data || []).map(user => ({
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }));
-      
-      setMrs(flatData);
+      setMrs(data || []);
     } catch (error) {
       console.error('Error fetching MRs:', error);
     }
