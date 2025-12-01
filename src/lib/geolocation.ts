@@ -10,30 +10,42 @@ export interface LocationData {
 // Get current location
 export const getCurrentLocation = async (): Promise<LocationData | null> => {
   try {
+    console.log('Checking location permissions...');
     const permission = await Geolocation.checkPermissions();
+    console.log('Permission status:', permission);
     
     if (permission.location !== 'granted') {
+      console.log('Requesting location permissions...');
       const request = await Geolocation.requestPermissions();
+      console.log('Permission request result:', request);
+      
       if (request.location !== 'granted') {
-        throw new Error('Location permission denied');
+        throw new Error('Location permission denied by user');
       }
     }
 
+    console.log('Getting current position...');
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 15000, // Increased timeout to 15 seconds
       maximumAge: 0
     });
 
+    console.log('Position obtained:', position);
     return {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       accuracy: position.coords.accuracy,
       timestamp: position.timestamp
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting location:', error);
-    return null;
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      name: error?.name
+    });
+    throw error; // Re-throw to let the caller handle it
   }
 };
 

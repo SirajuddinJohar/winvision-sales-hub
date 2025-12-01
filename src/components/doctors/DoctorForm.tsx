@@ -55,27 +55,34 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       setCapturingLocation(true);
       const locationData = await getCurrentLocation();
       
-      if (locationData) {
-        setLocation({
-          latitude: locationData.latitude,
-          longitude: locationData.longitude
-        });
-        toast({
-          title: "Location captured",
-          description: `Lat: ${locationData.latitude.toFixed(6)}, Lng: ${locationData.longitude.toFixed(6)}`
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to capture location. Please enable location permissions.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
+      setLocation({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude
+      });
+      toast({
+        title: "Location captured",
+        description: `Lat: ${locationData.latitude.toFixed(6)}, Lng: ${locationData.longitude.toFixed(6)}`
+      });
+    } catch (error: any) {
       console.error('Error capturing location:', error);
+      
+      let errorMessage = "Failed to capture location";
+      
+      if (error?.message?.includes('permission denied')) {
+        errorMessage = "Location permission denied. Please enable location access in your device settings.";
+      } else if (error?.code === 1) {
+        errorMessage = "Location permission denied. Please enable location access.";
+      } else if (error?.code === 2) {
+        errorMessage = "Location unavailable. Please check your GPS/internet connection.";
+      } else if (error?.code === 3) {
+        errorMessage = "Location request timed out. Please try again.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to capture location",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
