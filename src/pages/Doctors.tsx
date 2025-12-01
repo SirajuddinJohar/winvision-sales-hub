@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, User, MapPin, Target, Edit, Trash2 } from 'lucide-react';
+import { Plus, User, MapPin, Target, Edit, Trash2, AlertTriangle, Phone } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DoctorForm from '@/components/doctors/DoctorForm';
@@ -19,6 +19,8 @@ interface Doctor {
   territory?: string;
   monthly_target?: number;
   created_at: string;
+  phone?: string;
+  location?: { latitude: number; longitude: number };
 }
 
 const Doctors = () => {
@@ -44,7 +46,12 @@ const Doctors = () => {
 
       if (error) throw error;
 
-      setDoctors(data || []);
+      const doctorsWithTypedLocation = (data || []).map(doc => ({
+        ...doc,
+        location: doc.location as { latitude: number; longitude: number } | undefined
+      }));
+
+      setDoctors(doctorsWithTypedLocation);
     } catch (error) {
       console.error('Error fetching doctors:', error);
     } finally {
@@ -158,6 +165,12 @@ const Doctors = () => {
                       <CardDescription>{doctor.specialty}</CardDescription>
                     </div>
                   </div>
+                  {!doctor.location && (
+                    <Badge variant="destructive" className="flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      No Location
+                    </Badge>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -170,6 +183,22 @@ const Doctors = () => {
                     </Badge>
                   )}
                 </div>
+
+                {doctor.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{doctor.phone}</span>
+                  </div>
+                )}
+                
+                {doctor.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-green-600" />
+                    <span className="text-xs text-muted-foreground">
+                      📍 {doctor.location.latitude.toFixed(6)}, {doctor.location.longitude.toFixed(6)}
+                    </span>
+                  </div>
+                )}
                 
                 {doctor.monthly_target && (
                   <div className="flex items-center gap-2">

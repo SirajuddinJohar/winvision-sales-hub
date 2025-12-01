@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/ui/photo-upload';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
+import { getCurrentLocation } from '@/lib/geolocation';
 
 interface DoctorFormData {
   name: string;
@@ -17,6 +18,8 @@ interface DoctorFormData {
   territory?: string;
   monthly_target?: number;
   photo_url?: string;
+  phone?: string;
+  location?: { latitude: number; longitude: number };
 }
 
 interface DoctorFormProps {
@@ -30,6 +33,10 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(doctor?.photo_url || null);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(
+    doctor?.location || null
+  );
+  const [capturingLocation, setCapturingLocation] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<DoctorFormData>({
     defaultValues: {
@@ -39,8 +46,42 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       territory: doctor?.territory || '',
       monthly_target: doctor?.monthly_target || 0,
       photo_url: doctor?.photo_url || '',
+      phone: doctor?.phone || '',
     }
   });
+
+  const handleCaptureLocation = async () => {
+    try {
+      setCapturingLocation(true);
+      const locationData = await getCurrentLocation();
+      
+      if (locationData) {
+        setLocation({
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        });
+        toast({
+          title: "Location captured",
+          description: `Lat: ${locationData.latitude.toFixed(6)}, Lng: ${locationData.longitude.toFixed(6)}`
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to capture location. Please enable location permissions.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error capturing location:', error);
+      toast({
+        title: "Error",
+        description: "Failed to capture location",
+        variant: "destructive"
+      });
+    } finally {
+      setCapturingLocation(false);
+    }
+  };
 
   const onSubmit = async (data: DoctorFormData) => {
     try {
@@ -52,6 +93,8 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         assigned_mr_id: profile?.role === 'admin' ? null : profile?.id,
         created_by: profile?.id,
         photo_url: photoUrl,
+        phone: data.phone || null,
+        location: location || null,
       };
 
       if (doctor) {
@@ -132,6 +175,15 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="phone">Mobile Number</Label>
+              <Input
+                id="phone"
+                {...register('phone')}
+                placeholder="Enter mobile number"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="territory">Territory</Label>
               <Input
                 id="territory"
@@ -149,6 +201,39 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
                 {...register('monthly_target')}
                 placeholder="0.00"
               />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>Doctor Location *</Label>
+              <div className="flex gap-2 items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCaptureLocation}
+                  disabled={capturingLocation}
+                  className="flex-1"
+                >
+                  {capturingLocation ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Capturing...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      {location ? 'Update Location' : 'Capture Current Location'}
+                    </>
+                  )}
+                </Button>
+                {location && (
+                  <div className="text-xs text-muted-foreground">
+                    📍 {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Location is required for proximity-based call tracking (200m range)
+              </p>
             </div>
 
             <div className="space-y-2 md:col-span-2">

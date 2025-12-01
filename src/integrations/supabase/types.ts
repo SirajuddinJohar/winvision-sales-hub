@@ -213,8 +213,10 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          location: Json | null
           monthly_target: number | null
           name: string
+          phone: string | null
           photo_url: string | null
           specialty: string
           territory: string | null
@@ -226,8 +228,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          location?: Json | null
           monthly_target?: number | null
           name: string
+          phone?: string | null
           photo_url?: string | null
           specialty: string
           territory?: string | null
@@ -239,8 +243,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          location?: Json | null
           monthly_target?: number | null
           name?: string
+          phone?: string | null
           photo_url?: string | null
           specialty?: string
           territory?: string | null

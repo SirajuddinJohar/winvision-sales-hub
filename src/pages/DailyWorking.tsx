@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Stethoscope, Store, Check } from 'lucide-react';
+import { Search, Stethoscope, Store, Check, MapPin, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SampleEntry from '@/components/daily-working/SampleEntry';
 import OrderEntry from '@/components/daily-working/OrderEntry';
 import PageHeader from '@/components/layout/PageHeader';
+import { getCurrentLocation, calculateDistance } from '@/lib/geolocation';
 
 interface CallTarget {
   id: string;
@@ -17,6 +18,10 @@ interface CallTarget {
   details: string; // specialty for doctor, address for pharmacy
   area?: string;
   isComplete: boolean;
+  location?: { latitude: number; longitude: number };
+  phone?: string;
+  distanceFromUser?: number; // in meters
+  hasLocation?: boolean;
 }
 
 interface CallStats {
@@ -36,11 +41,16 @@ const DailyWorking = () => {
   const [currentView, setCurrentView] = useState<'list' | 'sample' | 'order'>('list');
   const [selectedTarget, setSelectedTarget] = useState<CallTarget | null>(null);
   const [sampleData, setSampleData] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    fetchUserLocation();
+  }, []);
+
+  useEffect(() => {
     fetchTargetsAndCalls();
-  }, [user, profile]);
+  }, [user, profile, userLocation]);
 
   useEffect(() => {
     const filtered = targets.filter(target => {
@@ -55,6 +65,16 @@ const DailyWorking = () => {
     setFilteredTargets(filtered);
   }, [targets, searchTerm, activeTab]);
 
+  const fetchUserLocation = async () => {
+    const location = await getCurrentLocation();
+    if (location) {
+      setUserLocation({
+        latitude: location.latitude,
+        longitude: location.longitude
+      });
+    }
+  };
+
   const fetchTargetsAndCalls = async () => {
     if (!user || !profile) return;
 
@@ -65,7 +85,7 @@ const DailyWorking = () => {
       // Fetch doctors
       let doctorsQuery = supabase
         .from('doctors')
-        .select('id, name, specialty, area');
+        .select('id, name, specialty, area, location, phone');
       
       if (profile.role === 'mr') {
         doctorsQuery = doctorsQuery.eq('assigned_mr_id', user.id);
@@ -99,14 +119,33 @@ const DailyWorking = () => {
 
       // Combine doctors and pharmacies
       const combinedTargets: CallTarget[] = [
-        ...(doctorsRes.data || []).map(doc => ({
-          id: doc.id,
-          name: doc.name,
-          type: 'doctor' as const,
-          details: doc.specialty,
-          area: doc.area,
-          isComplete: callsMap.get(doc.id) || false
-        })),
+        ...(doctorsRes.data || []).map(doc => {
+          const location = doc.location as { latitude: number; longitude: number } | null;
+          const hasLocation = location && location.latitude && location.longitude;
+          let distanceFromUser: number | undefined;
+          
+          if (hasLocation && userLocation) {
+            distanceFromUser = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              location.latitude,
+              location.longitude
+            ) * 1000; // Convert km to meters
+          }
+
+          return {
+            id: doc.id,
+            name: doc.name,
+            type: 'doctor' as const,
+            details: doc.specialty,
+            area: doc.area,
+            isComplete: callsMap.get(doc.id) || false,
+            location: location || undefined,
+            phone: doc.phone || undefined,
+            hasLocation: !!hasLocation,
+            distanceFromUser
+          };
+        }),
         ...(pharmaciesRes.data || []).map(pharm => ({
           id: pharm.id,
           name: pharm.name,
@@ -140,11 +179,29 @@ const DailyWorking = () => {
   };
 
   const handleTargetClick = async (target: CallTarget) => {
-    // For doctors, go to sample/order flow
+    // Check distance for doctors
     if (target.type === 'doctor') {
+      if (!target.hasLocation) {
+        toast({
+          title: "Location Required",
+          description: "This doctor's location is not set. Please update the doctor profile with location.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (target.distanceFromUser !== undefined && target.distanceFromUser > 200) {
+        toast({
+          title: "Too Far Away",
+          description: `You are ${Math.round(target.distanceFromUser)}m away. You must be within 200m to make this call.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       setSelectedTarget(target);
       setCurrentView('sample');
-    } 
+    }
     // For pharmacies, mark complete directly
     else if (target.type === 'pharmacy') {
       if (!user) return;
@@ -344,35 +401,67 @@ const DailyWorking = () => {
         </TabsList>
 
         <TabsContent value="pending" className="space-y-3 mt-4">
-          {filteredTargets.map((target) => (
-            <Card 
-              key={target.id} 
-              className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => handleTargetClick(target)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className={`p-2 rounded-lg ${target.type === 'doctor' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                    {target.type === 'doctor' ? (
-                      <Stethoscope className="h-5 w-5 text-blue-600" />
-                    ) : (
-                      <Store className="h-5 w-5 text-green-600" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground hover:text-primary">{target.name}</h3>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
-                        {target.type === 'doctor' ? '🩺 Doctor' : '🏪 Pharmacy'}
-                      </span>
+          {filteredTargets.map((target) => {
+            const isTooFar = target.type === 'doctor' && target.distanceFromUser !== undefined && target.distanceFromUser > 200;
+            const needsLocation = target.type === 'doctor' && !target.hasLocation;
+            const isDisabled = needsLocation || isTooFar;
+
+            return (
+              <Card 
+                key={target.id} 
+                className={`p-4 transition-colors ${
+                  isDisabled 
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : 'cursor-pointer hover:bg-accent/50'
+                }`}
+                onClick={() => !isDisabled && handleTargetClick(target)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`p-2 rounded-lg ${target.type === 'doctor' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                      {target.type === 'doctor' ? (
+                        <Stethoscope className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <Store className="h-5 w-5 text-green-600" />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{target.details}</p>
-                    {target.area && <p className="text-xs text-muted-foreground">{target.area}</p>}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground hover:text-primary">{target.name}</h3>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                          {target.type === 'doctor' ? '🩺 Doctor' : '🏪 Pharmacy'}
+                        </span>
+                        {target.type === 'doctor' && target.distanceFromUser !== undefined && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                            target.distanceFromUser <= 200 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            <MapPin className="h-3 w-3" />
+                            {Math.round(target.distanceFromUser)}m
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{target.details}</p>
+                      {target.area && <p className="text-xs text-muted-foreground">{target.area}</p>}
+                      {target.phone && <p className="text-xs text-muted-foreground">📱 {target.phone}</p>}
+                      
+                      {needsLocation && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>Location not set - update required</span>
+                        </div>
+                      )}
+                      {isTooFar && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>Too far away - must be within 200m</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
           {filteredTargets.length === 0 && (
             <Card className="p-8 text-center">
               <p className="text-muted-foreground">No pending calls found.</p>
