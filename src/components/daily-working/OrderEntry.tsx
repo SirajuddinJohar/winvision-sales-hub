@@ -124,47 +124,95 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
     setSaving(true);
     
     try {
+      // Get current location
+      const { getCurrentLocation } = await import('@/lib/geolocation');
+      const location = await getCurrentLocation();
+      
+      // Check if online
+      const { checkNetworkStatus, queueForSync } = await import('@/lib/offline');
+      const isOnline = await checkNetworkStatus();
+      
       // Only save daily working record and orders if there are orders to place
       if (ordersToPlace.length > 0) {
-        // Save daily working record
+        // Save daily working record with location
         const dailyWorkingRecord = {
           doctor_id: doctorId,
           mr_id: user?.id!,
           distributor_id: selectedDistributor,
           sample_details: sampleData as any,
-          order_details: ordersToPlace as any
+          order_details: ordersToPlace as any,
+          location: location ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy,
+            timestamp: location.timestamp
+          } : null
         };
 
-        const { data: dailyWorkingData, error: dailyWorkingError } = await supabase
-          .from('daily_working')
-          .insert(dailyWorkingRecord)
-          .select()
-          .single();
+        if (isOnline) {
+          // Save to Supabase
+          const { data: dailyWorkingData, error: dailyWorkingError } = await supabase
+            .from('daily_working')
+            .insert(dailyWorkingRecord)
+            .select()
+            .single();
 
-        if (dailyWorkingError) throw dailyWorkingError;
+          if (dailyWorkingError) throw dailyWorkingError;
 
-        // Create individual order records
-        const orderRecords = ordersToPlace.map(order => ({
-          doctor_id: doctorId,
-          pharmacy_id: selectedDistributor, // Using distributor as pharmacy for now
-          product_id: order.product_id,
-          quantity: order.order_qty,
-          unit_price: order.price,
-          // total_amount is a generated column, don't insert it
-          mr_id: user?.id,
-          order_date: new Date().toISOString().split('T')[0]
-        }));
+          // Create individual order records
+          const orderRecords = ordersToPlace.map(order => ({
+            doctor_id: doctorId,
+            pharmacy_id: selectedDistributor,
+            product_id: order.product_id,
+            quantity: order.order_qty,
+            unit_price: order.price,
+            mr_id: user?.id,
+            order_date: new Date().toISOString().split('T')[0]
+          }));
 
-        const { error: ordersError } = await supabase
-          .from('orders')
-          .insert(orderRecords);
+          const { error: ordersError } = await supabase
+            .from('orders')
+            .insert(orderRecords);
 
-        if (ordersError) throw ordersError;
+          if (ordersError) throw ordersError;
+        } else {
+          // Save for offline sync
+          await queueForSync({
+            id: `daily_working_${Date.now()}`,
+            type: 'daily_working',
+            data: dailyWorkingRecord,
+            timestamp: Date.now(),
+            synced: false
+          });
+
+          // Save orders for offline sync
+          const orderRecords = ordersToPlace.map(order => ({
+            doctor_id: doctorId,
+            pharmacy_id: selectedDistributor,
+            product_id: order.product_id,
+            quantity: order.order_qty,
+            unit_price: order.price,
+            mr_id: user?.id,
+            order_date: new Date().toISOString().split('T')[0]
+          }));
+
+          for (const order of orderRecords) {
+            await queueForSync({
+              id: `order_${Date.now()}_${Math.random()}`,
+              type: 'order',
+              data: order,
+              timestamp: Date.now(),
+              synced: false
+            });
+          }
+        }
       }
 
       toast({
         title: "Success!",
-        description: `Daily working completed for ${doctorName}`,
+        description: isOnline 
+          ? `Daily working completed for ${doctorName}`
+          : `Daily working saved offline and will sync when connected`,
       });
 
       onComplete();

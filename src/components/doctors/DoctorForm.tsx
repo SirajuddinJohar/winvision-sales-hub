@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoUpload } from '@/components/ui/photo-upload';
 import { Loader2 } from 'lucide-react';
 
 interface DoctorFormData {
@@ -15,6 +16,7 @@ interface DoctorFormData {
   area: string;
   territory?: string;
   monthly_target?: number;
+  photo_url?: string;
 }
 
 interface DoctorFormProps {
@@ -27,6 +29,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(doctor?.photo_url || null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<DoctorFormData>({
     defaultValues: {
@@ -35,6 +38,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       area: doctor?.area || '',
       territory: doctor?.territory || '',
       monthly_target: doctor?.monthly_target || 0,
+      photo_url: doctor?.photo_url || '',
     }
   });
 
@@ -47,6 +51,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         monthly_target: Number(data.monthly_target) || 0,
         assigned_mr_id: profile?.role === 'admin' ? null : profile?.id,
         created_by: profile?.id,
+        photo_url: photoUrl,
       };
 
       if (doctor) {
@@ -143,6 +148,14 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
                 step="0.01"
                 {...register('monthly_target')}
                 placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <PhotoUpload
+                value={photoUrl || undefined}
+                onChange={setPhotoUrl}
+                label="Doctor Photo"
               />
             </div>
           </div>

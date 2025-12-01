@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoUpload } from '@/components/ui/photo-upload';
 import { Loader2 } from 'lucide-react';
 
 interface PharmacyFormData {
@@ -19,6 +20,7 @@ interface PharmacyFormData {
   city: string;
   address: string;
   gstin?: string;
+  photo_url?: string;
 }
 
 interface PharmacyFormProps {
@@ -31,6 +33,7 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(pharmacy?.photo_url || null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<PharmacyFormData>({
     defaultValues: {
@@ -42,6 +45,7 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
       city: pharmacy?.city || '',
       address: pharmacy?.address || '',
       gstin: pharmacy?.gstin || '',
+      photo_url: pharmacy?.photo_url || '',
     }
   });
 
@@ -52,6 +56,7 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
       const pharmacyData = {
         ...data,
         created_by: profile?.id,
+        photo_url: photoUrl,
       };
 
       if (pharmacy) {
@@ -201,6 +206,14 @@ const PharmacyForm = ({ pharmacy, onSuccess, onCancel }: PharmacyFormProps) => {
                 id="gstin"
                 {...register('gstin')}
                 placeholder="Enter GSTIN if available"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <PhotoUpload
+                value={photoUrl || undefined}
+                onChange={setPhotoUrl}
+                label="Pharmacy Photo"
               />
             </div>
           </div>

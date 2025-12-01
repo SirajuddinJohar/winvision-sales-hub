@@ -3,7 +3,8 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { 
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
+import {
   Building2, 
   Users, 
   Truck,
@@ -72,6 +73,8 @@ const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner />
+      
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
