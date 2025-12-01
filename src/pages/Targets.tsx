@@ -155,7 +155,15 @@ const Targets = () => {
         .order('name');
 
       if (error) throw error;
-      setMrs(data || []);
+      
+      // Map to flat structure for dropdown compatibility
+      const flatData = (data || []).map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }));
+      
+      setMrs(flatData);
     } catch (error) {
       console.error('Error fetching MRs:', error);
     }
