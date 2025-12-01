@@ -83,6 +83,7 @@ export type Database = {
           distributor_id: string | null
           doctor_id: string
           id: string
+          location: Json | null
           mr_id: string
           order_details: Json | null
           sample_details: Json | null
@@ -94,6 +95,7 @@ export type Database = {
           distributor_id?: string | null
           doctor_id: string
           id?: string
+          location?: Json | null
           mr_id: string
           order_details?: Json | null
           sample_details?: Json | null
@@ -105,6 +107,7 @@ export type Database = {
           distributor_id?: string | null
           doctor_id?: string
           id?: string
+          location?: Json | null
           mr_id?: string
           order_details?: Json | null
           sample_details?: Json | null
@@ -212,6 +215,7 @@ export type Database = {
           id: string
           monthly_target: number | null
           name: string
+          photo_url: string | null
           specialty: string
           territory: string | null
           updated_at: string | null
@@ -224,6 +228,7 @@ export type Database = {
           id?: string
           monthly_target?: number | null
           name: string
+          photo_url?: string | null
           specialty: string
           territory?: string | null
           updated_at?: string | null
@@ -236,6 +241,7 @@ export type Database = {
           id?: string
           monthly_target?: number | null
           name?: string
+          photo_url?: string | null
           specialty?: string
           territory?: string | null
           updated_at?: string | null
@@ -444,6 +450,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          photo_url: string | null
           updated_at: string
         }
         Insert: {
@@ -458,6 +465,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          photo_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -472,6 +480,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          photo_url?: string | null
           updated_at?: string
         }
         Relationships: []
