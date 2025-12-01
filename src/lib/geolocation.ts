@@ -1,4 +1,5 @@
 import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 export interface LocationData {
   latitude: number;
@@ -8,8 +9,55 @@ export interface LocationData {
 }
 
 // Get current location
-export const getCurrentLocation = async (): Promise<LocationData | null> => {
+export const getCurrentLocation = async (): Promise<LocationData> => {
   try {
+    // For web platform, use browser's native Geolocation API
+    if (Capacitor.getPlatform() === 'web') {
+      console.log('Using browser Geolocation API...');
+      
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported by your browser');
+      }
+
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Browser position obtained:', position);
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: position.timestamp
+            });
+          },
+          (error) => {
+            console.error('Browser geolocation error:', error);
+            let errorMessage = 'Failed to get location';
+            
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied. Please enable location access in your browser.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location unavailable. Please check your GPS/internet connection.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please try again.';
+                break;
+            }
+            
+            reject(new Error(errorMessage));
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
+
+    // For native platforms (iOS/Android), use Capacitor Geolocation
     console.log('Checking location permissions...');
     const permission = await Geolocation.checkPermissions();
     console.log('Permission status:', permission);
@@ -27,7 +75,7 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
     console.log('Getting current position...');
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 15000, // Increased timeout to 15 seconds
+      timeout: 15000,
       maximumAge: 0
     });
 
@@ -45,7 +93,7 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
       code: error?.code,
       name: error?.name
     });
-    throw error; // Re-throw to let the caller handle it
+    throw error;
   }
 };
 
