@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Building, MapPin, Phone, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Building, MapPin, Phone, Edit, Trash2, Search, ShoppingCart, Clock, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import PharmacyForm from '@/components/pharmacies/PharmacyForm';
@@ -22,6 +22,8 @@ interface Pharmacy {
   address: string;
   gstin?: string;
   created_at: string;
+  last_order_date?: string;
+  last_order_amount?: number;
 }
 
 const Pharmacies = () => {
@@ -54,7 +56,7 @@ const Pharmacies = () => {
       let query = supabase
         .from('pharmacies')
         .select('*')
-        .order('name');
+        .order('last_order_date', { ascending: false, nullsFirst: false });
 
       const { data, error } = await query;
 
@@ -66,6 +68,22 @@ const Pharmacies = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR'
+    }).format(amount);
+  };
+
+  const getDaysSinceLastOrder = (lastOrderDate?: string): number | null => {
+    if (!lastOrderDate) return null;
+    const today = new Date();
+    const lastOrder = new Date(lastOrderDate);
+    const diffTime = Math.abs(today.getTime() - lastOrder.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   const handleAddPharmacy = () => {
@@ -198,6 +216,31 @@ const Pharmacies = () => {
                   <div className="text-sm">
                     <span className="text-muted-foreground">DL No: </span>
                     {pharmacy.dl_number_part1}{pharmacy.dl_number_part2 ? `-${pharmacy.dl_number_part2}` : ''}
+                  </div>
+                )}
+
+                {pharmacy.last_order_date && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        Last Order: {new Date(pharmacy.last_order_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    {pharmacy.last_order_amount && (
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {formatCurrency(pharmacy.last_order_amount)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {getDaysSinceLastOrder(pharmacy.last_order_date)} days ago
+                      </span>
+                    </div>
                   </div>
                 )}
 

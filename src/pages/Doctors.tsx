@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, User, MapPin, Target, Edit, Trash2, AlertTriangle, Phone } from 'lucide-react';
+import { Plus, User, MapPin, Target, Edit, Trash2, AlertTriangle, Phone, Calendar, Heart, TrendingUp, Clock, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DoctorForm from '@/components/doctors/DoctorForm';
@@ -21,11 +22,18 @@ interface Doctor {
   created_at: string;
   phone?: string;
   location?: { latitude: number; longitude: number };
+  birthday?: string;
+  anniversary?: string;
+  last_visit_date?: string;
+  relationship_score?: number;
+  tags?: string[];
+  notes?: string;
 }
 
 const Doctors = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -64,6 +72,49 @@ const Doctors = () => {
       style: 'currency',
       currency: 'INR'
     }).format(amount);
+  };
+
+  const getDaysSinceLastVisit = (lastVisitDate?: string): number | null => {
+    if (!lastVisitDate) return null;
+    const today = new Date();
+    const lastVisit = new Date(lastVisitDate);
+    const diffTime = Math.abs(today.getTime() - lastVisit.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getUrgencyBadge = (days: number | null) => {
+    if (days === null) return <Badge variant="outline">Never visited</Badge>;
+    if (days > 30) return <Badge variant="destructive">Urgent: {days}d</Badge>;
+    if (days > 14) return <Badge variant="secondary">Follow-up: {days}d</Badge>;
+    return <Badge variant="default">Recent: {days}d</Badge>;
+  };
+
+  const getScoreBadge = (score?: number) => {
+    if (!score && score !== 0) return null;
+    if (score >= 50) return <Badge className="bg-green-600">High: {score.toFixed(0)}</Badge>;
+    if (score >= 20) return <Badge className="bg-yellow-600">Medium: {score.toFixed(0)}</Badge>;
+    return <Badge className="bg-red-600">Low: {score.toFixed(0)}</Badge>;
+  };
+
+  const isUpcomingBirthday = (birthday?: string): boolean => {
+    if (!birthday) return false;
+    const today = new Date();
+    const bday = new Date(birthday);
+    bday.setFullYear(today.getFullYear());
+    const diffTime = bday.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30;
+  };
+
+  const isUpcomingAnniversary = (anniversary?: string): boolean => {
+    if (!anniversary) return false;
+    const today = new Date();
+    const anniv = new Date(anniversary);
+    anniv.setFullYear(today.getFullYear());
+    const diffTime = anniv.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30;
   };
 
   const handleAddDoctor = () => {
@@ -153,16 +204,25 @@ const Doctors = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doctor) => (
-            <Card key={doctor.id} className="hover:shadow-md transition-shadow">
+            <Card key={doctor.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/dashboard/doctors/${doctor.id}`)}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-primary/10">
                       <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{doctor.name}</CardTitle>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{doctor.name}</CardTitle>
+                        {(isUpcomingBirthday(doctor.birthday) || isUpcomingAnniversary(doctor.anniversary)) && (
+                          <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+                        )}
+                      </div>
                       <CardDescription>{doctor.specialty}</CardDescription>
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        {getUrgencyBadge(getDaysSinceLastVisit(doctor.last_visit_date))}
+                        {getScoreBadge(doctor.relationship_score)}
+                      </div>
                     </div>
                   </div>
                   {!doctor.location && (
@@ -173,7 +233,7 @@ const Doctors = () => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{doctor.area}</span>
@@ -190,12 +250,55 @@ const Doctors = () => {
                     <span className="text-sm">{doctor.phone}</span>
                   </div>
                 )}
-                
-                {doctor.location && (
+
+                {doctor.last_visit_date && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-green-600" />
-                    <span className="text-xs text-muted-foreground">
-                      📍 {doctor.location.latitude.toFixed(6)}, {doctor.location.longitude.toFixed(6)}
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      Last visit: {new Date(doctor.last_visit_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+
+                {(doctor.birthday || doctor.anniversary) && (
+                  <div className="flex flex-col gap-1">
+                    {doctor.birthday && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs">
+                          Birthday: {new Date(doctor.birthday).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          {isUpcomingBirthday(doctor.birthday) && ' 🎂'}
+                        </span>
+                      </div>
+                    )}
+                    {doctor.anniversary && (
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs">
+                          Anniversary: {new Date(doctor.anniversary).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          {isUpcomingAnniversary(doctor.anniversary) && ' 💝'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {doctor.tags && doctor.tags.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    {doctor.tags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {doctor.relationship_score !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      Engagement Score: {doctor.relationship_score.toFixed(1)}
                     </span>
                   </div>
                 )}
@@ -213,7 +316,7 @@ const Doctors = () => {
                   <p className="text-xs text-muted-foreground">
                     Added: {new Date(doctor.created_at).toLocaleDateString()}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"

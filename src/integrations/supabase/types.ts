@@ -206,49 +206,118 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_visit_notes: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          mr_id: string
+          notes: string | null
+          tags: string[] | null
+          updated_at: string
+          visit_date: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          mr_id: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          visit_date?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          mr_id?: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_visit_notes_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_visit_notes_mr_id_fkey"
+            columns: ["mr_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctors: {
         Row: {
+          anniversary: string | null
           area: string
           assigned_mr_id: string | null
+          birthday: string | null
           created_at: string | null
           created_by: string | null
           id: string
+          last_visit_date: string | null
           location: Json | null
           monthly_target: number | null
           name: string
+          notes: string | null
           phone: string | null
           photo_url: string | null
+          prescribing_preferences: Json | null
+          relationship_score: number | null
           specialty: string
+          tags: string[] | null
           territory: string | null
           updated_at: string | null
         }
         Insert: {
+          anniversary?: string | null
           area: string
           assigned_mr_id?: string | null
+          birthday?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
+          last_visit_date?: string | null
           location?: Json | null
           monthly_target?: number | null
           name: string
+          notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          prescribing_preferences?: Json | null
+          relationship_score?: number | null
           specialty: string
+          tags?: string[] | null
           territory?: string | null
           updated_at?: string | null
         }
         Update: {
+          anniversary?: string | null
           area?: string
           assigned_mr_id?: string | null
+          birthday?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
+          last_visit_date?: string | null
           location?: Json | null
           monthly_target?: number | null
           name?: string
+          notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          prescribing_preferences?: Json | null
+          relationship_score?: number | null
           specialty?: string
+          tags?: string[] | null
           territory?: string | null
           updated_at?: string | null
         }
@@ -454,6 +523,8 @@ export type Database = {
           dl_number_part2: string
           gstin: string | null
           id: string
+          last_order_amount: number | null
+          last_order_date: string | null
           name: string
           phone: string
           photo_url: string | null
@@ -469,6 +540,8 @@ export type Database = {
           dl_number_part2: string
           gstin?: string | null
           id?: string
+          last_order_amount?: number | null
+          last_order_date?: string | null
           name: string
           phone: string
           photo_url?: string | null
@@ -484,12 +557,59 @@ export type Database = {
           dl_number_part2?: string
           gstin?: string | null
           id?: string
+          last_order_amount?: number | null
+          last_order_date?: string | null
           name?: string
           phone?: string
           photo_url?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      prescription_tracking: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          frequency_count: number
+          id: string
+          last_prescribed_date: string | null
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          frequency_count?: number
+          id?: string
+          last_prescribed_date?: string | null
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          frequency_count?: number
+          id?: string
+          last_prescribed_date?: string | null
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_tracking_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescription_tracking_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -773,6 +893,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_doctor_relationship_score: {
+        Args: { doctor_id_param: string }
+        Returns: number
+      }
       calculate_target_achievement: {
         Args: { target_id_param: string }
         Returns: number

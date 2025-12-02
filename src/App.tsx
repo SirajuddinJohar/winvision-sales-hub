@@ -9,6 +9,7 @@ import AuthPage from "./components/auth/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
+import DoctorDetails from "./pages/DoctorDetails";
 import Distributors from "./pages/Distributors";
 import DistributorDetails from "./pages/DistributorDetails";
 import Pharmacies from "./pages/Pharmacies";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/doctors" element={<Doctors />} />
+            <Route path="/dashboard/doctors/:id" element={<DoctorDetails />} />
             <Route path="/dashboard/distributors" element={<Distributors />} />
             <Route path="/dashboard/distributors/:id" element={<DistributorDetails />} />
             <Route path="/dashboard/pharmacies" element={<Pharmacies />} />
