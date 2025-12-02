@@ -20,6 +20,11 @@ interface DoctorFormData {
   photo_url?: string;
   phone?: string;
   location?: { latitude: number; longitude: number };
+  birthday?: string;
+  anniversary?: string;
+  tags?: string;
+  notes?: string;
+  prescribing_preferences?: string;
 }
 
 interface DoctorFormProps {
@@ -47,6 +52,11 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       monthly_target: doctor?.monthly_target || 0,
       photo_url: doctor?.photo_url || '',
       phone: doctor?.phone || '',
+      birthday: doctor?.birthday || '',
+      anniversary: doctor?.anniversary || '',
+      tags: doctor?.tags?.join(', ') || '',
+      notes: doctor?.notes || '',
+      prescribing_preferences: doctor?.prescribing_preferences ? JSON.stringify(doctor.prescribing_preferences) : '',
     }
   });
 
@@ -102,6 +112,11 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         photo_url: photoUrl,
         phone: data.phone || null,
         location: location || null,
+        birthday: data.birthday || null,
+        anniversary: data.anniversary || null,
+        tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        notes: data.notes || null,
+        prescribing_preferences: data.prescribing_preferences ? JSON.parse(data.prescribing_preferences) : {},
       };
 
       if (doctor) {
@@ -199,7 +214,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="monthly_target">Monthly Target (₹)</Label>
               <Input
                 id="monthly_target"
@@ -207,6 +222,43 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
                 step="0.01"
                 {...register('monthly_target')}
                 placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthday">Birthday</Label>
+              <Input
+                id="birthday"
+                type="date"
+                {...register('birthday')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="anniversary">Anniversary</Label>
+              <Input
+                id="anniversary"
+                type="date"
+                {...register('anniversary')}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Input
+                id="tags"
+                {...register('tags')}
+                placeholder="e.g., VIP, High Prescriber, Cardiologist"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                id="notes"
+                {...register('notes')}
+                placeholder="Additional notes about the doctor..."
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
