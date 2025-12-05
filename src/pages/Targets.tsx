@@ -181,6 +181,10 @@ const Targets = () => {
       const currentMonth = currentDate.getMonth() + 1;
       const currentYear = currentDate.getFullYear();
       
+      // Handle year rollover for December
+      const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+      const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -196,7 +200,7 @@ const Targets = () => {
         `)
         .eq('mr_id', profile?.id)
         .gte('order_date', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`)
-        .lt('order_date', `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-01`)
+        .lt('order_date', `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`)
         .order('order_date', { ascending: false });
 
       if (error) throw error;
