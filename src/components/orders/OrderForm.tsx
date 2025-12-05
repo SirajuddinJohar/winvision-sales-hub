@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductItem {
   product_id: string;
@@ -18,7 +21,7 @@ interface ProductItem {
 
 interface OrderFormData {
   doctor_id: string;
-  pharmacy_id: string;
+  distributor_id: string;
   order_date: string;
   products: ProductItem[];
 }
@@ -34,7 +37,11 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [distributors, setDistributors] = useState<any[]>([]);
+  
+  const [doctorOpen, setDoctorOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
+  const [productOpen, setProductOpen] = useState<number | null>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<OrderFormData>({
     defaultValues: {
@@ -66,15 +73,15 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           .select('id, name, price, category')
           .order('name');
 
-        // Fetch pharmacies
-        const { data: pharmaciesData } = await supabase
+        // Fetch distributors
+        const { data: distributorsData } = await supabase
           .from('Distributors')
           .select('id, name, address')
           .order('name');
 
         setDoctors(doctorsData || []);
         setProducts(productsData || []);
-        setPharmacies(pharmaciesData || []);
+        setDistributors(distributorsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -97,10 +104,10 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         return;
       }
 
-      if (!data.pharmacy_id) {
+      if (!data.distributor_id) {
         toast({ 
           title: "Error", 
-          description: "Please select a pharmacy", 
+          description: "Please select a distributor", 
           variant: "destructive" 
         });
         return;
@@ -121,7 +128,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
       const orderPromises = validProducts.map(product => {
         const orderData = {
           doctor_id: data.doctor_id,
-          pharmacy_id: data.pharmacy_id,
+          pharmacy_id: data.distributor_id,
           product_id: product.product_id,
           quantity: Number(product.quantity),
           unit_price: Number(product.unit_price),
@@ -143,7 +150,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
       
       toast({ title: "Orders placed successfully" });
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error placing order:', error);
       toast({ 
         title: "Error", 
@@ -172,12 +179,22 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
     }
   };
 
+  const getSelectedDoctorName = () => {
+    const doctor = doctors.find(d => d.id === selectedDoctor);
+    return doctor ? `${doctor.name} - ${doctor.specialty}` : '';
+  };
+
+  const getSelectedProductName = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product ? `${product.name} - ₹${product.price}` : '';
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>Place New Order</CardTitle>
         <CardDescription>
-          Create a new order with multiple products for a doctor and pharmacy
+          Create a new order with multiple products for a doctor and distributor
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -185,37 +202,64 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           {/* Basic Order Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="doctor_id">Doctor *</Label>
-              <Select 
-                onValueChange={(value) => setValue('doctor_id', value)} 
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctors.map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
-                      {doctor.name} - {doctor.specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Doctor *</Label>
+              <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={doctorOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedDoctor ? getSelectedDoctorName() : "Search doctor..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search doctor..." />
+                    <CommandList>
+                      <CommandEmpty>No doctor found.</CommandEmpty>
+                      <CommandGroup>
+                        {doctors.map((doctor) => (
+                          <CommandItem
+                            key={doctor.id}
+                            value={`${doctor.name} ${doctor.specialty}`}
+                            onSelect={() => {
+                              setSelectedDoctor(doctor.id);
+                              setValue('doctor_id', doctor.id);
+                              setDoctorOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedDoctor === doctor.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {doctor.name} - {doctor.specialty}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pharmacy_id">Pharmacy *</Label>
+              <Label htmlFor="distributor_id">Distributor *</Label>
               <Select 
-                onValueChange={(value) => setValue('pharmacy_id', value)} 
+                onValueChange={(value) => setValue('distributor_id', value)} 
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select pharmacy" />
+                  <SelectValue placeholder="Select distributor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {pharmacies.map((pharmacy) => (
-                    <SelectItem key={pharmacy.id} value={pharmacy.id}>
-                      {pharmacy.name}
+                  {distributors.map((distributor) => (
+                    <SelectItem key={distributor.id} value={distributor.id}>
+                      {distributor.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -250,23 +294,49 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div className="space-y-2 md:col-span-2">
                     <Label>Product</Label>
-                    <Select 
-                      onValueChange={(value) => {
-                        setValue(`products.${index}.product_id`, value);
-                        handleProductChange(value, index);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} - ₹{product.price} ({product.category})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={productOpen === index} onOpenChange={(open) => setProductOpen(open ? index : null)}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          {watchedProducts[index]?.product_id 
+                            ? getSelectedProductName(watchedProducts[index].product_id) 
+                            : "Search product..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[350px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search product..." />
+                          <CommandList>
+                            <CommandEmpty>No product found.</CommandEmpty>
+                            <CommandGroup>
+                              {products.map((product) => (
+                                <CommandItem
+                                  key={product.id}
+                                  value={`${product.name} ${product.category}`}
+                                  onSelect={() => {
+                                    setValue(`products.${index}.product_id`, product.id);
+                                    handleProductChange(product.id, index);
+                                    setProductOpen(null);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      watchedProducts[index]?.product_id === product.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {product.name} - ₹{product.price} ({product.category})
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div className="space-y-2">
