@@ -24,6 +24,8 @@ import TourPlanRequests from "./pages/TourPlanRequests";
 import MyPerformance from "./pages/MyPerformance";
 import CallReports from "./pages/CallReports";
 import ExpensesReports from "./pages/ExpensesReports";
+import Master from "./pages/Master";
+import AddSample from "./pages/AddSample";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +58,8 @@ const App = () => (
             <Route path="/dashboard/my-performance" element={<MyPerformance />} />
             <Route path="/dashboard/call-reports" element={<CallReports />} />
             <Route path="/dashboard/expenses-reports" element={<ExpensesReports />} />
+            <Route path="/dashboard/master" element={<Master />} />
+            <Route path="/dashboard/master/add-sample" element={<AddSample />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
