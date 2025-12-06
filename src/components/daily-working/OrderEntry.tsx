@@ -19,10 +19,18 @@ interface Distributor {
   name: string;
 }
 
+interface DistributorProduct {
+  product_id: string;
+  product_name: string;
+  ptr: number;
+  available_qty: number;
+}
+
 interface OrderItem {
   product_id: string;
   product_name: string;
   price: number;
+  available_qty: number;
   order_qty: number;
 }
 
@@ -43,50 +51,40 @@ interface OrderEntryProps {
 
 const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: OrderEntryProps) => {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [selectedDistributor, setSelectedDistributor] = useState<string>('');
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchData();
+    fetchDistributors();
   }, []);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (selectedDistributor) {
+      fetchDistributorProducts(selectedDistributor);
+    } else {
+      setOrderItems([]);
+    }
+  }, [selectedDistributor]);
+
+  const fetchDistributors = async () => {
     try {
-      const [productsResult, distributorsResult] = await Promise.all([
-        supabase
-          .from('products')
-          .select('id, name, price')
-          .eq('product_type', 'regular')
-          .order('name'),
-        supabase
-          .from('Distributors')
-          .select('id, name')
-          .order('name')
-      ]);
+      const { data, error } = await supabase
+        .from('Distributors')
+        .select('id, name')
+        .order('name');
 
-      if (productsResult.error) throw productsResult.error;
-      if (distributorsResult.error) throw distributorsResult.error;
-
-      const items: OrderItem[] = (productsResult.data || []).map(product => ({
-        product_id: product.id,
-        product_name: product.name,
-        price: product.price,
-        order_qty: 0
-      }));
-
-      setProducts(productsResult.data || []);
-      setDistributors(distributorsResult.data || []);
-      setOrderItems(items);
+      if (error) throw error;
+      setDistributors(data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching distributors:', error);
       toast({
         title: "Error",
-        description: "Failed to load products and distributors",
+        description: "Failed to load distributors",
         variant: "destructive"
       });
     } finally {
@@ -94,11 +92,50 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
     }
   };
 
+  const fetchDistributorProducts = async (distributorId: string) => {
+    setLoadingProducts(true);
+    try {
+      const { data, error } = await supabase
+        .from('distributor_products')
+        .select(`
+          product_id,
+          ptr,
+          quantity,
+          products (
+            id,
+            name
+          )
+        `)
+        .eq('distributor_id', distributorId);
+
+      if (error) throw error;
+
+      const items: OrderItem[] = (data || []).map(item => ({
+        product_id: item.product_id,
+        product_name: (item.products as any)?.name || 'Unknown Product',
+        price: item.ptr,
+        available_qty: item.quantity,
+        order_qty: 0
+      }));
+
+      setOrderItems(items);
+    } catch (error) {
+      console.error('Error fetching distributor products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load distributor products",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
   const updateOrderQuantity = (productId: string, qty: number) => {
     setOrderItems(prev => 
       prev.map(item => 
         item.product_id === productId 
-          ? { ...item, order_qty: Math.max(0, qty) }
+          ? { ...item, order_qty: Math.max(0, Math.min(qty, item.available_qty)) }
           : item
       )
     );
@@ -175,6 +212,20 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
             .insert(orderRecords);
 
           if (ordersError) throw ordersError;
+
+          // Reduce stock from distributor_products
+          for (const order of ordersToPlace) {
+            const newQty = order.available_qty - order.order_qty;
+            const { error: stockError } = await supabase
+              .from('distributor_products')
+              .update({ quantity: newQty })
+              .eq('distributor_id', selectedDistributor)
+              .eq('product_id', order.product_id);
+
+            if (stockError) {
+              console.error('Error updating distributor stock:', stockError);
+            }
+          }
         } else {
           // Save for offline sync
           await queueForSync({
@@ -272,50 +323,77 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
         </div>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-4 font-semibold text-sm text-muted-foreground border-b pb-2">
-            <div>Product Name</div>
-            <div>Unit Price</div>
-            <div>Order Qty</div>
-            <div>Total</div>
+        {!selectedDistributor ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Please select a distributor to view available products
           </div>
+        ) : loadingProducts ? (
+          <div className="animate-pulse space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 bg-muted rounded"></div>
+            ))}
+          </div>
+        ) : orderItems.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No products available for this distributor
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-5 gap-4 font-semibold text-sm text-muted-foreground border-b pb-2">
+              <div>Product Name</div>
+              <div className="text-center">PTR</div>
+              <div className="text-center">Available</div>
+              <div className="text-center">Order Qty</div>
+              <div className="text-center">Total</div>
+            </div>
 
-          {orderItems.map((item) => (
-            <div key={item.product_id} className="grid grid-cols-4 gap-4 items-center py-3 border-b">
-              <div className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-primary" />
-                <span className="font-medium">{item.product_name}</span>
+            {orderItems.map((item) => (
+              <div key={item.product_id} className="grid grid-cols-5 gap-4 items-center py-3 border-b">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{item.product_name}</span>
+                </div>
+                
+                <div className="text-center font-mono">
+                  ₹{item.price.toFixed(2)}
+                </div>
+
+                <div className="text-center font-mono text-muted-foreground">
+                  {item.available_qty}
+                </div>
+                
+                <div className="flex justify-center">
+                  <Input
+                    type="number"
+                    min="0"
+                    max={item.available_qty}
+                    value={item.order_qty}
+                    onChange={(e) => updateOrderQuantity(item.product_id, parseInt(e.target.value) || 0)}
+                    className="w-20 text-center"
+                  />
+                </div>
+                
+                <div className="text-center font-mono font-semibold">
+                  ₹{(item.order_qty * item.price).toFixed(2)}
+                </div>
               </div>
-              
-              <div className="text-center font-mono">
-                ₹{item.price.toFixed(2)}
-              </div>
-              
-              <div className="flex justify-center">
-                <Input
-                  type="number"
-                  min="0"
-                  value={item.order_qty}
-                  onChange={(e) => updateOrderQuantity(item.product_id, parseInt(e.target.value) || 0)}
-                  className="w-20 text-center"
-                />
-              </div>
-              
-              <div className="text-center font-mono font-semibold">
-                ₹{(item.order_qty * item.price).toFixed(2)}
+            ))}
+          </>
+        )}
+
+          {orderItems.length > 0 && (
+            <div className="border-t-2 pt-4">
+              <div className="grid grid-cols-5 gap-4 font-bold text-lg">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div className="text-center">Total:</div>
+                <div className="text-center text-primary">
+                  ₹{getTotalAmount().toFixed(2)}
+                </div>
               </div>
             </div>
-          ))}
-
-          <div className="border-t-2 pt-4">
-            <div className="grid grid-cols-4 gap-4 font-bold text-lg">
-              <div></div>
-              <div></div>
-              <div className="text-center">Total Amount:</div>
-              <div className="text-center text-primary">
-                ₹{getTotalAmount().toFixed(2)}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </Card>
 
