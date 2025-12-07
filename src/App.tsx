@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
 import Dashboard from "./pages/Dashboard";
@@ -30,39 +32,50 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Component to initialize permissions on app load
+const PermissionInitializer = ({ children }: { children: React.ReactNode }) => {
+  const { isRequesting } = usePermissions();
+  
+  // Permissions are requested automatically in usePermissions hook
+  // We just render children - no loading state needed
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/doctors" element={<Doctors />} />
-            <Route path="/dashboard/doctors/:id" element={<DoctorDetails />} />
-            <Route path="/dashboard/distributors" element={<Distributors />} />
-            <Route path="/dashboard/distributors/:id" element={<DistributorDetails />} />
-            <Route path="/dashboard/pharmacies" element={<Pharmacies />} />
-            <Route path="/dashboard/products" element={<Products />} />
-            <Route path="/dashboard/orders" element={<Orders />} />
-            <Route path="/dashboard/expenses" element={<Expenses />} />
-            <Route path="/dashboard/targets" element={<Targets />} />
-            <Route path="/dashboard/targets/mr/:mrId" element={<MRTargetDetails />} />
-            <Route path="/dashboard/daily-working" element={<DailyWorking />} />
-            <Route path="/dashboard/reporting" element={<Reporting />} />
-            <Route path="/dashboard/tour-plan" element={<MonthlyTourPlan />} />
-            <Route path="/dashboard/tour-plan-requests" element={<TourPlanRequests />} />
-            <Route path="/dashboard/my-performance" element={<MyPerformance />} />
-            <Route path="/dashboard/call-reports" element={<CallReports />} />
-            <Route path="/dashboard/expenses-reports" element={<ExpensesReports />} />
-            <Route path="/dashboard/master" element={<Master />} />
-            <Route path="/dashboard/master/add-sample" element={<AddSample />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <PermissionInitializer>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/doctors" element={<Doctors />} />
+              <Route path="/dashboard/doctors/:id" element={<DoctorDetails />} />
+              <Route path="/dashboard/distributors" element={<Distributors />} />
+              <Route path="/dashboard/distributors/:id" element={<DistributorDetails />} />
+              <Route path="/dashboard/pharmacies" element={<Pharmacies />} />
+              <Route path="/dashboard/products" element={<Products />} />
+              <Route path="/dashboard/orders" element={<Orders />} />
+              <Route path="/dashboard/expenses" element={<Expenses />} />
+              <Route path="/dashboard/targets" element={<Targets />} />
+              <Route path="/dashboard/targets/mr/:mrId" element={<MRTargetDetails />} />
+              <Route path="/dashboard/daily-working" element={<DailyWorking />} />
+              <Route path="/dashboard/reporting" element={<Reporting />} />
+              <Route path="/dashboard/tour-plan" element={<MonthlyTourPlan />} />
+              <Route path="/dashboard/tour-plan-requests" element={<TourPlanRequests />} />
+              <Route path="/dashboard/my-performance" element={<MyPerformance />} />
+              <Route path="/dashboard/call-reports" element={<CallReports />} />
+              <Route path="/dashboard/expenses-reports" element={<ExpensesReports />} />
+              <Route path="/dashboard/master" element={<Master />} />
+              <Route path="/dashboard/master/add-sample" element={<AddSample />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </PermissionInitializer>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
