@@ -30,6 +30,9 @@ import ExpensesReports from "./pages/ExpensesReports";
 import Master from "./pages/Master";
 import AddSample from "./pages/AddSample";
 import AttachDoctorPharmacy from "./pages/AttachDoctorPharmacy";
+import SalesAndStocks from "./pages/SalesAndStocks";
+import SecondarySales from "./pages/SecondarySales";
+import PrimarySales from "./pages/PrimarySales";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +79,9 @@ const App = () => (
               <Route path="/dashboard/master" element={<Master />} />
               <Route path="/dashboard/master/add-sample" element={<AddSample />} />
               <Route path="/dashboard/master/attach-doctor-pharmacy" element={<AttachDoctorPharmacy />} />
+              <Route path="/dashboard/master/sales-and-stocks" element={<SalesAndStocks />} />
+              <Route path="/dashboard/master/secondary-sales" element={<SecondarySales />} />
+              <Route path="/dashboard/master/primary-sales" element={<PrimarySales />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
