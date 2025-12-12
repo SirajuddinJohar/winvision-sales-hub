@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, MapPin, Phone, Calendar, Heart, TrendingUp, Target, Edit, ArrowLeft, Tag, IndianRupee, ChevronRight } from 'lucide-react';
+import { User, MapPin, Phone, Calendar, Heart, TrendingUp, Target, Edit, ArrowLeft, Tag, IndianRupee, ChevronRight, Store } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/layout/PageHeader';
 import PrescriptionTracking from '@/components/doctors/PrescriptionTracking';
@@ -27,17 +27,53 @@ interface Doctor {
   location?: { latitude: number; longitude: number };
 }
 
+interface AssignedPharmacy {
+  id: string;
+  name: string;
+  city: string;
+  contact_person: string;
+}
+
 const DoctorDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [assignedPharmacies, setAssignedPharmacies] = useState<AssignedPharmacy[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
       fetchDoctor();
+      fetchAssignedPharmacies();
     }
   }, [id]);
+
+  const fetchAssignedPharmacies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctor_pharmacy_assignments')
+        .select(`
+          pharmacy_id,
+          pharmacies:pharmacy_id (
+            id,
+            name,
+            city,
+            contact_person
+          )
+        `)
+        .eq('doctor_id', id);
+
+      if (error) throw error;
+      
+      const pharmacies = data
+        ?.map(item => item.pharmacies as unknown as AssignedPharmacy)
+        .filter(Boolean) || [];
+      
+      setAssignedPharmacies(pharmacies);
+    } catch (error) {
+      console.error('Error fetching assigned pharmacies:', error);
+    }
+  };
 
   const fetchDoctor = async () => {
     try {
@@ -262,6 +298,44 @@ const DoctorDetails = () => {
             <p className="text-sm text-muted-foreground">
               View and manage incentive details for this doctor
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Assigned Pharmacies */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Store className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <CardTitle className="text-lg">Assigned Pharmacies</CardTitle>
+              <Badge variant="secondary" className="ml-auto">
+                {assignedPharmacies.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {assignedPharmacies.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No pharmacies assigned to this doctor
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {assignedPharmacies.map((pharmacy) => (
+                  <div
+                    key={pharmacy.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
+                  >
+                    <div>
+                      <p className="font-medium">{pharmacy.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {pharmacy.city} • {pharmacy.contact_person}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
