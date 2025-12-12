@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Doctors from "./pages/Doctors";
 import DoctorDetails from "./pages/DoctorDetails";
+import DoctorIncentive from "./pages/DoctorIncentive";
 import Distributors from "./pages/Distributors";
 import DistributorDetails from "./pages/DistributorDetails";
 import Pharmacies from "./pages/Pharmacies";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/doctors" element={<Doctors />} />
               <Route path="/dashboard/doctors/:id" element={<DoctorDetails />} />
+              <Route path="/dashboard/doctors/:id/incentive" element={<DoctorIncentive />} />
               <Route path="/dashboard/distributors" element={<Distributors />} />
               <Route path="/dashboard/distributors/:id" element={<DistributorDetails />} />
               <Route path="/dashboard/pharmacies" element={<Pharmacies />} />

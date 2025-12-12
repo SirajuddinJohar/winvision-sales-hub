@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, User, MapPin, Target, Edit, Trash2, AlertTriangle, Phone, Calendar, Heart, TrendingUp, Clock, Tag } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, User, MapPin, Target, Edit, Trash2, AlertTriangle, Phone, Calendar, Heart, TrendingUp, Clock, Tag, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DoctorForm from '@/components/doctors/DoctorForm';
@@ -38,6 +39,15 @@ const Doctors = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredDoctors = useMemo(() => {
+    if (!searchQuery.trim()) return doctors;
+    const query = searchQuery.toLowerCase();
+    return doctors.filter(doctor => 
+      doctor.name.toLowerCase().includes(query)
+    );
+  }, [doctors, searchQuery]);
 
   useEffect(() => {
     fetchDoctors();
@@ -187,14 +197,23 @@ const Doctors = () => {
         description="Manage your assigned doctors and their information"
       />
       <div className="p-4 md:p-6 space-y-6">
-        <div className="flex justify-end">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search doctor by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
           <Button onClick={handleAddDoctor}>
             <Plus className="mr-2 h-4 w-4" />
             Add Doctor
           </Button>
         </div>
 
-      {doctors.length === 0 ? (
+      {filteredDoctors.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
             <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -203,7 +222,7 @@ const Doctors = () => {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {doctors.map((doctor) => (
+          {filteredDoctors.map((doctor) => (
             <Card key={doctor.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/dashboard/doctors/${doctor.id}`)}>
               <CardHeader>
                 <div className="flex items-start justify-between">
