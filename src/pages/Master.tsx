@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Package, FlaskConical, ArrowLeft } from 'lucide-react';
+import { FlaskConical, Link2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 
 const Master = () => {
@@ -15,6 +15,7 @@ const Master = () => {
 
   const masterItems = [
     { icon: FlaskConical, label: 'Add Sample', path: '/dashboard/master/add-sample' },
+    { icon: Link2, label: 'Attach Dr with Ch', path: '/dashboard/master/attach-doctor-pharmacy' },
   ];
 
   return (
