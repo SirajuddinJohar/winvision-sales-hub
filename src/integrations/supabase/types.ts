@@ -206,6 +206,52 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_pharmacy_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doctor_id: string
+          id: string
+          pharmacy_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doctor_id: string
+          id?: string
+          pharmacy_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doctor_id?: string
+          id?: string
+          pharmacy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_pharmacy_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_pharmacy_assignments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_pharmacy_assignments_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_visit_notes: {
         Row: {
           created_at: string
