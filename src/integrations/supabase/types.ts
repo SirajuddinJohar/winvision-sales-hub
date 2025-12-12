@@ -693,6 +693,39 @@ export type Database = {
         }
         Relationships: []
       }
+      secondary_sales: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          distributor_id: string
+          id: string
+          image_url: string | null
+          sales_month: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          distributor_id: string
+          id?: string
+          image_url?: string | null
+          sales_month: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          distributor_id?: string
+          id?: string
+          image_url?: string | null
+          sales_month?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       targets: {
         Row: {
           achieved_value: number | null
