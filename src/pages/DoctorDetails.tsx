@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, MapPin, Phone, Calendar, Heart, TrendingUp, Target, Edit, ArrowLeft, Tag } from 'lucide-react';
+import { User, MapPin, Phone, Calendar, Heart, TrendingUp, Target, Edit, ArrowLeft, Tag, IndianRupee, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/layout/PageHeader';
 import PrescriptionTracking from '@/components/doctors/PrescriptionTracking';
@@ -236,11 +236,34 @@ const DoctorDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Prescription Tracking and Visit Notes */}
+        {/* Prescription Tracking, Visit Notes, and Incentive */}
         <div className="grid gap-6 md:grid-cols-2">
           <PrescriptionTracking doctorId={doctor.id} />
           <VisitNotes doctorId={doctor.id} />
         </div>
+
+        {/* Incentive Block */}
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate(`/dashboard/doctors/${doctor.id}/incentive`)}
+        >
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                  <IndianRupee className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-lg">Incentive</CardTitle>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              View and manage incentive details for this doctor
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
