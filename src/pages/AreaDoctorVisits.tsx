@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, MapPin, User, Save, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, MapPin, User, Save, Loader2, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 
 interface Area {
@@ -63,7 +63,7 @@ const AreaDoctorVisits = () => {
       if (areasError) throw areasError;
       setAreas(areasData || []);
 
-      // Fetch doctors assigned to current MR
+      // Fetch doctors
       const { data: doctorsData, error: doctorsError } = await supabase
         .from('doctors')
         .select('id, name, specialty, area')
@@ -72,15 +72,47 @@ const AreaDoctorVisits = () => {
       if (doctorsError) throw doctorsError;
       setDoctors(doctorsData || []);
 
-      // Load existing assignments from localStorage (or could be from DB)
-      const savedAssignments = localStorage.getItem(`area_doctor_visits_${user?.id}`);
-      if (savedAssignments) {
-        setAssignments(JSON.parse(savedAssignments));
-      }
+      // Fetch existing assignments from database
+      await fetchAssignments(areasData || [], doctorsData || []);
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAssignments = async (areasData: Area[], doctorsData: Doctor[]) => {
+    try {
+      const { data: assignmentsData, error } = await supabase
+        .from('area_doctor_visits')
+        .select('area_id, doctor_id')
+        .order('created_at');
+
+      if (error) throw error;
+
+      // Group by area
+      const groupedAssignments: Record<string, string[]> = {};
+      (assignmentsData || []).forEach((assignment) => {
+        if (!groupedAssignments[assignment.area_id]) {
+          groupedAssignments[assignment.area_id] = [];
+        }
+        groupedAssignments[assignment.area_id].push(assignment.doctor_id);
+      });
+
+      // Transform to AreaDoctorAssignment format
+      const formattedAssignments: AreaDoctorAssignment[] = Object.entries(groupedAssignments).map(([areaId, doctorIds]) => {
+        const area = areasData.find(a => a.id === areaId);
+        const areaDoctors = doctorsData.filter(d => doctorIds.includes(d.id));
+        return {
+          areaId,
+          areaName: area?.area_name || 'Unknown Area',
+          doctors: areaDoctors
+        };
+      });
+
+      setAssignments(formattedAssignments);
+    } catch (error: any) {
+      toast.error('Failed to load assignments: ' + error.message);
     }
   };
 
@@ -92,7 +124,7 @@ const AreaDoctorVisits = () => {
     );
   };
 
-  const handleSaveAssignment = () => {
+  const handleSaveAssignment = async () => {
     if (!selectedArea) {
       toast.error('Please select an area');
       return;
@@ -103,39 +135,68 @@ const AreaDoctorVisits = () => {
       return;
     }
 
-    setSaving(true);
-    
-    const selectedAreaData = areas.find(a => a.id === selectedArea);
-    const selectedDoctorsData = doctors.filter(d => selectedDoctors.includes(d.id));
-
-    const newAssignment: AreaDoctorAssignment = {
-      areaId: selectedArea,
-      areaName: selectedAreaData?.area_name || '',
-      doctors: selectedDoctorsData
-    };
-
-    // Update or add assignment
-    const existingIndex = assignments.findIndex(a => a.areaId === selectedArea);
-    let updatedAssignments: AreaDoctorAssignment[];
-    
-    if (existingIndex >= 0) {
-      updatedAssignments = [...assignments];
-      updatedAssignments[existingIndex] = newAssignment;
-    } else {
-      updatedAssignments = [...assignments, newAssignment];
+    if (!user?.id) {
+      toast.error('Please log in to save assignments');
+      return;
     }
 
-    setAssignments(updatedAssignments);
+    setSaving(true);
     
-    // Save to localStorage
-    localStorage.setItem(`area_doctor_visits_${user?.id}`, JSON.stringify(updatedAssignments));
-    
-    // Reset form
-    setSelectedArea('');
-    setSelectedDoctors([]);
-    setSaving(false);
-    
-    toast.success('Assignment saved successfully!');
+    try {
+      // Delete existing assignments for this area by this user
+      const { error: deleteError } = await supabase
+        .from('area_doctor_visits')
+        .delete()
+        .eq('area_id', selectedArea)
+        .eq('created_by', user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new assignments
+      const insertData = selectedDoctors.map(doctorId => ({
+        area_id: selectedArea,
+        doctor_id: doctorId,
+        created_by: user.id
+      }));
+
+      const { error: insertError } = await supabase
+        .from('area_doctor_visits')
+        .insert(insertData);
+
+      if (insertError) throw insertError;
+
+      // Refresh assignments
+      await fetchAssignments(areas, doctors);
+      
+      // Reset form
+      setSelectedArea('');
+      setSelectedDoctors([]);
+      
+      toast.success('Assignment saved successfully!');
+    } catch (error: any) {
+      toast.error('Failed to save assignment: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (areaId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('area_doctor_visits')
+        .delete()
+        .eq('area_id', areaId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      setAssignments(prev => prev.filter(a => a.areaId !== areaId));
+      toast.success('Assignment deleted');
+    } catch (error: any) {
+      toast.error('Failed to delete: ' + error.message);
+    }
   };
 
   const toggleAreaExpanded = (areaId: string) => {
@@ -145,10 +206,6 @@ const AreaDoctorVisits = () => {
         : [...prev, areaId]
     );
   };
-
-  const filteredDoctors = selectedArea 
-    ? doctors 
-    : doctors;
 
   if (!user) return null;
 
@@ -198,10 +255,10 @@ const AreaDoctorVisits = () => {
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                  ) : filteredDoctors.length === 0 ? (
+                  ) : doctors.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">No doctors available</p>
                   ) : (
-                    filteredDoctors.map((doctor) => (
+                    doctors.map((doctor) => (
                       <div
                         key={doctor.id}
                         className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
@@ -244,7 +301,11 @@ const AreaDoctorVisits = () => {
             <CardTitle>Area Assignments</CardTitle>
           </CardHeader>
           <CardContent>
-            {assignments.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : assignments.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 No area assignments yet. Select an area and assign doctors above.
               </p>
@@ -266,6 +327,17 @@ const AreaDoctorVisits = () => {
                           <Badge variant="secondary">
                             {assignment.doctors.length} doctors
                           </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAssignment(assignment.areaId);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                           {expandedAreas.includes(assignment.areaId) ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
