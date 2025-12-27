@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Link2, Package, TrendingUp, ShoppingCart } from 'lucide-react';
+import { FlaskConical, Link2, Package, TrendingUp, ShoppingCart, MapPin } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 
 const Master = () => {
@@ -19,6 +19,7 @@ const Master = () => {
     { icon: Package, label: 'Sales And Stocks', path: '/dashboard/master/sales-and-stocks' },
     { icon: TrendingUp, label: 'Secondary Sales', path: '/dashboard/master/secondary-sales' },
     { icon: ShoppingCart, label: 'Primary Sales', path: '/dashboard/master/primary-sales' },
+    { icon: MapPin, label: 'Area Wise Doctor Visits', path: '/dashboard/master/area-doctor-visits' },
   ];
 
   return (
