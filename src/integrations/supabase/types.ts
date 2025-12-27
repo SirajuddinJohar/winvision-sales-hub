@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      area_doctor_visits: {
+        Row: {
+          area_id: string
+          created_at: string
+          created_by: string
+          doctor_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          created_by: string
+          doctor_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          created_by?: string
+          doctor_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_doctor_visits_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_doctor_visits_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       areas: {
         Row: {
           area_name: string
