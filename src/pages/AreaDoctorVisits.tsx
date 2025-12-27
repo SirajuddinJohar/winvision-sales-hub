@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, MapPin, User, Save, Loader2, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, MapPin, User, Save, Loader2, Trash2, Search, X } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 
 interface Area {
@@ -36,12 +36,13 @@ const AreaDoctorVisits = () => {
   
   const [areas, setAreas] = useState<Area[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedArea, setSelectedArea] = useState<string>('');
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<AreaDoctorAssignment[]>([]);
   const [expandedAreas, setExpandedAreas] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -54,7 +55,6 @@ const AreaDoctorVisits = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch areas
       const { data: areasData, error: areasError } = await supabase
         .from('areas')
         .select('id, area_name')
@@ -63,7 +63,6 @@ const AreaDoctorVisits = () => {
       if (areasError) throw areasError;
       setAreas(areasData || []);
 
-      // Fetch doctors
       const { data: doctorsData, error: doctorsError } = await supabase
         .from('doctors')
         .select('id, name, specialty, area')
@@ -72,7 +71,6 @@ const AreaDoctorVisits = () => {
       if (doctorsError) throw doctorsError;
       setDoctors(doctorsData || []);
 
-      // Fetch existing assignments from database
       await fetchAssignments(areasData || [], doctorsData || []);
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
@@ -90,7 +88,6 @@ const AreaDoctorVisits = () => {
 
       if (error) throw error;
 
-      // Group by area
       const groupedAssignments: Record<string, string[]> = {};
       (assignmentsData || []).forEach((assignment) => {
         if (!groupedAssignments[assignment.area_id]) {
@@ -99,7 +96,6 @@ const AreaDoctorVisits = () => {
         groupedAssignments[assignment.area_id].push(assignment.doctor_id);
       });
 
-      // Transform to AreaDoctorAssignment format
       const formattedAssignments: AreaDoctorAssignment[] = Object.entries(groupedAssignments).map(([areaId, doctorIds]) => {
         const area = areasData.find(a => a.id === areaId);
         const areaDoctors = doctorsData.filter(d => doctorIds.includes(d.id));
@@ -116,6 +112,14 @@ const AreaDoctorVisits = () => {
     }
   };
 
+  const handleAreaToggle = (areaId: string) => {
+    setSelectedAreas(prev =>
+      prev.includes(areaId)
+        ? prev.filter(id => id !== areaId)
+        : [...prev, areaId]
+    );
+  };
+
   const handleDoctorToggle = (doctorId: string) => {
     setSelectedDoctors(prev => 
       prev.includes(doctorId) 
@@ -124,9 +128,20 @@ const AreaDoctorVisits = () => {
     );
   };
 
+  const filteredDoctors = useMemo(() => {
+    if (!searchQuery.trim()) return doctors;
+    
+    const query = searchQuery.toLowerCase();
+    return doctors.filter(doctor =>
+      doctor.name.toLowerCase().includes(query) ||
+      doctor.specialty.toLowerCase().includes(query) ||
+      doctor.area.toLowerCase().includes(query)
+    );
+  }, [doctors, searchQuery]);
+
   const handleSaveAssignment = async () => {
-    if (!selectedArea) {
-      toast.error('Please select an area');
+    if (selectedAreas.length === 0) {
+      toast.error('Please select at least one area');
       return;
     }
 
@@ -143,21 +158,29 @@ const AreaDoctorVisits = () => {
     setSaving(true);
     
     try {
-      // Delete existing assignments for this area by this user
-      const { error: deleteError } = await supabase
-        .from('area_doctor_visits')
-        .delete()
-        .eq('area_id', selectedArea)
-        .eq('created_by', user.id);
+      // Delete existing assignments for selected areas by this user
+      for (const areaId of selectedAreas) {
+        const { error: deleteError } = await supabase
+          .from('area_doctor_visits')
+          .delete()
+          .eq('area_id', areaId)
+          .eq('created_by', user.id);
 
-      if (deleteError) throw deleteError;
+        if (deleteError) throw deleteError;
+      }
 
-      // Insert new assignments
-      const insertData = selectedDoctors.map(doctorId => ({
-        area_id: selectedArea,
-        doctor_id: doctorId,
-        created_by: user.id
-      }));
+      // Insert new assignments for all selected areas
+      const insertData: { area_id: string; doctor_id: string; created_by: string }[] = [];
+      
+      for (const areaId of selectedAreas) {
+        for (const doctorId of selectedDoctors) {
+          insertData.push({
+            area_id: areaId,
+            doctor_id: doctorId,
+            created_by: user.id
+          });
+        }
+      }
 
       const { error: insertError } = await supabase
         .from('area_doctor_visits')
@@ -165,14 +188,13 @@ const AreaDoctorVisits = () => {
 
       if (insertError) throw insertError;
 
-      // Refresh assignments
       await fetchAssignments(areas, doctors);
       
-      // Reset form
-      setSelectedArea('');
+      setSelectedAreas([]);
       setSelectedDoctors([]);
+      setSearchQuery('');
       
-      toast.success('Assignment saved successfully!');
+      toast.success('Assignments saved successfully!');
     } catch (error: any) {
       toast.error('Failed to save assignment: ' + error.message);
     } finally {
@@ -207,6 +229,12 @@ const AreaDoctorVisits = () => {
     );
   };
 
+  const getSelectedAreaNames = () => {
+    return areas
+      .filter(a => selectedAreas.includes(a.id))
+      .map(a => a.area_name);
+  };
+
   if (!user) return null;
 
   return (
@@ -219,29 +247,59 @@ const AreaDoctorVisits = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-primary" />
-              Assign Doctors to Area
+              Assign Doctors to Areas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Area Selection */}
+            {/* Area Selection - Multi Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Area</label>
-              <Select value={selectedArea} onValueChange={setSelectedArea}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.map((area) => (
-                    <SelectItem key={area.id} value={area.id}>
-                      {area.area_name}
-                    </SelectItem>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Select Areas</label>
+                <Badge variant={selectedAreas.length > 0 ? "default" : "secondary"}>
+                  {selectedAreas.length} selected
+                </Badge>
+              </div>
+              
+              {/* Selected Areas Tags */}
+              {selectedAreas.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {getSelectedAreaNames().map((name, index) => (
+                    <Badge key={index} variant="outline" className="flex items-center gap-1">
+                      {name}
+                      <X 
+                        className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                        onClick={() => {
+                          const area = areas.find(a => a.area_name === name);
+                          if (area) handleAreaToggle(area.id);
+                        }}
+                      />
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              
+              <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1">
+                {areas.map((area) => (
+                  <div
+                    key={area.id}
+                    className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
+                    onClick={() => handleAreaToggle(area.id)}
+                  >
+                    <Checkbox
+                      checked={selectedAreas.includes(area.id)}
+                      onCheckedChange={() => handleAreaToggle(area.id)}
+                    />
+                    <span className="font-medium">{area.area_name}</span>
+                  </div>
+                ))}
+                {areas.length === 0 && (
+                  <p className="text-center text-muted-foreground py-2">No areas available</p>
+                )}
+              </div>
             </div>
 
-            {/* Doctor Selection */}
-            {selectedArea && (
+            {/* Doctor Selection with Search */}
+            {selectedAreas.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Select Doctors (minimum 5)</label>
@@ -250,15 +308,34 @@ const AreaDoctorVisits = () => {
                   </Badge>
                 </div>
                 
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, specialty, or area..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                  {searchQuery && (
+                    <X 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground"
+                      onClick={() => setSearchQuery('')}
+                    />
+                  )}
+                </div>
+                
                 <div className="max-h-64 overflow-y-auto border rounded-lg p-2 space-y-2">
                   {loading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                  ) : doctors.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">No doctors available</p>
+                  ) : filteredDoctors.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">
+                      {searchQuery ? 'No doctors match your search' : 'No doctors available'}
+                    </p>
                   ) : (
-                    doctors.map((doctor) => (
+                    filteredDoctors.map((doctor) => (
                       <div
                         key={doctor.id}
                         className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
@@ -282,7 +359,7 @@ const AreaDoctorVisits = () => {
             {/* Save Button */}
             <Button 
               onClick={handleSaveAssignment} 
-              disabled={!selectedArea || selectedDoctors.length < 5 || saving}
+              disabled={selectedAreas.length === 0 || selectedDoctors.length < 5 || saving}
               className="w-full"
             >
               {saving ? (
@@ -290,7 +367,7 @@ const AreaDoctorVisits = () => {
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Save Assignment
+              Save Assignment ({selectedAreas.length} area{selectedAreas.length !== 1 ? 's' : ''}, {selectedDoctors.length} doctors)
             </Button>
           </CardContent>
         </Card>
@@ -307,7 +384,7 @@ const AreaDoctorVisits = () => {
               </div>
             ) : assignments.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No area assignments yet. Select an area and assign doctors above.
+                No area assignments yet. Select areas and assign doctors above.
               </p>
             ) : (
               <div className="space-y-2">
