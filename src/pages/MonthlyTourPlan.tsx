@@ -12,7 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import PageHeader from '@/components/layout/PageHeader';
-import { Calendar, Trash2 } from 'lucide-react';
+import { Calendar, Trash2, MapPin, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TourPlan {
   id: string;
@@ -69,10 +71,14 @@ const MonthlyTourPlan = () => {
     admin_response_at?: string | null;
     admin_remarks?: string | null;
   } | null>(null);
+  const [todayArea, setTodayArea] = useState<string | null>(null);
+  const [showTodayPlan, setShowTodayPlan] = useState(false);
+  const [todayPlanData, setTodayPlanData] = useState<TourPlanDay | null>(null);
 
   // Helper function to check if plan can be edited
   const canEditPlan = (plan: TourPlan | null): boolean => {
-    if (!plan) return false;
+    // No plan yet means user can create one
+    if (!plan) return true;
     // Initial draft with no edit_until restriction
     if (plan.status === 'draft' && !plan.edit_until) return true;
     // Time-based edit window is active
@@ -100,7 +106,43 @@ const MonthlyTourPlan = () => {
     fetchAreas();
     fetchTourPlan();
     checkAndUnlockForFirstOfMonth();
+    fetchTodayPlan();
   }, [selectedYear, selectedMonth, user?.id]);
+
+  // Fetch today's plan data
+  const fetchTodayPlan = async () => {
+    if (!user?.id) return;
+    
+    const today = new Date();
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth() + 1;
+    const todayYear = today.getFullYear();
+    
+    // Get tour plan for current month
+    const { data: planData } = await supabase
+      .from('tour_plans')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('month', todayMonth)
+      .eq('year', todayYear)
+      .maybeSingle();
+    
+    if (planData) {
+      const { data: dayData } = await supabase
+        .from('tour_plan_days')
+        .select('*')
+        .eq('tour_plan_id', planData.id)
+        .eq('date', todayDate)
+        .maybeSingle();
+      
+      setTodayPlanData(dayData);
+      
+      // Get first area from today's plan if exists
+      if (dayData?.areas && Array.isArray(dayData.areas) && dayData.areas.length > 0) {
+        setTodayArea((dayData.areas as any[])[0]?.id || null);
+      }
+    }
+  };
 
   const fetchAreas = async () => {
     const { data, error } = await supabase
@@ -472,6 +514,62 @@ const MonthlyTourPlan = () => {
       <PageHeader title="Monthly Tour Plan" description="Plan your monthly tours" />
       
       <div className="container mx-auto px-4 py-6 max-w-6xl">
+        {/* Today's Plan Section */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MapPin className="h-5 w-5 text-primary" />
+              Today's Plan - {format(currentDate, 'MMMM dd, yyyy')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todayPlanData ? (
+              <div className="space-y-3">
+                {todayPlanData.is_holiday ? (
+                  <Badge variant="destructive" className="text-sm">Holiday</Badge>
+                ) : todayPlanData.is_weekly_off ? (
+                  <Badge variant="secondary" className="text-sm">Weekly Off</Badge>
+                ) : (
+                  <>
+                    <div className="text-sm text-muted-foreground mb-2">Select area you're working in today:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {todayPlanData.areas && Array.isArray(todayPlanData.areas) && (todayPlanData.areas as any[]).map((area: any) => (
+                        <Button
+                          key={area.id}
+                          variant={todayArea === area.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTodayArea(area.id)}
+                          className="flex items-center gap-1"
+                        >
+                          {todayArea === area.id && <Check className="h-3 w-3" />}
+                          {area.name}
+                        </Button>
+                      ))}
+                    </div>
+                    {todayArea && (
+                      <div className="mt-3 p-3 bg-background rounded-lg border">
+                        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                          <Check className="h-4 w-4" />
+                          Working in: {(todayPlanData.areas as any[])?.find((a: any) => a.id === todayArea)?.name}
+                        </div>
+                      </div>
+                    )}
+                    {todayPlanData.remarks && (
+                      <div className="text-sm text-muted-foreground mt-2">
+                        <span className="font-medium">Remarks:</span> {todayPlanData.remarks}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No plan set for today. Click on today's date in the calendar below to add your plan.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Header Section */}
         <div className="bg-card rounded-lg p-6 mb-6 shadow-sm border">
           <div className="text-center mb-4">
