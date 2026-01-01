@@ -10,6 +10,8 @@ import SampleEntry from '@/components/daily-working/SampleEntry';
 import OrderEntry from '@/components/daily-working/OrderEntry';
 import PageHeader from '@/components/layout/PageHeader';
 import { getCurrentLocation, calculateDistance } from '@/lib/geolocation';
+import { useSearchParams } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 interface CallTarget {
   id: string;
@@ -22,6 +24,7 @@ interface CallTarget {
   phone?: string;
   distanceFromUser?: number; // in meters
   hasLocation?: boolean;
+  isTodayPlan?: boolean; // Flag for today's planned calls
 }
 
 interface CallStats {
@@ -32,16 +35,21 @@ interface CallStats {
 
 const DailyWorking = () => {
   const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const selectedAreaId = searchParams.get('area');
+  
   const [targets, setTargets] = useState<CallTarget[]>([]);
   const [filteredTargets, setFilteredTargets] = useState<CallTarget[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<CallStats>({ total: 0, doctors: 0, pharmacies: 0 });
-  const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('pending');
   const [currentView, setCurrentView] = useState<'list' | 'sample' | 'order'>('list');
   const [selectedTarget, setSelectedTarget] = useState<CallTarget | null>(null);
   const [sampleData, setSampleData] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [todayAreaName, setTodayAreaName] = useState<string | null>(null);
+  const [todayPlanDoctorIds, setTodayPlanDoctorIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,7 +58,7 @@ const DailyWorking = () => {
 
   useEffect(() => {
     fetchTargetsAndCalls();
-  }, [user, profile, userLocation]);
+  }, [user, profile, userLocation, selectedAreaId]);
 
   useEffect(() => {
     const filtered = targets.filter(target => {
@@ -58,7 +66,14 @@ const DailyWorking = () => {
         target.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (target.area && target.area.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesTab = activeTab === 'completed' ? target.isComplete : !target.isComplete;
+      let matchesTab = true;
+      if (activeTab === 'completed') {
+        matchesTab = target.isComplete;
+      } else if (activeTab === 'pending') {
+        // In pending tab, show only today's planned calls that are not complete
+        matchesTab = !target.isComplete && target.isTodayPlan === true;
+      }
+      // 'all' tab shows everything
       
       return matchesSearch && matchesTab;
     });
@@ -81,6 +96,52 @@ const DailyWorking = () => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
+      const todayDate = new Date().getDate();
+      const todayMonth = new Date().getMonth() + 1;
+      const todayYear = new Date().getFullYear();
+
+      // Fetch today's tour plan to get planned doctors for selected area
+      let plannedDoctorIds: string[] = [];
+      let areaName: string | null = null;
+      
+      if (selectedAreaId) {
+        // Get tour plan for today
+        const { data: planData } = await supabase
+          .from('tour_plans')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('month', todayMonth)
+          .eq('year', todayYear)
+          .maybeSingle();
+        
+        if (planData) {
+          const { data: dayData } = await supabase
+            .from('tour_plan_days')
+            .select('areas')
+            .eq('tour_plan_id', planData.id)
+            .eq('date', todayDate)
+            .maybeSingle();
+          
+          if (dayData?.areas && Array.isArray(dayData.areas)) {
+            const selectedArea = (dayData.areas as any[]).find((a: any) => a.id === selectedAreaId);
+            areaName = selectedArea?.name || null;
+          }
+        }
+        
+        // Fetch doctors assigned to this area from area_doctor_visits
+        const { data: areaDoctors } = await supabase
+          .from('area_doctor_visits')
+          .select('doctor_id')
+          .eq('area_id', selectedAreaId)
+          .eq('created_by', user.id);
+        
+        if (areaDoctors) {
+          plannedDoctorIds = areaDoctors.map(ad => ad.doctor_id);
+        }
+      }
+      
+      setTodayAreaName(areaName);
+      setTodayPlanDoctorIds(plannedDoctorIds);
 
       // Fetch doctors
       let doctorsQuery = supabase
@@ -133,6 +194,9 @@ const DailyWorking = () => {
             ) * 1000; // Convert km to meters
           }
 
+          // Check if this doctor is in today's plan
+          const isTodayPlan = plannedDoctorIds.length === 0 || plannedDoctorIds.includes(doc.id);
+
           return {
             id: doc.id,
             name: doc.name,
@@ -143,7 +207,8 @@ const DailyWorking = () => {
             location: location || undefined,
             phone: doc.phone || undefined,
             hasLocation: !!hasLocation,
-            distanceFromUser
+            distanceFromUser,
+            isTodayPlan
           };
         }),
         ...(pharmaciesRes.data || []).map(pharm => ({
@@ -152,7 +217,8 @@ const DailyWorking = () => {
           type: 'pharmacy' as const,
           details: pharm.address,
           area: pharm.city,
-          isComplete: callsMap.get(pharm.id) || false
+          isComplete: callsMap.get(pharm.id) || false,
+          isTodayPlan: false // Pharmacies are shown in 'all' tab
         }))
       ];
 
@@ -360,6 +426,20 @@ const DailyWorking = () => {
       <PageHeader title="Daily Working" description="Track your daily doctor and pharmacy calls" />
       <div className="p-4 md:p-6 space-y-6">
 
+      {/* Today's Area Banner */}
+      {todayAreaName && (
+        <Card className="p-4 border-primary/20 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <span className="font-medium">Today's Area:</span>
+            <Badge variant="default">{todayAreaName}</Badge>
+            <span className="text-sm text-muted-foreground ml-2">
+              ({todayPlanDoctorIds.length} doctors assigned)
+            </span>
+          </div>
+        </Card>
+      )}
+
       {/* Call Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
@@ -393,13 +473,76 @@ const DailyWorking = () => {
         />
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'completed')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="pending">Pending</TabsTrigger>
+      {/* Tabs - 3 columns: All, Pending, Completed */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'all' | 'pending' | 'completed')}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="pending">
+            Pending {todayPlanDoctorIds.length > 0 ? `(${targets.filter(t => t.isTodayPlan && !t.isComplete).length})` : ''}
+          </TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
 
+        {/* All Tab - Shows all doctors and pharmacies */}
+        <TabsContent value="all" className="space-y-3 mt-4">
+          {filteredTargets.map((target) => {
+            const isTooFar = target.type === 'doctor' && target.distanceFromUser !== undefined && target.distanceFromUser > 200;
+            const needsLocation = target.type === 'doctor' && !target.hasLocation;
+            const isDisabled = needsLocation || isTooFar || target.isComplete;
+
+            return (
+              <Card 
+                key={target.id} 
+                className={`p-4 transition-colors ${
+                  target.isComplete ? 'bg-muted/30' :
+                  isDisabled 
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : 'cursor-pointer hover:bg-accent/50'
+                }`}
+                onClick={() => !isDisabled && handleTargetClick(target)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`p-2 rounded-lg ${target.type === 'doctor' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                      {target.type === 'doctor' ? (
+                        <Stethoscope className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <Store className="h-5 w-5 text-green-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground">{target.name}</h3>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                          {target.type === 'doctor' ? '🩺 Doctor' : '🏪 Pharmacy'}
+                        </span>
+                        {target.isTodayPlan && (
+                          <Badge variant="outline" className="text-xs border-primary text-primary">
+                            Today's Plan
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{target.details}</p>
+                      {target.area && <p className="text-xs text-muted-foreground">{target.area}</p>}
+                    </div>
+                  </div>
+                  {target.isComplete && (
+                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+          {filteredTargets.length === 0 && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No targets found.</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Pending Tab - Shows today's planned calls only */}
         <TabsContent value="pending" className="space-y-3 mt-4">
           {filteredTargets.map((target) => {
             const isTooFar = target.type === 'doctor' && target.distanceFromUser !== undefined && target.distanceFromUser > 200;
@@ -426,11 +569,14 @@ const DailyWorking = () => {
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-foreground hover:text-primary">{target.name}</h3>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
                           {target.type === 'doctor' ? '🩺 Doctor' : '🏪 Pharmacy'}
                         </span>
+                        <Badge variant="outline" className="text-xs border-primary text-primary">
+                          Today's Plan
+                        </Badge>
                         {target.type === 'doctor' && target.distanceFromUser !== undefined && (
                           <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
                             target.distanceFromUser <= 200 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
