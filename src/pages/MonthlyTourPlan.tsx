@@ -548,9 +548,19 @@ const MonthlyTourPlan = () => {
                     </div>
                     {todayArea && (
                       <div className="mt-3 p-3 bg-background rounded-lg border">
-                        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                          <Check className="h-4 w-4" />
-                          Working in: {(todayPlanData.areas as any[])?.find((a: any) => a.id === todayArea)?.name}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                            <Check className="h-4 w-4" />
+                            Working in: {(todayPlanData.areas as any[])?.find((a: any) => a.id === todayArea)?.name}
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/daily-working?area=${todayArea}`)}
+                            className="flex items-center gap-1"
+                          >
+                            Go to Daily Working
+                            <MapPin className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     )}
