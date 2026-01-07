@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import PageHeader from '@/components/layout/PageHeader';
 import {
@@ -28,7 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { MapPin, Trash2, Search, User, ArrowLeft, Users } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { MapPin, Trash2, Search, User, ArrowLeft, Users, Plus, X } from 'lucide-react';
 
 interface AreaWithUser {
   id: string;
@@ -43,6 +51,19 @@ interface AreaWithUser {
   doctor_count: number;
 }
 
+interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+  area: string;
+}
+
+interface AreaDoctor {
+  id: string;
+  doctor_id: string;
+  doctor: Doctor;
+}
+
 const WorkingAreas = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,6 +73,16 @@ const WorkingAreas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterByUser, setFilterByUser] = useState<string>('');
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  
+  // Doctor management dialog state
+  const [selectedArea, setSelectedArea] = useState<AreaWithUser | null>(null);
+  const [doctorDialogOpen, setDoctorDialogOpen] = useState(false);
+  const [areaDoctors, setAreaDoctors] = useState<AreaDoctor[]>([]);
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [doctorSearch, setDoctorSearch] = useState('');
+  const [selectedDoctorsToAdd, setSelectedDoctorsToAdd] = useState<string[]>([]);
+  const [showAddDoctors, setShowAddDoctors] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -167,6 +198,134 @@ const WorkingAreas = () => {
       });
     }
   };
+
+  // Fetch doctors for selected area
+  const fetchAreaDoctors = async (areaId: string) => {
+    setLoadingDoctors(true);
+    try {
+      const { data, error } = await supabase
+        .from('area_doctor_visits')
+        .select('id, doctor_id, doctors(id, name, specialty, area)')
+        .eq('area_id', areaId);
+
+      if (error) throw error;
+
+      const formattedDoctors = (data || []).map((item: any) => ({
+        id: item.id,
+        doctor_id: item.doctor_id,
+        doctor: item.doctors,
+      }));
+
+      setAreaDoctors(formattedDoctors);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch doctors',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
+
+  // Fetch all doctors for adding
+  const fetchAllDoctors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, name, specialty, area')
+        .order('name');
+
+      if (error) throw error;
+      setAllDoctors(data || []);
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+    }
+  };
+
+  const handleOpenDoctorDialog = async (area: AreaWithUser) => {
+    setSelectedArea(area);
+    setDoctorDialogOpen(true);
+    setShowAddDoctors(false);
+    setSelectedDoctorsToAdd([]);
+    setDoctorSearch('');
+    await Promise.all([fetchAreaDoctors(area.id), fetchAllDoctors()]);
+  };
+
+  const handleRemoveDoctor = async (assignmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('area_doctor_visits')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Doctor removed from area' });
+      
+      if (selectedArea) {
+        fetchAreaDoctors(selectedArea.id);
+        fetchAreas(); // Refresh counts
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to remove doctor',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddDoctors = async () => {
+    if (!selectedArea || selectedDoctorsToAdd.length === 0 || !user) return;
+
+    try {
+      const insertData = selectedDoctorsToAdd.map((doctorId) => ({
+        area_id: selectedArea.id,
+        doctor_id: doctorId,
+        created_by: user.id,
+      }));
+
+      const { error } = await supabase
+        .from('area_doctor_visits')
+        .insert(insertData);
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: `Added ${selectedDoctorsToAdd.length} doctor(s) to area` });
+      
+      setSelectedDoctorsToAdd([]);
+      setShowAddDoctors(false);
+      fetchAreaDoctors(selectedArea.id);
+      fetchAreas();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add doctors',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleDoctorSelection = (doctorId: string) => {
+    setSelectedDoctorsToAdd((prev) =>
+      prev.includes(doctorId)
+        ? prev.filter((id) => id !== doctorId)
+        : [...prev, doctorId]
+    );
+  };
+
+  // Get available doctors (not already assigned to this area)
+  const availableDoctors = allDoctors.filter(
+    (doc) => !areaDoctors.some((ad) => ad.doctor_id === doc.id)
+  );
+
+  const filteredAvailableDoctors = availableDoctors.filter(
+    (doc) =>
+      doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      doc.area.toLowerCase().includes(doctorSearch.toLowerCase())
+  );
 
   const filteredAreas = areas.filter((area) => {
     const matchesSearch =
@@ -333,7 +492,11 @@ const WorkingAreas = () => {
                         </TableCell>
                         <TableCell>{area.distance} km</TableCell>
                         <TableCell>
-                          <Badge variant={area.doctor_count > 0 ? "default" : "outline"} className="flex items-center gap-1 w-fit">
+                          <Badge 
+                            variant={area.doctor_count > 0 ? "default" : "outline"} 
+                            className="flex items-center gap-1 w-fit cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => handleOpenDoctorDialog(area)}
+                          >
                             <Users className="h-3 w-3" />
                             {area.doctor_count}
                           </Badge>
@@ -386,6 +549,129 @@ const WorkingAreas = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Doctor Management Dialog */}
+      <Dialog open={doctorDialogOpen} onOpenChange={setDoctorDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              {selectedArea?.area_name} - Doctors
+            </DialogTitle>
+            <DialogDescription>
+              Manage doctors assigned to this area
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {/* Current Doctors List */}
+            {!showAddDoctors && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Assigned Doctors ({areaDoctors.length})</h4>
+                  <Button size="sm" onClick={() => setShowAddDoctors(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Doctors
+                  </Button>
+                </div>
+
+                {loadingDoctors ? (
+                  <div className="text-center py-4 text-muted-foreground">Loading...</div>
+                ) : areaDoctors.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                    No doctors assigned to this area
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {areaDoctors.map((ad) => (
+                      <div
+                        key={ad.id}
+                        className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                      >
+                        <div>
+                          <p className="font-medium">{ad.doctor?.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {ad.doctor?.specialty} • {ad.doctor?.area}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleRemoveDoctor(ad.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Add Doctors View */}
+            {showAddDoctors && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Add Doctors</h4>
+                  <Button variant="ghost" size="sm" onClick={() => setShowAddDoctors(false)}>
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Back
+                  </Button>
+                </div>
+
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search doctors..."
+                    value={doctorSearch}
+                    onChange={(e) => setDoctorSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {filteredAvailableDoctors.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                    No available doctors found
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {filteredAvailableDoctors.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedDoctorsToAdd.includes(doc.id)
+                            ? 'bg-primary/10 border-primary'
+                            : 'hover:bg-accent'
+                        }`}
+                        onClick={() => toggleDoctorSelection(doc.id)}
+                      >
+                        <Checkbox
+                          checked={selectedDoctorsToAdd.includes(doc.id)}
+                          onCheckedChange={() => toggleDoctorSelection(doc.id)}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium">{doc.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {doc.specialty} • {doc.area}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedDoctorsToAdd.length > 0 && (
+                  <Button className="w-full" onClick={handleAddDoctors}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add {selectedDoctorsToAdd.length} Doctor(s)
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
