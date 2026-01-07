@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { MapPin, Trash2, Search, User, ArrowLeft } from 'lucide-react';
+import { MapPin, Trash2, Search, User, ArrowLeft, Users } from 'lucide-react';
 
 interface AreaWithUser {
   id: string;
@@ -40,6 +40,7 @@ interface AreaWithUser {
   created_by: string | null;
   user_name: string | null;
   user_email: string | null;
+  doctor_count: number;
 }
 
 const WorkingAreas = () => {
@@ -71,6 +72,17 @@ const WorkingAreas = () => {
 
       if (areasError) throw areasError;
 
+      // Fetch doctor counts for all areas
+      const { data: doctorCounts } = await supabase
+        .from('area_doctor_visits')
+        .select('area_id');
+
+      // Count doctors per area
+      const countByArea = (doctorCounts || []).reduce((acc, item) => {
+        acc[item.area_id] = (acc[item.area_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
       // Fetch user info for each area
       const areasWithUsers: AreaWithUser[] = await Promise.all(
         (areasData || []).map(async (area) => {
@@ -94,6 +106,7 @@ const WorkingAreas = () => {
             ...area,
             user_name: userName,
             user_email: userEmail,
+            doctor_count: countByArea[area.id] || 0,
           };
         })
       );
@@ -298,6 +311,7 @@ const WorkingAreas = () => {
                       <TableHead>Area Name</TableHead>
                       <TableHead>From → To</TableHead>
                       <TableHead>Distance</TableHead>
+                      <TableHead>Doctors</TableHead>
                       <TableHead>Created By</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -318,6 +332,12 @@ const WorkingAreas = () => {
                           </span>
                         </TableCell>
                         <TableCell>{area.distance} km</TableCell>
+                        <TableCell>
+                          <Badge variant={area.doctor_count > 0 ? "default" : "outline"} className="flex items-center gap-1 w-fit">
+                            <Users className="h-3 w-3" />
+                            {area.doctor_count}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           {area.user_name ? (
                             <div>
