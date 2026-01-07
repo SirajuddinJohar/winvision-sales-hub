@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ interface AreaFormProps {
 
 const AreaForm = ({ onClose, onSave }: AreaFormProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
   const { 
@@ -39,7 +41,8 @@ const AreaForm = ({ onClose, onSave }: AreaFormProps) => {
         .from('areas')
         .insert([{
           ...data,
-          distance: Number(data.distance)
+          distance: Number(data.distance),
+          created_by: user?.id
         }]);
         
       if (error) throw error;

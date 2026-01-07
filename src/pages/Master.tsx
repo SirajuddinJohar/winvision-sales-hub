@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Link2, Package, TrendingUp, ShoppingCart, MapPin } from 'lucide-react';
+import { FlaskConical, Link2, Package, TrendingUp, ShoppingCart, MapPin, Map } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 const Master = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useRoleAccess();
 
   if (!user) {
     navigate('/auth');
@@ -20,6 +22,7 @@ const Master = () => {
     { icon: TrendingUp, label: 'Secondary Sales', path: '/dashboard/master/secondary-sales' },
     { icon: ShoppingCart, label: 'Primary Sales', path: '/dashboard/master/primary-sales' },
     { icon: MapPin, label: 'Area Wise Doctor Visits', path: '/dashboard/master/area-doctor-visits' },
+    ...(isAdmin ? [{ icon: Map, label: 'Working Areas', path: '/dashboard/master/working-areas' }] : []),
   ];
 
   return (

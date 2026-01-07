@@ -60,6 +60,7 @@ export type Database = {
         Row: {
           area_name: string
           created_at: string
+          created_by: string | null
           distance: number
           from_location: string
           id: string
@@ -69,6 +70,7 @@ export type Database = {
         Insert: {
           area_name: string
           created_at?: string
+          created_by?: string | null
           distance: number
           from_location: string
           id?: string
@@ -78,6 +80,7 @@ export type Database = {
         Update: {
           area_name?: string
           created_at?: string
+          created_by?: string | null
           distance?: number
           from_location?: string
           id?: string
