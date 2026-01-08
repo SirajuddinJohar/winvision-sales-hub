@@ -339,12 +339,21 @@ const WorkingAreas = () => {
     return matchesSearch && matchesUser;
   });
 
-  // Group areas by user for summary
+  // Helper function to get short name (last word of full name)
+  const getShortName = (fullName: string | null): string => {
+    if (!fullName) return 'Not tracked';
+    const parts = fullName.trim().split(' ');
+    // Return last name if multiple parts, otherwise the single name
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
+  // Group areas by user for summary (only for tracked users)
   const areasByUser = areas.reduce((acc, area) => {
-    const key = area.created_by || 'unknown';
+    if (!area.created_by) return acc; // Skip untracked areas
+    const key = area.created_by;
     if (!acc[key]) {
       acc[key] = {
-        name: area.user_name || 'Unknown User',
+        name: getShortName(area.user_name),
         count: 0,
       };
     }
@@ -502,13 +511,13 @@ const WorkingAreas = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {area.user_name ? (
+                          {area.created_by && area.user_name ? (
                             <div>
-                              <p className="font-medium">{area.user_name}</p>
+                              <p className="font-medium">{getShortName(area.user_name)}</p>
                               <p className="text-xs text-muted-foreground">{area.user_email}</p>
                             </div>
                           ) : (
-                            <Badge variant="outline">Unknown</Badge>
+                            <Badge variant="outline" className="text-muted-foreground">Not tracked</Badge>
                           )}
                         </TableCell>
                         <TableCell>
