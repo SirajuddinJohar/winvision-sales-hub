@@ -161,6 +161,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_working_setup: {
+        Row: {
+          created_at: string
+          id: string
+          mr_id: string
+          selected_areas: Json | null
+          updated_at: string
+          work_date: string
+          work_type: string
+          working_with: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mr_id: string
+          selected_areas?: Json | null
+          updated_at?: string
+          work_date?: string
+          work_type: string
+          working_with?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mr_id?: string
+          selected_areas?: Json | null
+          updated_at?: string
+          work_date?: string
+          work_type?: string
+          working_with?: string | null
+        }
+        Relationships: []
+      }
       distributor_products: {
         Row: {
           created_at: string

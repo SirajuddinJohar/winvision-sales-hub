@@ -4,14 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Stethoscope, Store, Check, MapPin, AlertTriangle } from 'lucide-react';
+import { Search, Stethoscope, Store, Check, MapPin, AlertTriangle, Calendar, Users, Briefcase, Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SampleEntry from '@/components/daily-working/SampleEntry';
 import OrderEntry from '@/components/daily-working/OrderEntry';
 import PageHeader from '@/components/layout/PageHeader';
 import { getCurrentLocation, calculateDistance } from '@/lib/geolocation';
-import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface CallTarget {
   id: string;
@@ -33,10 +36,25 @@ interface CallStats {
   pharmacies: number;
 }
 
+interface Area {
+  id: string;
+  area_name: string;
+  from_location: string;
+  to_location: string;
+  distance: number;
+}
+
+interface DailyWorkingSetup {
+  id: string;
+  mr_id: string;
+  work_date: string;
+  work_type: 'leave' | 'holiday' | 'on_field';
+  working_with: 'individual' | 'manager' | null;
+  selected_areas: string[];
+}
+
 const DailyWorking = () => {
   const { user, profile } = useAuth();
-  const [searchParams] = useSearchParams();
-  const selectedAreaId = searchParams.get('area');
   
   const [targets, setTargets] = useState<CallTarget[]>([]);
   const [filteredTargets, setFilteredTargets] = useState<CallTarget[]>([]);
@@ -48,17 +66,35 @@ const DailyWorking = () => {
   const [selectedTarget, setSelectedTarget] = useState<CallTarget | null>(null);
   const [sampleData, setSampleData] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [todayAreaName, setTodayAreaName] = useState<string | null>(null);
   const [todayPlanDoctorIds, setTodayPlanDoctorIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // Setup state
+  const [todaySetup, setTodaySetup] = useState<DailyWorkingSetup | null>(null);
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [isEditingSetup, setIsEditingSetup] = useState(false);
+  const [workType, setWorkType] = useState<'leave' | 'holiday' | 'on_field' | null>(null);
+  const [workingWith, setWorkingWith] = useState<'individual' | 'manager' | null>(null);
+  const [selectedWorkAreas, setSelectedWorkAreas] = useState<string[]>([]);
+  const [userAreas, setUserAreas] = useState<Area[]>([]);
+  const [savingSetup, setSavingSetup] = useState(false);
 
   useEffect(() => {
     fetchUserLocation();
   }, []);
 
   useEffect(() => {
-    fetchTargetsAndCalls();
-  }, [user, profile, userLocation, selectedAreaId]);
+    if (user) {
+      fetchTodaySetup();
+      fetchUserAreas();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (setupComplete && todaySetup?.work_type === 'on_field') {
+      fetchTargetsAndCalls();
+    }
+  }, [user, profile, userLocation, setupComplete, todaySetup]);
 
   useEffect(() => {
     const filtered = targets.filter(target => {
@@ -90,57 +126,176 @@ const DailyWorking = () => {
     }
   };
 
+  const fetchTodaySetup = async () => {
+    if (!user) return;
+    
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('daily_working_setup')
+        .select('*')
+        .eq('mr_id', user.id)
+        .eq('work_date', today)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        const setupData: DailyWorkingSetup = {
+          id: data.id,
+          mr_id: data.mr_id,
+          work_date: data.work_date,
+          work_type: data.work_type as 'leave' | 'holiday' | 'on_field',
+          working_with: data.working_with as 'individual' | 'manager' | null,
+          selected_areas: (data.selected_areas as string[]) || []
+        };
+        setTodaySetup(setupData);
+        setWorkType(setupData.work_type);
+        setWorkingWith(setupData.working_with);
+        setSelectedWorkAreas(setupData.selected_areas);
+        setSetupComplete(true);
+      }
+    } catch (error) {
+      console.error('Error fetching today setup:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserAreas = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('id, area_name, from_location, to_location, distance')
+        .eq('created_by', user.id)
+        .order('area_name');
+
+      if (error) throw error;
+      setUserAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching user areas:', error);
+    }
+  };
+
+  const handleSetupSubmit = async () => {
+    if (!user || !workType) return;
+
+    if (workType === 'on_field' && selectedWorkAreas.length === 0) {
+      toast({
+        title: "Select Areas",
+        description: "Please select at least one working area",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (workType === 'on_field' && !workingWith) {
+      toast({
+        title: "Select Working With",
+        description: "Please select whether you're working individually or with manager",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSavingSetup(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const setupData = {
+        mr_id: user.id,
+        work_date: today,
+        work_type: workType,
+        working_with: workType === 'on_field' ? workingWith : null,
+        selected_areas: workType === 'on_field' ? selectedWorkAreas : []
+      };
+
+      const { data, error } = await supabase
+        .from('daily_working_setup')
+        .upsert(setupData, {
+          onConflict: 'mr_id,work_date'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const savedSetup: DailyWorkingSetup = {
+        id: data.id,
+        mr_id: data.mr_id,
+        work_date: data.work_date,
+        work_type: data.work_type as 'leave' | 'holiday' | 'on_field',
+        working_with: data.working_with as 'individual' | 'manager' | null,
+        selected_areas: (data.selected_areas as string[]) || []
+      };
+      setTodaySetup(savedSetup);
+      setSetupComplete(true);
+      setIsEditingSetup(false);
+
+      toast({
+        title: "Setup Saved",
+        description: workType === 'on_field' 
+          ? `You are working on field in ${selectedWorkAreas.length} area(s) today`
+          : `You are on ${workType === 'leave' ? 'Leave' : 'Holiday'} today`
+      });
+
+    } catch (error) {
+      console.error('Error saving setup:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save today's setup",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingSetup(false);
+    }
+  };
+
+  const handleEditSetup = () => {
+    setIsEditingSetup(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (todaySetup) {
+      setWorkType(todaySetup.work_type);
+      setWorkingWith(todaySetup.working_with);
+      setSelectedWorkAreas(todaySetup.selected_areas);
+    }
+    setIsEditingSetup(false);
+  };
+
+  const toggleAreaSelection = (areaId: string) => {
+    setSelectedWorkAreas(prev => 
+      prev.includes(areaId)
+        ? prev.filter(id => id !== areaId)
+        : [...prev, areaId]
+    );
+  };
+
   const fetchTargetsAndCalls = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile || !todaySetup) return;
 
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
-      const todayDate = new Date().getDate();
-      const todayMonth = new Date().getMonth() + 1;
-      const todayYear = new Date().getFullYear();
 
-      // Fetch today's tour plan to get planned doctors for selected area
+      // Fetch doctors from selected areas via area_doctor_visits
       let plannedDoctorIds: string[] = [];
-      let areaName: string | null = null;
       
-      if (selectedAreaId) {
-        // Get tour plan for today
-        const { data: planData } = await supabase
-          .from('tour_plans')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('month', todayMonth)
-          .eq('year', todayYear)
-          .maybeSingle();
-        
-        if (planData) {
-          const { data: dayData } = await supabase
-            .from('tour_plan_days')
-            .select('areas')
-            .eq('tour_plan_id', planData.id)
-            .eq('date', todayDate)
-            .maybeSingle();
-          
-          if (dayData?.areas && Array.isArray(dayData.areas)) {
-            const selectedArea = (dayData.areas as any[]).find((a: any) => a.id === selectedAreaId);
-            areaName = selectedArea?.name || null;
-          }
-        }
-        
-        // Fetch doctors assigned to this area from area_doctor_visits
+      if (todaySetup.selected_areas.length > 0) {
         const { data: areaDoctors } = await supabase
           .from('area_doctor_visits')
           .select('doctor_id')
-          .eq('area_id', selectedAreaId)
+          .in('area_id', todaySetup.selected_areas)
           .eq('created_by', user.id);
         
         if (areaDoctors) {
-          plannedDoctorIds = areaDoctors.map(ad => ad.doctor_id);
+          plannedDoctorIds = [...new Set(areaDoctors.map(ad => ad.doctor_id))];
         }
       }
       
-      setTodayAreaName(areaName);
       setTodayPlanDoctorIds(plannedDoctorIds);
 
       // Fetch doctors
@@ -194,8 +349,8 @@ const DailyWorking = () => {
             ) * 1000; // Convert km to meters
           }
 
-          // Check if this doctor is in today's plan
-          const isTodayPlan = plannedDoctorIds.length === 0 || plannedDoctorIds.includes(doc.id);
+          // Check if this doctor is in today's selected areas
+          const isTodayPlan = plannedDoctorIds.includes(doc.id);
 
           return {
             id: doc.id,
@@ -364,19 +519,19 @@ const DailyWorking = () => {
     }
   };
 
-  if (loading) {
+  const getSelectedAreaNames = () => {
+    return userAreas
+      .filter(area => selectedWorkAreas.includes(area.id))
+      .map(area => area.area_name);
+  };
+
+  // Loading state
+  if (loading && !setupComplete) {
     return (
       <div className="space-y-6">
         <div className="h-8 bg-muted rounded animate-pulse"></div>
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="h-16 bg-muted rounded"></div>
-            </Card>
-          ))}
-        </div>
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
             <Card key={i} className="p-4 animate-pulse">
               <div className="h-16 bg-muted rounded"></div>
             </Card>
@@ -420,22 +575,219 @@ const DailyWorking = () => {
     );
   }
 
-  // List View
+  // Setup Block - Show when setup is not complete OR when editing
+  const showSetupBlock = !setupComplete || isEditingSetup;
+
+  // Leave/Holiday View
+  if (setupComplete && !isEditingSetup && todaySetup && (todaySetup.work_type === 'leave' || todaySetup.work_type === 'holiday')) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader title="Daily Working" description="Track your daily doctor and pharmacy calls" />
+        <div className="p-4 md:p-6 space-y-6">
+          <Card className="p-6 text-center border-primary/20 bg-primary/5">
+            <div className="space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Calendar className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold">
+                You are on {todaySetup.work_type === 'leave' ? 'Leave' : 'Holiday'} Today
+              </h2>
+              <p className="text-muted-foreground">
+                Enjoy your {todaySetup.work_type === 'leave' ? 'day off' : 'holiday'}! 
+                If this is incorrect, you can edit your setup.
+              </p>
+              <Button variant="outline" onClick={handleEditSetup}>
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Today's Setup
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Setup Form
+  if (showSetupBlock) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader title="Daily Working" description="Configure your working preferences for today" />
+        <div className="p-4 md:p-6 space-y-6">
+          <Card className="p-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Today's Working Setup</h2>
+                {isEditingSetup && (
+                  <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+
+              {/* Work Type Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Select Working Type</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    type="button"
+                    variant={workType === 'leave' ? 'default' : 'outline'}
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => setWorkType('leave')}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span>Leave</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={workType === 'holiday' ? 'default' : 'outline'}
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => setWorkType('holiday')}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span>Holiday</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={workType === 'on_field' ? 'default' : 'outline'}
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => setWorkType('on_field')}
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    <span>On Field</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* On Field Options */}
+              {workType === 'on_field' && (
+                <>
+                  {/* Area Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Select Working Areas</Label>
+                    {userAreas.length === 0 ? (
+                      <Card className="p-4 bg-muted/50">
+                        <p className="text-sm text-muted-foreground text-center">
+                          No areas found. Please create areas in the Working Areas page first.
+                        </p>
+                      </Card>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                        {userAreas.map(area => (
+                          <div
+                            key={area.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                              selectedWorkAreas.includes(area.id)
+                                ? 'bg-primary/10 border border-primary/30'
+                                : 'bg-muted/30 hover:bg-muted/50'
+                            }`}
+                            onClick={() => toggleAreaSelection(area.id)}
+                          >
+                            <Checkbox
+                              checked={selectedWorkAreas.includes(area.id)}
+                              onCheckedChange={() => toggleAreaSelection(area.id)}
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium">{area.area_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {area.from_location} → {area.to_location} • {area.distance} km
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {selectedWorkAreas.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedWorkAreas.length} area(s) selected
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Working With Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Working With</Label>
+                    <RadioGroup
+                      value={workingWith || ''}
+                      onValueChange={(value) => setWorkingWith(value as 'individual' | 'manager')}
+                      className="grid grid-cols-2 gap-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`flex-1 flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            workingWith === 'individual'
+                              ? 'bg-primary/10 border-primary'
+                              : 'hover:bg-muted/50'
+                          }`}
+                          onClick={() => setWorkingWith('individual')}
+                        >
+                          <RadioGroupItem value="individual" id="individual" />
+                          <Label htmlFor="individual" className="cursor-pointer flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Individual
+                          </Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`flex-1 flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            workingWith === 'manager'
+                              ? 'bg-primary/10 border-primary'
+                              : 'hover:bg-muted/50'
+                          }`}
+                          onClick={() => setWorkingWith('manager')}
+                        >
+                          <RadioGroupItem value="manager" id="manager" />
+                          <Label htmlFor="manager" className="cursor-pointer flex items-center gap-2">
+                            <Briefcase className="h-4 w-4" />
+                            With Manager
+                          </Label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleSetupSubmit}
+                disabled={!workType || savingSetup}
+                className="w-full"
+              >
+                {savingSetup ? 'Saving...' : isEditingSetup ? 'Update Setup' : 'Start Working'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Main List View (On Field)
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="Daily Working" description="Track your daily doctor and pharmacy calls" />
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Today's Area Banner */}
-      {todayAreaName && (
+      {/* Today's Setup Summary Banner */}
+      {todaySetup && todaySetup.work_type === 'on_field' && (
         <Card className="p-4 border-primary/20 bg-primary/5">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            <span className="font-medium">Today's Area:</span>
-            <Badge variant="default">{todayAreaName}</Badge>
-            <span className="text-sm text-muted-foreground ml-2">
-              ({todayPlanDoctorIds.length} doctors assigned)
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-wrap">
+              <MapPin className="h-5 w-5 text-primary" />
+              <span className="font-medium">Today's Areas:</span>
+              <div className="flex flex-wrap gap-1">
+                {getSelectedAreaNames().map((name, idx) => (
+                  <Badge key={idx} variant="default">{name}</Badge>
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                • {todayPlanDoctorIds.length} doctors • Working {workingWith === 'manager' ? 'with Manager' : 'Individually'}
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleEditSetup}>
+              <Edit2 className="h-4 w-4" />
+            </Button>
           </div>
         </Card>
       )}
