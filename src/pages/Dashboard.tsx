@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/layout/PageHeader';
 import UpcomingReminders from '@/components/doctors/UpcomingReminders';
+import MRDailyWorkingDashboard from '@/components/admin/MRDailyWorkingDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -514,6 +515,11 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Admin: MR Daily Working Dashboard */}
+      {isAdmin && (
+        <MRDailyWorkingDashboard />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
