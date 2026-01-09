@@ -681,10 +681,19 @@ const DailyWorking = () => {
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Select Working Areas</Label>
                     {userAreas.length === 0 ? (
-                      <Card className="p-4 bg-muted/50">
+                      <Card className="p-4 bg-muted/50 space-y-3">
                         <p className="text-sm text-muted-foreground text-center">
-                          No areas found. Please create areas in the Working Areas page first.
+                          No areas found. Please assign doctors to areas in the Area Wise Doctor Visits page first.
                         </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => window.location.href = '/area-doctor-visits'}
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          Go to Area Wise Doctor Visits
+                        </Button>
                       </Card>
                     ) : (
                       <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
