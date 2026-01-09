@@ -166,14 +166,30 @@ const DailyWorking = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('areas')
-        .select('id, area_name, from_location, to_location, distance')
-        .eq('created_by', user.id)
-        .order('area_name');
+      // First get unique area IDs where user has assigned doctors
+      const { data: areaAssignments, error: assignError } = await supabase
+        .from('area_doctor_visits')
+        .select('area_id')
+        .eq('created_by', user.id);
 
-      if (error) throw error;
-      setUserAreas(data || []);
+      if (assignError) throw assignError;
+
+      // Get unique area IDs
+      const uniqueAreaIds = [...new Set(areaAssignments?.map(a => a.area_id) || [])];
+
+      if (uniqueAreaIds.length > 0) {
+        // Fetch the area details
+        const { data: areasData, error: areasError } = await supabase
+          .from('areas')
+          .select('id, area_name, from_location, to_location, distance')
+          .in('id', uniqueAreaIds)
+          .order('area_name');
+
+        if (areasError) throw areasError;
+        setUserAreas(areasData || []);
+      } else {
+        setUserAreas([]);
+      }
     } catch (error) {
       console.error('Error fetching user areas:', error);
     }
