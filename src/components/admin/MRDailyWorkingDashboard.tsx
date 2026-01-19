@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, MapPin, Briefcase, Calendar, Coffee, Palmtree } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, Users, MapPin, Briefcase, Calendar, Coffee, Palmtree, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MRSetup {
@@ -14,6 +15,8 @@ interface MRSetup {
   working_with: string | null;
   selected_areas: string[];
   work_date: string;
+  completedCalls: number;
+  totalCalls: number;
 }
 
 interface AreaInfo {
@@ -58,9 +61,38 @@ const MRDailyWorkingDashboard = () => {
 
       if (setupsError) throw setupsError;
 
+      // Fetch today's completed calls (daily_working records)
+      const { data: dailyWorkingData, error: dwError } = await supabase
+        .from('daily_working')
+        .select('mr_id, doctor_id')
+        .eq('work_date', today);
+
+      if (dwError) throw dwError;
+
+      // Fetch all area_doctor_visits to know total doctors per area per MR
+      const { data: areaDoctorVisitsData, error: advError } = await supabase
+        .from('area_doctor_visits')
+        .select('area_id, doctor_id, created_by');
+
+      if (advError) throw advError;
+
       // Combine data
       const mrList = (usersData || []).map(user => {
         const setup = (setupsData || []).find(s => s.mr_id === user.id);
+        const selectedAreas = (setup?.selected_areas as string[]) || [];
+        
+        // Count total doctors for this MR's selected areas
+        const doctorsInSelectedAreas = (areaDoctorVisitsData || [])
+          .filter(adv => adv.created_by === user.id && selectedAreas.includes(adv.area_id))
+          .map(adv => adv.doctor_id);
+        const uniqueDoctors = [...new Set(doctorsInSelectedAreas)];
+        const totalCalls = uniqueDoctors.length;
+
+        // Count completed calls for this MR today
+        const completedCalls = (dailyWorkingData || [])
+          .filter(dw => dw.mr_id === user.id)
+          .length;
+
         return {
           id: setup?.id || user.id,
           mr_id: user.id,
@@ -68,8 +100,10 @@ const MRDailyWorkingDashboard = () => {
           mr_email: user.email,
           work_type: setup?.work_type || 'not_set',
           working_with: setup?.working_with || null,
-          selected_areas: (setup?.selected_areas as string[]) || [],
-          work_date: today
+          selected_areas: selectedAreas,
+          work_date: today,
+          completedCalls,
+          totalCalls
         };
       });
 
@@ -109,6 +143,14 @@ const MRDailyWorkingDashboard = () => {
       default:
         return <Badge variant="secondary">Not Set</Badge>;
     }
+  };
+
+  const getProgressColor = (completed: number, total: number) => {
+    if (total === 0) return 'bg-muted';
+    const percentage = (completed / total) * 100;
+    if (percentage >= 100) return 'bg-green-500';
+    if (percentage >= 50) return 'bg-yellow-500';
+    return 'bg-orange-500';
   };
 
   const onFieldCount = mrSetups.filter(s => s.work_type === 'on_field').length;
@@ -160,34 +202,66 @@ const MRDailyWorkingDashboard = () => {
           {mrSetups.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No MRs found</p>
           ) : (
-            mrSetups.map((mr) => (
-              <div
-                key={mr.mr_id}
-                className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  {getWorkTypeIcon(mr.work_type)}
-                  <div>
-                    <p className="font-medium">{mr.mr_name}</p>
-                    <p className="text-sm text-muted-foreground">{mr.mr_email}</p>
+            mrSetups.map((mr) => {
+              const progressPercentage = mr.totalCalls > 0 
+                ? Math.round((mr.completedCalls / mr.totalCalls) * 100) 
+                : 0;
+
+              return (
+                <div
+                  key={mr.mr_id}
+                  className="p-4 bg-muted/50 rounded-lg space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getWorkTypeIcon(mr.work_type)}
+                      <div>
+                        <p className="font-medium">{mr.mr_name}</p>
+                        <p className="text-sm text-muted-foreground">{mr.mr_email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {mr.work_type === 'on_field' && mr.selected_areas.length > 0 && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          <span>{mr.selected_areas.map(id => getAreaName(id)).join(', ')}</span>
+                        </div>
+                      )}
+                      {mr.work_type === 'on_field' && mr.working_with && (
+                        <Badge variant="outline" className="text-xs">
+                          {mr.working_with === 'manager' ? 'With Manager' : 'Individual'}
+                        </Badge>
+                      )}
+                      {getWorkTypeBadge(mr.work_type)}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {mr.work_type === 'on_field' && mr.selected_areas.length > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{mr.selected_areas.map(id => getAreaName(id)).join(', ')}</span>
+
+                  {/* Call Completion Progress - Only show for on_field */}
+                  {mr.work_type === 'on_field' && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Call Progress</span>
+                        </div>
+                        <span className="font-medium">
+                          {mr.completedCalls} / {mr.totalCalls} calls
+                          {mr.totalCalls > 0 && (
+                            <span className="text-muted-foreground ml-1">
+                              ({progressPercentage}%)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={progressPercentage} 
+                        className="h-2"
+                      />
                     </div>
                   )}
-                  {mr.work_type === 'on_field' && mr.working_with && (
-                    <Badge variant="outline" className="text-xs">
-                      {mr.working_with === 'manager' ? 'With Manager' : 'Individual'}
-                    </Badge>
-                  )}
-                  {getWorkTypeBadge(mr.work_type)}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </CardContent>
