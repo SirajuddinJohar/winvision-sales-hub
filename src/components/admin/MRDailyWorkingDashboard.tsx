@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Users, MapPin, Briefcase, Calendar, Coffee, Palmtree, CheckCircle2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Users, MapPin, Briefcase, Calendar, Coffee, Palmtree, CheckCircle2, Clock, User, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MRSetup {
@@ -24,10 +26,24 @@ interface AreaInfo {
   area_name: string;
 }
 
+interface CallDetail {
+  id: string;
+  doctor_id: string;
+  doctor_name: string;
+  doctor_specialty: string;
+  doctor_area: string;
+  created_at: string;
+  has_order: boolean;
+  has_sample: boolean;
+}
+
 const MRDailyWorkingDashboard = () => {
   const [mrSetups, setMrSetups] = useState<MRSetup[]>([]);
   const [areas, setAreas] = useState<AreaInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMR, setSelectedMR] = useState<MRSetup | null>(null);
+  const [callDetails, setCallDetails] = useState<CallDetail[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     fetchTodaySetups();
@@ -115,6 +131,62 @@ const MRDailyWorkingDashboard = () => {
     }
   };
 
+  const fetchCallDetails = async (mr: MRSetup) => {
+    setLoadingDetails(true);
+    setSelectedMR(mr);
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      // Fetch daily_working records for this MR today with doctor details
+      const { data: dailyWorkingData, error } = await supabase
+        .from('daily_working')
+        .select('id, doctor_id, created_at, order_details, sample_details')
+        .eq('mr_id', mr.mr_id)
+        .eq('work_date', today)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Get doctor IDs to fetch their details
+      const doctorIds = (dailyWorkingData || []).map(dw => dw.doctor_id);
+      
+      if (doctorIds.length > 0) {
+        const { data: doctorsData, error: doctorError } = await supabase
+          .from('doctors')
+          .select('id, name, specialty, area')
+          .in('id', doctorIds);
+
+        if (doctorError) throw doctorError;
+
+        const details: CallDetail[] = (dailyWorkingData || []).map(dw => {
+          const doctor = (doctorsData || []).find(d => d.id === dw.doctor_id);
+          const orderDetails = dw.order_details as any[] || [];
+          const sampleDetails = dw.sample_details as any[] || [];
+          
+          return {
+            id: dw.id,
+            doctor_id: dw.doctor_id,
+            doctor_name: doctor?.name || 'Unknown Doctor',
+            doctor_specialty: doctor?.specialty || '',
+            doctor_area: doctor?.area || '',
+            created_at: dw.created_at,
+            has_order: orderDetails.length > 0,
+            has_sample: sampleDetails.length > 0
+          };
+        });
+
+        setCallDetails(details);
+      } else {
+        setCallDetails([]);
+      }
+    } catch (error) {
+      console.error('Error fetching call details:', error);
+      setCallDetails([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const getAreaName = (areaId: string) => {
     return areas.find(a => a.id === areaId)?.area_name || 'Unknown Area';
   };
@@ -145,14 +217,6 @@ const MRDailyWorkingDashboard = () => {
     }
   };
 
-  const getProgressColor = (completed: number, total: number) => {
-    if (total === 0) return 'bg-muted';
-    const percentage = (completed / total) * 100;
-    if (percentage >= 100) return 'bg-green-500';
-    if (percentage >= 50) return 'bg-yellow-500';
-    return 'bg-orange-500';
-  };
-
   const onFieldCount = mrSetups.filter(s => s.work_type === 'on_field').length;
   const leaveCount = mrSetups.filter(s => s.work_type === 'leave').length;
   const holidayCount = mrSetups.filter(s => s.work_type === 'holiday').length;
@@ -169,103 +233,190 @@ const MRDailyWorkingDashboard = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          MR Daily Working Status - {format(new Date(), 'dd MMM yyyy')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-4 gap-3">
-          <div className="p-3 bg-green-500/10 rounded-lg text-center">
-            <p className="text-2xl font-bold text-green-600">{onFieldCount}</p>
-            <p className="text-xs text-muted-foreground">On Field</p>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            MR Daily Working Status - {format(new Date(), 'dd MMM yyyy')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="p-3 bg-green-500/10 rounded-lg text-center">
+              <p className="text-2xl font-bold text-green-600">{onFieldCount}</p>
+              <p className="text-xs text-muted-foreground">On Field</p>
+            </div>
+            <div className="p-3 bg-orange-500/10 rounded-lg text-center">
+              <p className="text-2xl font-bold text-orange-600">{leaveCount}</p>
+              <p className="text-xs text-muted-foreground">On Leave</p>
+            </div>
+            <div className="p-3 bg-blue-500/10 rounded-lg text-center">
+              <p className="text-2xl font-bold text-blue-600">{holidayCount}</p>
+              <p className="text-xs text-muted-foreground">Holiday</p>
+            </div>
+            <div className="p-3 bg-muted rounded-lg text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{notSetCount}</p>
+              <p className="text-xs text-muted-foreground">Not Set</p>
+            </div>
           </div>
-          <div className="p-3 bg-orange-500/10 rounded-lg text-center">
-            <p className="text-2xl font-bold text-orange-600">{leaveCount}</p>
-            <p className="text-xs text-muted-foreground">On Leave</p>
-          </div>
-          <div className="p-3 bg-blue-500/10 rounded-lg text-center">
-            <p className="text-2xl font-bold text-blue-600">{holidayCount}</p>
-            <p className="text-xs text-muted-foreground">Holiday</p>
-          </div>
-          <div className="p-3 bg-muted rounded-lg text-center">
-            <p className="text-2xl font-bold text-muted-foreground">{notSetCount}</p>
-            <p className="text-xs text-muted-foreground">Not Set</p>
-          </div>
-        </div>
 
-        {/* MR List */}
-        <div className="space-y-2">
-          {mrSetups.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No MRs found</p>
-          ) : (
-            mrSetups.map((mr) => {
-              const progressPercentage = mr.totalCalls > 0 
-                ? Math.round((mr.completedCalls / mr.totalCalls) * 100) 
-                : 0;
+          {/* MR List */}
+          <div className="space-y-2">
+            {mrSetups.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No MRs found</p>
+            ) : (
+              mrSetups.map((mr) => {
+                const progressPercentage = mr.totalCalls > 0 
+                  ? Math.round((mr.completedCalls / mr.totalCalls) * 100) 
+                  : 0;
 
-              return (
-                <div
-                  key={mr.mr_id}
-                  className="p-4 bg-muted/50 rounded-lg space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getWorkTypeIcon(mr.work_type)}
-                      <div>
-                        <p className="font-medium">{mr.mr_name}</p>
-                        <p className="text-sm text-muted-foreground">{mr.mr_email}</p>
+                return (
+                  <div
+                    key={mr.mr_id}
+                    className="p-4 bg-muted/50 rounded-lg space-y-3 cursor-pointer hover:bg-muted/70 transition-colors"
+                    onClick={() => fetchCallDetails(mr)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getWorkTypeIcon(mr.work_type)}
+                        <div>
+                          <p className="font-medium">{mr.mr_name}</p>
+                          <p className="text-sm text-muted-foreground">{mr.mr_email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {mr.work_type === 'on_field' && mr.selected_areas.length > 0 && (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span>{mr.selected_areas.map(id => getAreaName(id)).join(', ')}</span>
+                          </div>
+                        )}
+                        {mr.work_type === 'on_field' && mr.working_with && (
+                          <Badge variant="outline" className="text-xs">
+                            {mr.working_with === 'manager' ? 'With Manager' : 'Individual'}
+                          </Badge>
+                        )}
+                        {getWorkTypeBadge(mr.work_type)}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {mr.work_type === 'on_field' && mr.selected_areas.length > 0 && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          <span>{mr.selected_areas.map(id => getAreaName(id)).join(', ')}</span>
+
+                    {/* Call Completion Progress - Only show for on_field */}
+                    {mr.work_type === 'on_field' && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Call Progress</span>
+                          </div>
+                          <span className="font-medium">
+                            {mr.completedCalls} / {mr.totalCalls} calls
+                            {mr.totalCalls > 0 && (
+                              <span className="text-muted-foreground ml-1">
+                                ({progressPercentage}%)
+                              </span>
+                            )}
+                          </span>
                         </div>
-                      )}
-                      {mr.work_type === 'on_field' && mr.working_with && (
-                        <Badge variant="outline" className="text-xs">
-                          {mr.working_with === 'manager' ? 'With Manager' : 'Individual'}
-                        </Badge>
-                      )}
-                      {getWorkTypeBadge(mr.work_type)}
-                    </div>
+                        <Progress 
+                          value={progressPercentage} 
+                          className="h-2"
+                        />
+                      </div>
+                    )}
                   </div>
+                );
+              })
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-                  {/* Call Completion Progress - Only show for on_field */}
-                  {mr.work_type === 'on_field' && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          <span>Call Progress</span>
-                        </div>
-                        <span className="font-medium">
-                          {mr.completedCalls} / {mr.totalCalls} calls
-                          {mr.totalCalls > 0 && (
-                            <span className="text-muted-foreground ml-1">
-                              ({progressPercentage}%)
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <Progress 
-                        value={progressPercentage} 
-                        className="h-2"
-                      />
+      {/* Call Details Dialog */}
+      <Dialog open={!!selectedMR} onOpenChange={(open) => !open && setSelectedMR(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              {selectedMR?.mr_name}'s Calls - {format(new Date(), 'dd MMM yyyy')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* MR Info Summary */}
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {selectedMR && getWorkTypeBadge(selectedMR.work_type)}
+                  {selectedMR?.work_type === 'on_field' && selectedMR?.selected_areas.length > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{selectedMR.selected_areas.map(id => getAreaName(id)).join(', ')}</span>
                     </div>
                   )}
                 </div>
-              );
-            })
+                <div className="text-sm font-medium">
+                  {selectedMR?.completedCalls} / {selectedMR?.totalCalls} calls completed
+                </div>
+              </div>
+
+              {/* Call List */}
+              <ScrollArea className="h-[400px]">
+                {callDetails.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Clock className="h-8 w-8 mb-2" />
+                    <p>No calls recorded yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 pr-4">
+                    {callDetails.map((call, index) => (
+                      <div
+                        key={call.id}
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{call.doctor_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {call.doctor_specialty} • {call.doctor_area}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {call.has_order && (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                              Order
+                            </Badge>
+                          )}
+                          {call.has_sample && (
+                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">
+                              Sample
+                            </Badge>
+                          )}
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{format(new Date(call.created_at), 'hh:mm a')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
