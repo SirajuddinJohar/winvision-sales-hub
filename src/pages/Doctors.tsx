@@ -196,19 +196,19 @@ const Doctors = () => {
         title="Doctors" 
         description="Manage your assigned doctors and their information"
       />
-      <div className="p-4 md:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-between">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
             <Input
               placeholder="Search doctor by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-8 md:pl-10 h-9 md:h-10 text-sm"
             />
           </div>
-          <Button onClick={handleAddDoctor}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={handleAddDoctor} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+            <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
             Add Doctor
           </Button>
         </div>
@@ -221,80 +221,80 @@ const Doctors = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredDoctors.map((doctor) => (
             <Card key={doctor.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/dashboard/doctors/${doctor.id}`)}>
-              <CardHeader>
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <User className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-1.5 md:p-2 rounded-lg bg-primary/10">
+                      <User className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{doctor.name}</CardTitle>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 md:gap-2">
+                        <CardTitle className="text-sm md:text-lg truncate">{doctor.name}</CardTitle>
                         {(isUpcomingBirthday(doctor.birthday) || isUpcomingAnniversary(doctor.anniversary)) && (
-                          <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+                          <Heart className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-500 animate-pulse flex-shrink-0" />
                         )}
                       </div>
-                      <CardDescription>{doctor.specialty}</CardDescription>
-                      <div className="flex gap-1 mt-2 flex-wrap">
+                      <CardDescription className="text-xs md:text-sm">{doctor.specialty}</CardDescription>
+                      <div className="flex gap-1 mt-1.5 md:mt-2 flex-wrap">
                         {getUrgencyBadge(getDaysSinceLastVisit(doctor.last_visit_date))}
                         {getScoreBadge(doctor.relationship_score)}
                       </div>
                     </div>
                   </div>
                   {!doctor.location && (
-                    <Badge variant="destructive" className="flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      No Location
+                    <Badge variant="destructive" className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                      No Loc
                     </Badge>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{doctor.area}</span>
+              <CardContent className="p-3 md:p-6 pt-0 md:pt-0 space-y-2 md:space-y-3">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs md:text-sm truncate">{doctor.area}</span>
                   {doctor.territory && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] md:text-xs px-1.5 py-0">
                       {doctor.territory}
                     </Badge>
                   )}
                 </div>
 
                 {doctor.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{doctor.phone}</span>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs md:text-sm">{doctor.phone}</span>
                   </div>
                 )}
 
                 {doctor.last_visit_date && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      Last visit: {new Date(doctor.last_visit_date).toLocaleDateString()}
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs md:text-sm">
+                      Last: {new Date(doctor.last_visit_date).toLocaleDateString()}
                     </span>
                   </div>
                 )}
 
                 {(doctor.birthday || doctor.anniversary) && (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5 md:gap-1">
                     {doctor.birthday && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs">
-                          Birthday: {new Date(doctor.birthday).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      <div className="flex items-center gap-1.5 md:gap-2">
+                        <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-[10px] md:text-xs">
+                          BD: {new Date(doctor.birthday).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           {isUpcomingBirthday(doctor.birthday) && ' 🎂'}
                         </span>
                       </div>
                     )}
                     {doctor.anniversary && (
-                      <div className="flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs">
-                          Anniversary: {new Date(doctor.anniversary).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      <div className="flex items-center gap-1.5 md:gap-2">
+                        <Heart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-[10px] md:text-xs">
+                          Anniv: {new Date(doctor.anniversary).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           {isUpcomingAnniversary(doctor.anniversary) && ' 💝'}
                         </span>
                       </div>
@@ -303,10 +303,10 @@ const Doctors = () => {
                 )}
 
                 {doctor.tags && doctor.tags.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    {doctor.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                  <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                    <Tag className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                    {doctor.tags.slice(0, 3).map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs px-1.5 py-0">
                         {tag}
                       </Badge>
                     ))}
@@ -314,42 +314,44 @@ const Doctors = () => {
                 )}
 
                 {doctor.relationship_score !== undefined && (
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      Engagement Score: {doctor.relationship_score.toFixed(1)}
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs md:text-sm">
+                      Score: {doctor.relationship_score.toFixed(1)}
                     </span>
                   </div>
                 )}
                 
                 {doctor.monthly_target && (
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <Target className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs md:text-sm">
                       Target: {formatCurrency(doctor.monthly_target)}
                     </span>
                   </div>
                 )}
 
                 <div className="pt-2 border-t flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] md:text-xs text-muted-foreground">
                     Added: {new Date(doctor.created_at).toLocaleDateString()}
                   </p>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-1.5 md:gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditDoctor(doctor)}
+                      className="h-7 w-7 md:h-8 md:w-8 p-0"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </Button>
                     {profile?.role === 'admin' && (
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteDoctor(doctor.id)}
+                        className="h-7 w-7 md:h-8 md:w-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                     )}
                   </div>

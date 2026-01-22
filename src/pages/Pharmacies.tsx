@@ -156,22 +156,22 @@ const Pharmacies = () => {
         title="Pharmacies" 
         description="Manage pharmacy information and contacts"
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         <div className="flex justify-end">
-          <Button onClick={handleAddPharmacy}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={handleAddPharmacy} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+            <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
             Add Pharmacy
           </Button>
         </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
         <Input
-          placeholder="Search pharmacies by name, city, contact person, or phone..."
+          placeholder="Search pharmacies..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-8 md:pl-10 h-9 md:h-10 text-sm"
         />
       </div>
 
@@ -185,59 +185,59 @@ const Pharmacies = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPharmacies.map((pharmacy) => (
             <Card key={pharmacy.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Building className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-1.5 md:p-2 rounded-lg bg-primary/10">
+                      <Building className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{pharmacy.name}</CardTitle>
-                      <CardDescription>{pharmacy.contact_person}</CardDescription>
+                    <div className="min-w-0">
+                      <CardTitle className="text-sm md:text-lg truncate">{pharmacy.name}</CardTitle>
+                      <CardDescription className="text-xs md:text-sm truncate">{pharmacy.contact_person}</CardDescription>
                     </div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{pharmacy.city}</span>
+              <CardContent className="p-3 md:p-6 pt-0 md:pt-0 space-y-2 md:space-y-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs md:text-sm">{pharmacy.city}</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{pharmacy.phone}</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs md:text-sm">{pharmacy.phone}</span>
                 </div>
 
                 {(pharmacy.dl_number_part1 || pharmacy.dl_number_part2) && (
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">DL No: </span>
+                  <div className="text-xs md:text-sm">
+                    <span className="text-muted-foreground">DL: </span>
                     {pharmacy.dl_number_part1}{pharmacy.dl_number_part2 ? `-${pharmacy.dl_number_part2}` : ''}
                   </div>
                 )}
 
                 {pharmacy.last_order_date && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Last Order: {new Date(pharmacy.last_order_date).toLocaleDateString()}
+                  <div className="space-y-1.5 md:space-y-2 pt-2 border-t">
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                      <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs md:text-sm">
+                        Last: {new Date(pharmacy.last_order_date).toLocaleDateString()}
                       </span>
                     </div>
                     {pharmacy.last_order_amount && (
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
+                      <div className="flex items-center gap-1.5 md:gap-2">
+                        <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs md:text-sm">
                           {formatCurrency(pharmacy.last_order_amount)}
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                      <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-[10px] md:text-xs text-muted-foreground">
                         {getDaysSinceLastOrder(pharmacy.last_order_date)} days ago
                       </span>
                     </div>
@@ -245,24 +245,26 @@ const Pharmacies = () => {
                 )}
 
                 <div className="pt-2 border-t flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] md:text-xs text-muted-foreground">
                     Added: {new Date(pharmacy.created_at).toLocaleDateString()}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 md:gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditPharmacy(pharmacy)}
+                      className="h-7 w-7 md:h-8 md:w-8 p-0"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </Button>
                     {profile?.role === 'admin' && (
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeletePharmacy(pharmacy.id)}
+                        className="h-7 w-7 md:h-8 md:w-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                     )}
                   </div>
