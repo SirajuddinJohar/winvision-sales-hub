@@ -167,29 +167,30 @@ const Orders = () => {
         title="Orders" 
         description="Manage and track all orders"
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         <div className="flex justify-end">
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button size="sm" className="h-8 md:h-10 text-xs md:text-sm" onClick={() => setShowForm(true)}>
+            <Plus className="mr-1.5 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
             New Order
           </Button>
         </div>
 
       {isAdmin && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
+        <Card className="mb-3 md:mb-6">
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <Filter className="h-4 w-4 md:h-5 md:w-5" />
               Filters
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
               <div>
                 <Input
                   placeholder="Filter by doctor..."
                   value={filters.doctor}
                   onChange={(e) => setFilters(prev => ({ ...prev, doctor: e.target.value }))}
+                  className="h-8 md:h-10 text-xs md:text-sm"
                 />
               </div>
               <div>
@@ -197,6 +198,7 @@ const Orders = () => {
                   placeholder="Filter by pharmacy..."
                   value={filters.pharmacy}
                   onChange={(e) => setFilters(prev => ({ ...prev, pharmacy: e.target.value }))}
+                  className="h-8 md:h-10 text-xs md:text-sm"
                 />
               </div>
               <div>
@@ -205,6 +207,7 @@ const Orders = () => {
                   placeholder="From date"
                   value={filters.dateFrom}
                   onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                  className="h-8 md:h-10 text-xs md:text-sm"
                 />
               </div>
               <div>
@@ -213,13 +216,16 @@ const Orders = () => {
                   placeholder="To date"
                   value={filters.dateTo}
                   onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                  className="h-8 md:h-10 text-xs md:text-sm"
                 />
               </div>
             </div>
-            <div className="flex gap-2 mt-4">
-              <Button onClick={fetchOrders}>Apply Filters</Button>
+            <div className="flex gap-2 mt-3 md:mt-4">
+              <Button size="sm" className="h-8 md:h-10 text-xs md:text-sm" onClick={fetchOrders}>Apply Filters</Button>
               <Button 
-                variant="outline" 
+                variant="outline"
+                size="sm"
+                className="h-8 md:h-10 text-xs md:text-sm"
                 onClick={() => {
                   setFilters({ doctor: '', pharmacy: '', dateFrom: '', dateTo: '' });
                   fetchOrders();
@@ -234,66 +240,66 @@ const Orders = () => {
 
       {orders.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-8">
-            <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No orders found</p>
+          <CardContent className="text-center py-6 md:py-8">
+            <Package className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+            <p className="text-sm md:text-base text-muted-foreground">No orders found</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-2 md:gap-4">
           {orders.map((order) => (
             <Card key={order.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-sm md:text-lg truncate">
                       {order.product?.name || 'Product Name'}
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs md:text-sm">
                       {order.product?.category || 'Category'}
                     </CardDescription>
                   </div>
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs md:text-sm shrink-0">
                     {formatCurrency(order.total_amount)}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
+              <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs md:text-sm truncate">
                       {new Date(order.order_date).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Qty: {order.quantity}</span>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs md:text-sm">Qty: {order.quantity}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {formatCurrency(order.unit_price)} per unit
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs md:text-sm truncate">
+                      {formatCurrency(order.unit_price)}/unit
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
                   <div>
-                    <p className="text-sm font-medium">Doctor</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm font-medium">Doctor</p>
+                    <p className="text-xs md:text-sm text-muted-foreground truncate">
                       {order.doctor?.name || 'N/A'} - {order.doctor?.specialty || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Pharmacy</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm font-medium">Pharmacy</p>
+                    <p className="text-xs md:text-sm text-muted-foreground truncate">
                       {order.pharmacy?.name || 'N/A'}
                     </p>
                   </div>
                   {isAdmin && order.mr && (
                     <div>
-                      <p className="text-sm font-medium">Medical Rep</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm font-medium">Medical Rep</p>
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">
                         {order.mr?.name} ({order.mr?.email})
                       </p>
                     </div>
