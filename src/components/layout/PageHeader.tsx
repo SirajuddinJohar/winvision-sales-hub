@@ -26,26 +26,26 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border shadow-sm mb-6">
-      <div className="flex items-center justify-between px-4 md:px-6 py-4">
-        <div className="flex items-center gap-4">
+    <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border shadow-sm mb-3 md:mb-6">
+      <div className="flex items-center justify-between px-3 md:px-6 py-2.5 md:py-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{title}</h1>
+            <h1 className="text-lg md:text-2xl font-bold text-foreground tracking-tight">{title}</h1>
             {description && (
-              <p className="text-sm text-muted-foreground font-medium mt-0.5">{description}</p>
+              <p className="text-xs md:text-sm text-muted-foreground font-medium mt-0.5">{description}</p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
-            className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+            className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
             title="Home"
           >
-            <Home className="h-5 w-5" />
+            <Home className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           
           <DropdownMenu>
@@ -53,9 +53,9 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+                className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 shadow-lg">
