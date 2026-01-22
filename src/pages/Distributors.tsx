@@ -137,11 +137,11 @@ const Distributors = () => {
         title="Distributors" 
         description="Manage your distributor network and contacts"
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         {profile?.role === 'admin' && (
           <div className="flex justify-end">
-            <Button onClick={handleAddDistributor}>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={handleAddDistributor} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+              <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
               Add Distributor
             </Button>
           </div>
@@ -149,12 +149,12 @@ const Distributors = () => {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
         <Input
-          placeholder="Search distributors by name, city, contact person, or phone..."
+          placeholder="Search distributors..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-8 md:pl-10 h-9 md:h-10 text-sm"
         />
       </div>
 
@@ -168,61 +168,63 @@ const Distributors = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredDistributors.map((distributor) => (
             <Card 
               key={distributor.id} 
               className="hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => navigate(`/dashboard/distributors/${distributor.id}`)}
             >
-              <CardHeader>
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Truck className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-1.5 md:p-2 rounded-lg bg-primary/10">
+                      <Truck className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">{distributor.name}</CardTitle>
-                      <CardDescription>{distributor.contact_person}</CardDescription>
+                    <div className="min-w-0">
+                      <CardTitle className="text-sm md:text-lg truncate">{distributor.name}</CardTitle>
+                      <CardDescription className="text-xs md:text-sm truncate">{distributor.contact_person}</CardDescription>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0" />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{distributor.city}</span>
+              <CardContent className="p-3 md:p-6 pt-0 md:pt-0 space-y-2 md:space-y-4">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs md:text-sm">{distributor.city}</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{distributor.phone}</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs md:text-sm">{distributor.phone}</span>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs md:text-sm text-muted-foreground">
                   <p className="line-clamp-2">{distributor.address}</p>
                 </div>
 
                 {profile?.role === 'admin' && (
                   <div className="pt-2 border-t flex justify-between items-center">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] md:text-xs text-muted-foreground">
                       Added: {new Date(distributor.created_at).toLocaleDateString()}
                     </p>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-1.5 md:gap-2" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditDistributor(distributor)}
+                        className="h-7 w-7 md:h-8 md:w-8 p-0"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteDistributor(distributor.id)}
+                        className="h-7 w-7 md:h-8 md:w-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                     </div>
                   </div>
