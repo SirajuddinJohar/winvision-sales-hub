@@ -148,15 +148,15 @@ const Reporting = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 md:space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-5 w-64" />
+            <Skeleton className="h-6 md:h-8 w-24 md:w-32 mb-2" />
+            <Skeleton className="h-4 md:h-5 w-48 md:w-64" />
           </div>
         </div>
-        <div className="grid gap-4">
-          <Skeleton className="h-32 w-full" />
+        <div className="grid gap-2.5 md:gap-4">
+          <Skeleton className="h-28 md:h-32 w-full" />
         </div>
       </div>
     );
@@ -168,25 +168,25 @@ const Reporting = () => {
         title="Reporting" 
         description="Generate reports based on doctors and pharmacies"
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+        <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Filter className="h-4 w-4 md:h-5 md:w-5" />
             Report Filters
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs md:text-sm">
             Select a doctor or pharmacy to view related entries
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Doctor</label>
+        <CardContent className="p-3 md:p-6 pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-4">
+            <div className="space-y-1.5 md:space-y-2">
+              <label className="text-xs md:text-sm font-medium">Select Doctor</label>
               <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Choose a doctor..." />
                 </SelectTrigger>
                  <SelectContent>
@@ -200,10 +200,10 @@ const Reporting = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Pharmacy</label>
+            <div className="space-y-1.5 md:space-y-2">
+              <label className="text-xs md:text-sm font-medium">Select Pharmacy</label>
               <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Choose a pharmacy..." />
                 </SelectTrigger>
                  <SelectContent>
@@ -219,10 +219,11 @@ const Reporting = () => {
           </div>
 
           {(selectedDoctor !== 'all' || selectedPharmacy !== 'all') && (
-            <div className="mt-4 flex gap-2">
+            <div className="mt-3 md:mt-4 flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
+                className="h-8 md:h-9 text-xs md:text-sm"
                  onClick={() => {
                    setSelectedDoctor('all');
                    setSelectedPharmacy('all');
@@ -237,44 +238,44 @@ const Reporting = () => {
 
       {/* Summary Stats */}
       {reportEntries.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-1.5 md:p-2 rounded-lg bg-primary/10">
+                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
-                  <p className="text-2xl font-bold">{reportEntries.length}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-lg md:text-2xl font-bold">{reportEntries.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-1.5 md:p-2 rounded-lg bg-green-500/10">
+                  <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Quantity</p>
-                  <p className="text-2xl font-bold">{getTotalQuantity()}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Total Qty</p>
+                  <p className="text-lg md:text-2xl font-bold">{getTotalQuantity()}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-1.5 md:p-2 rounded-lg bg-blue-500/10">
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold">{formatCurrency(getTotalAmount())}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-base md:text-2xl font-bold">{formatCurrency(getTotalAmount())}</p>
                 </div>
               </div>
             </CardContent>
@@ -284,9 +285,9 @@ const Reporting = () => {
 
       {/* Report Entries */}
       <Card>
-        <CardHeader>
-          <CardTitle>Report Entries</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+          <CardTitle className="text-base md:text-lg">Report Entries</CardTitle>
+          <CardDescription className="text-xs md:text-sm">
             {selectedDoctor && selectedPharmacy
               ? `Showing orders for selected doctor and pharmacy`
               : selectedDoctor
@@ -296,50 +297,50 @@ const Reporting = () => {
               : 'Select a doctor or pharmacy to view report entries'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-0">
           {entriesLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-2.5 md:space-y-4">
               {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
+                <Skeleton key={i} className="h-20 md:h-24 w-full" />
               ))}
             </div>
           ) : reportEntries.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-               <p className="text-muted-foreground">
+            <div className="text-center py-6 md:py-8">
+              <FileText className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+               <p className="text-xs md:text-sm text-muted-foreground">
                  {selectedDoctor !== 'all' || selectedPharmacy !== 'all'
                    ? 'No entries found for the selected filters'
                    : 'Select a doctor or pharmacy to generate a report'}
                </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2 md:space-y-4">
               {reportEntries.map((entry) => (
-                <div key={entry.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex justify-between items-start mb-3">
+                <div key={entry.id} className="border rounded-lg p-3 md:p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2 md:mb-3">
                     <div>
-                      <h4 className="font-medium">{entry.product?.name}</h4>
-                      <p className="text-sm text-muted-foreground">{entry.product?.category}</p>
+                      <h4 className="font-medium text-sm md:text-base">{entry.product?.name}</h4>
+                      <p className="text-xs md:text-sm text-muted-foreground">{entry.product?.category}</p>
                     </div>
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="text-xs md:text-sm">
                       {formatCurrency(entry.total_amount)}
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm">
                     <div>
-                      <p className="font-medium">Doctor</p>
-                      <p className="text-muted-foreground">
+                      <p className="font-medium text-xs">Doctor</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">
                         {entry.doctor?.name} - {entry.doctor?.specialty}
                       </p>
                     </div>
                     <div>
-                      <p className="font-medium">Pharmacy</p>
-                      <p className="text-muted-foreground">{entry.pharmacy?.name}</p>
+                      <p className="font-medium text-xs">Pharmacy</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">{entry.pharmacy?.name}</p>
                     </div>
                     <div>
-                      <p className="font-medium">Order Details</p>
-                      <p className="text-muted-foreground">
+                      <p className="font-medium text-xs">Order Details</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">
                         Qty: {entry.quantity} | {new Date(entry.order_date).toLocaleDateString()}
                       </p>
                     </div>

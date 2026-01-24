@@ -63,12 +63,10 @@ const Dashboard = () => {
       try {
         setLoading(true);
 
-        // Fetch doctors count - now properly filtered by RLS (assigned doctors only for MRs)
         const { count: doctorsCount } = await supabase
           .from('doctors')
           .select('*', { count: 'exact', head: true });
 
-        // Fetch products count (admin only)
         let productsCount = 0;
         if (isAdmin) {
           const { count } = await supabase
@@ -77,18 +75,15 @@ const Dashboard = () => {
           productsCount = count || 0;
         }
 
-        // Fetch orders count - now properly filtered by RLS (own orders for MRs)
         const { count: ordersCount } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true });
 
-        // Fetch pending expenses count - now properly filtered by RLS
         const { count: pendingExpensesCount } = await supabase
           .from('expenses')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
 
-        // Calculate monthly revenue - now properly filtered by RLS
         const currentMonth = new Date().toISOString().slice(0, 7);
         const { data: revenueData } = await supabase
           .from('orders')
@@ -98,7 +93,6 @@ const Dashboard = () => {
         
         const monthlyRevenue = revenueData?.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) || 0;
 
-        // Calculate target achievement based on actual targets - now properly filtered by RLS
         const { data: targetsData } = await supabase
           .from('targets')
           .select('target_value, achieved_value')
@@ -118,7 +112,6 @@ const Dashboard = () => {
           targetAchievement,
         });
 
-        // Fetch sales trend data (last 7 days)
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const date = new Date();
           date.setDate(date.getDate() - (6 - i));
@@ -145,7 +138,6 @@ const Dashboard = () => {
         );
         setSalesTrend(salesTrendData);
 
-        // Fetch target data (last 6 months)
         const last6Months = Array.from({ length: 6 }, (_, i) => {
           const date = new Date();
           date.setMonth(date.getMonth() - (5 - i));
@@ -250,13 +242,13 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-3 md:space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardHeader className="space-y-2">
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-                <div className="h-8 bg-muted rounded w-1/3"></div>
+              <CardHeader className="p-3 md:p-6 space-y-1.5 md:space-y-2">
+                <div className="h-3 md:h-4 bg-muted rounded w-1/2"></div>
+                <div className="h-6 md:h-8 bg-muted rounded w-1/3"></div>
               </CardHeader>
             </Card>
           ))}
@@ -271,10 +263,10 @@ const Dashboard = () => {
         title="Dashboard" 
         description={isAdmin ? 'Overview of all pharmaceutical operations' : 'Your performance and activities overview'}
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         <div className="flex items-center justify-end">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
             {new Date().toLocaleDateString('en-US', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -284,20 +276,20 @@ const Dashboard = () => {
           </div>
         </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-6">
         {statCards.map((card, index) => (
           <Card key={index} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary hover:-translate-y-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 md:p-4 pb-1.5 md:pb-3">
+              <CardTitle className="text-[10px] md:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {card.title}
               </CardTitle>
-              <div className={`p-3 rounded-xl ${card.bgColor} shadow-sm`}>
-                <card.icon className={`h-6 w-6 ${card.color}`} />
+              <div className={`p-2 md:p-3 rounded-xl ${card.bgColor} shadow-sm`}>
+                <card.icon className={`h-4 w-4 md:h-6 md:w-6 ${card.color}`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">{card.value}</div>
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="p-3 md:p-4 pt-0">
+              <div className="text-xl md:text-3xl font-bold text-foreground mb-0.5 md:mb-1">{card.value}</div>
+              <p className="text-[10px] md:text-sm text-muted-foreground">
                 {card.description}
               </p>
             </CardContent>
@@ -306,17 +298,17 @@ const Dashboard = () => {
       </div>
 
       {/* Analytics Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Sales Trend Chart */}
         <Card className="border-l-4 border-l-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               Sales Trend
             </CardTitle>
-            <CardDescription>Revenue and orders over the last 7 days</CardDescription>
+            <CardDescription className="text-xs md:text-sm">Revenue and orders over the last 7 days</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0">
             <ChartContainer
               config={{
                 revenue: {
@@ -328,7 +320,7 @@ const Dashboard = () => {
                   color: "hsl(var(--accent))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px] md:h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesTrend}>
@@ -342,11 +334,11 @@ const Dashboard = () => {
                   <XAxis 
                     dataKey="date" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Area 
@@ -365,14 +357,14 @@ const Dashboard = () => {
 
         {/* Target Achievement Chart */}
         <Card className="border-l-4 border-l-success">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-success" />
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <Target className="h-4 w-4 md:h-5 md:w-5 text-success" />
               Target vs Achievement
             </CardTitle>
-            <CardDescription>Performance over the last 6 months</CardDescription>
+            <CardDescription className="text-xs md:text-sm">Performance over the last 6 months</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0">
             <ChartContainer
               config={{
                 target: {
@@ -384,7 +376,7 @@ const Dashboard = () => {
                   color: "hsl(var(--success))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px] md:h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={targetData}>
@@ -392,14 +384,14 @@ const Dashboard = () => {
                   <XAxis 
                     dataKey="month" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '10px' }} />
                   <Bar 
                     dataKey="target" 
                     fill="hsl(var(--muted))" 
@@ -418,14 +410,14 @@ const Dashboard = () => {
 
         {/* Performance Metrics Chart */}
         <Card className="border-l-4 border-l-accent">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-accent" />
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-accent" />
               Daily Orders
             </CardTitle>
-            <CardDescription>Order volume trend over the last week</CardDescription>
+            <CardDescription className="text-xs md:text-sm">Order volume trend over the last week</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0">
             <ChartContainer
               config={{
                 orders: {
@@ -433,7 +425,7 @@ const Dashboard = () => {
                   color: "hsl(var(--accent))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px] md:h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={salesTrend}>
@@ -441,11 +433,11 @@ const Dashboard = () => {
                   <XAxis 
                     dataKey="date" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Line 
@@ -453,8 +445,8 @@ const Dashboard = () => {
                     dataKey="orders" 
                     stroke="hsl(var(--accent))" 
                     strokeWidth={3}
-                    dot={{ fill: "hsl(var(--accent))", r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ fill: "hsl(var(--accent))", r: 3 }}
+                    activeDot={{ r: 5 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -464,14 +456,14 @@ const Dashboard = () => {
 
         {/* Achievement Percentage Chart */}
         <Card className="border-l-4 border-l-info">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-info" />
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <Target className="h-4 w-4 md:h-5 md:w-5 text-info" />
               Achievement Rate
             </CardTitle>
-            <CardDescription>Target achievement percentage by month</CardDescription>
+            <CardDescription className="text-xs md:text-sm">Target achievement percentage by month</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0">
             <ChartContainer
               config={{
                 achievement: {
@@ -479,7 +471,7 @@ const Dashboard = () => {
                   color: "hsl(var(--info))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px] md:h-[300px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={targetData}>
@@ -493,11 +485,11 @@ const Dashboard = () => {
                   <XAxis 
                     dataKey="month" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
                     domain={[0, 100]}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -516,110 +508,74 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Admin: MR Daily Working Dashboard */}
-      {isAdmin && (
-        <MRDailyWorkingDashboard />
-      )}
+      {/* MR Daily Working Dashboard for Admins */}
+      {isAdmin && <MRDailyWorkingDashboard />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Recent Activity and Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Recent Activity
-            </CardTitle>
-            <CardDescription>
-              Latest updates and activities
-            </CardDescription>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="text-sm md:text-base">Recent Activity</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Latest actions and updates</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
-                <div className="p-2.5 rounded-xl bg-success-light">
-                  <ShoppingCart className="h-5 w-5 text-success" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-foreground">New order placed</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="space-y-2 md:space-y-3">
+              <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/50">
+                <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+                <span className="text-xs md:text-sm">Recent orders available in Orders page</span>
               </div>
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
-                <div className="p-2.5 rounded-xl bg-primary-light">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-foreground">Doctor updated</p>
-                  <p className="text-xs text-muted-foreground">4 hours ago</p>
-                </div>
+              <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/50">
+                <Target className="h-3.5 w-3.5 md:h-4 md:w-4 text-success" />
+                <span className="text-xs md:text-sm">Target tracking available</span>
               </div>
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-card border border-border/50 hover:shadow-md transition-all">
-                <div className="p-2.5 rounded-xl bg-warning-light">
-                  <Receipt className="h-5 w-5 text-warning" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-foreground">Expense submitted</p>
-                  <p className="text-xs text-muted-foreground">6 hours ago</p>
-                </div>
+              <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/50">
+                <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 text-warning" />
+                <span className="text-xs md:text-sm">{stats.pendingExpenses} expenses pending approval</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Common tasks and shortcuts
-            </CardDescription>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className="text-sm md:text-base">Quick Actions</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Frequently used shortcuts</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-primary" onClick={() => navigate('/dashboard/doctors')}>
-                <div className="text-center">
-                  <div className="p-3 rounded-xl bg-primary-light inline-block mb-3">
-                    <Users className="h-7 w-7 text-primary" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">
-                    {isAdmin ? 'Manage Doctors' : 'Doctor Activity'}
-                  </p>
-                </div>
-              </Card>
-              {isAdmin && (
-                <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-success" onClick={() => navigate('/dashboard/products')}>
-                  <div className="text-center">
-                    <div className="p-3 rounded-xl bg-success-light inline-block mb-3">
-                      <Package className="h-7 w-7 text-success" />
-                    </div>
-                    <p className="font-semibold text-sm text-foreground">Add Product</p>
-                  </div>
-                </Card>
-              )}
-              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-accent" onClick={() => navigate('/dashboard/orders')}>
-                <div className="text-center">
-                  <div className="p-3 rounded-xl bg-accent-light inline-block mb-3">
-                    <ShoppingCart className="h-7 w-7 text-accent" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Place Order</p>
-                </div>
-              </Card>
-              <Card className="p-5 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-gradient-card border-l-4 border-l-warning" onClick={() => navigate('/dashboard/expenses')}>
-                <div className="text-center">
-                  <div className="p-3 rounded-xl bg-warning-light inline-block mb-3">
-                    <Receipt className="h-7 w-7 text-warning" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">
-                    {isAdmin ? 'Review Expenses' : 'Add Expense'}
-                  </p>
-                </div>
-              </Card>
+          <CardContent className="p-3 md:p-6 pt-0">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
+              <button 
+                onClick={() => navigate('/doctors')}
+                className="p-2 md:p-3 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-left"
+              >
+                <Users className="h-4 w-4 md:h-5 md:w-5 text-primary mb-1 md:mb-2" />
+                <span className="text-xs md:text-sm font-medium">View Doctors</span>
+              </button>
+              <button 
+                onClick={() => navigate('/orders')}
+                className="p-2 md:p-3 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors text-left"
+              >
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-accent mb-1 md:mb-2" />
+                <span className="text-xs md:text-sm font-medium">New Order</span>
+              </button>
+              <button 
+                onClick={() => navigate('/expenses')}
+                className="p-2 md:p-3 rounded-lg bg-warning/10 hover:bg-warning/20 transition-colors text-left"
+              >
+                <Receipt className="h-4 w-4 md:h-5 md:w-5 text-warning mb-1 md:mb-2" />
+                <span className="text-xs md:text-sm font-medium">Add Expense</span>
+              </button>
+              <button 
+                onClick={() => navigate('/targets')}
+                className="p-2 md:p-3 rounded-lg bg-success/10 hover:bg-success/20 transition-colors text-left"
+              >
+                <Target className="h-4 w-4 md:h-5 md:w-5 text-success mb-1 md:mb-2" />
+                <span className="text-xs md:text-sm font-medium">View Targets</span>
+              </button>
             </div>
           </CardContent>
         </Card>
       </div>
-      </div>
+    </div>
     </div>
   );
 };

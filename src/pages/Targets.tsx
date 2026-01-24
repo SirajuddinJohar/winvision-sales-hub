@@ -75,7 +75,6 @@ const Targets = () => {
 
   const fetchTargets = async () => {
     try {
-      // First fetch targets with doctor info
       const { data: targetsData, error: targetsError } = await supabase
         .from('targets')
         .select(`
@@ -94,7 +93,6 @@ const Targets = () => {
 
       if (targetsError) throw targetsError;
 
-      // Calculate achieved values for each target
       const targetsWithAchievement = await Promise.all(
         (targetsData || []).map(async (target) => {
           const { data: achievedValue, error } = await supabase
@@ -123,14 +121,12 @@ const Targets = () => {
 
   const fetchDoctors = async () => {
     try {
-      // Don't fetch if profile is not loaded yet
       if (!profile) return;
       
       let query = supabase
         .from('doctors')
         .select('id, name, specialty');
 
-      // If user is not admin, only fetch doctors assigned to them
       if (profile.role !== 'admin') {
         query = query.eq('assigned_mr_id', profile.id);
       }
@@ -146,7 +142,6 @@ const Targets = () => {
 
   const fetchMRs = async () => {
     try {
-      // First get user IDs with MR role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -161,7 +156,6 @@ const Targets = () => {
 
       const mrUserIds = roleData.map(r => r.user_id);
 
-      // Then fetch user details for those IDs
       const { data, error } = await supabase
         .from('users')
         .select('id, name, email')
@@ -181,7 +175,6 @@ const Targets = () => {
       const currentMonth = currentDate.getMonth() + 1;
       const currentYear = currentDate.getFullYear();
       
-      // Handle year rollover for December
       const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
       const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
       
@@ -233,7 +226,6 @@ const Targets = () => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        // Calculate achieved value
         const { data: achievedValue, error: rpcError } = await supabase
           .rpc('calculate_target_achievement', { target_id_param: data.id });
         
@@ -266,32 +258,32 @@ const Targets = () => {
 
   const getStatusBadge = (achieved: number, target: number) => {
     const percentage = getAchievementPercentage(achieved, target);
-    if (percentage >= 100) return <Badge className="bg-green-500">Achieved</Badge>;
-    if (percentage >= 75) return <Badge className="bg-yellow-500">Near Target</Badge>;
-    if (percentage >= 50) return <Badge variant="secondary">In Progress</Badge>;
-    return <Badge variant="destructive">Behind Target</Badge>;
+    if (percentage >= 100) return <Badge className="bg-green-500 text-[10px] md:text-xs">Achieved</Badge>;
+    if (percentage >= 75) return <Badge className="bg-yellow-500 text-[10px] md:text-xs">Near Target</Badge>;
+    if (percentage >= 50) return <Badge variant="secondary" className="text-[10px] md:text-xs">In Progress</Badge>;
+    return <Badge variant="destructive" className="text-[10px] md:text-xs">Behind Target</Badge>;
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 md:space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-5 w-64" />
+            <Skeleton className="h-6 md:h-8 w-24 md:w-32 mb-2" />
+            <Skeleton className="h-4 md:h-5 w-48 md:w-64" />
           </div>
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-9 md:h-10 w-24 md:w-32" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
+            <Skeleton key={i} className="h-48 md:h-64 w-full" />
           ))}
         </div>
       </div>
     );
   }
 
-  // Show new interface for MR users
+  // MR View
   if (profile?.role === 'mr') {
     return (
       <div className="min-h-screen bg-background">
@@ -299,42 +291,42 @@ const Targets = () => {
           title="Targets" 
           description="Track your sales targets and achievements"
         />
-        <div className="p-4 md:p-6 space-y-6">
+        <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="monthly-target">Your Monthly Target</TabsTrigger>
-            <TabsTrigger value="doctor-target">Doctor Target</TabsTrigger>
+            <TabsTrigger value="monthly-target" className="text-xs md:text-sm">Your Monthly Target</TabsTrigger>
+            <TabsTrigger value="doctor-target" className="text-xs md:text-sm">Doctor Target</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="monthly-target" className="space-y-6">
+          <TabsContent value="monthly-target" className="space-y-3 md:space-y-6">
             {/* Monthly Target Card */}
             {mrMonthlyTarget ? (
               <Card className="bg-gradient-to-r from-primary/5 to-primary/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TargetIcon className="h-5 w-5" />
+                <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                    <TargetIcon className="h-4 w-4 md:h-5 md:w-5" />
                     Monthly Target - {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <CardContent className="p-3 md:p-6 pt-0 space-y-3 md:space-y-4">
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Monthly Target</p>
-                      <p className="text-2xl font-bold text-primary">
+                      <p className="text-xs md:text-sm text-muted-foreground">Monthly Target</p>
+                      <p className="text-lg md:text-2xl font-bold text-primary">
                         {formatCurrency(mrMonthlyTarget.target_value)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Achieved</p>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-xs md:text-sm text-muted-foreground">Achieved</p>
+                      <p className="text-lg md:text-2xl font-bold text-green-600">
                         {formatCurrency(mrMonthlyTarget.achieved_value)}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                  <div className="space-y-1.5 md:space-y-2">
+                    <div className="flex justify-between text-xs md:text-sm">
                       <span>Progress</span>
                       <span className="font-medium">
                         {getAchievementPercentage(mrMonthlyTarget.achieved_value, mrMonthlyTarget.target_value).toFixed(1)}%
@@ -342,7 +334,7 @@ const Targets = () => {
                     </div>
                     <Progress 
                       value={getAchievementPercentage(mrMonthlyTarget.achieved_value, mrMonthlyTarget.target_value)} 
-                      className="h-3" 
+                      className="h-2 md:h-3" 
                     />
                   </div>
 
@@ -351,79 +343,81 @@ const Targets = () => {
               </Card>
             ) : (
               <Card>
-                <CardContent className="text-center py-8">
-                  <TargetIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No monthly target set for this month</p>
+                <CardContent className="text-center py-6 md:py-8">
+                  <TargetIcon className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+                  <p className="text-xs md:text-sm text-muted-foreground">No monthly target set for this month</p>
                 </CardContent>
               </Card>
             )}
 
             {/* Orders Table */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                  <Package className="h-4 w-4 md:h-5 md:w-5" />
                   Current Month Orders
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs md:text-sm">
                   All orders placed this month across all doctors
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 md:p-6 pt-0">
                 {orders.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Doctor Name</TableHead>
-                        <TableHead>Product</TableHead>
-                        <TableHead className="text-right">Order Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell>
-                            {new Date(order.order_date).toLocaleDateString('en-IN')}
-                          </TableCell>
-                          <TableCell className="font-medium">{order.doctor?.name}</TableCell>
-                          <TableCell>{order.product?.name}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(order.total_amount)}
-                          </TableCell>
+                  <div className="overflow-x-auto -mx-3 md:mx-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs md:text-sm">Date</TableHead>
+                          <TableHead className="text-xs md:text-sm">Doctor Name</TableHead>
+                          <TableHead className="text-xs md:text-sm">Product</TableHead>
+                          <TableHead className="text-right text-xs md:text-sm">Order Amount</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="text-xs md:text-sm py-2 md:py-4">
+                              {new Date(order.order_date).toLocaleDateString('en-IN')}
+                            </TableCell>
+                            <TableCell className="font-medium text-xs md:text-sm py-2 md:py-4">{order.doctor?.name}</TableCell>
+                            <TableCell className="text-xs md:text-sm py-2 md:py-4">{order.product?.name}</TableCell>
+                            <TableCell className="text-right font-medium text-xs md:text-sm py-2 md:py-4">
+                              {formatCurrency(order.total_amount)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No orders placed this month</p>
+                  <div className="text-center py-6 md:py-8">
+                    <Package className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+                    <p className="text-xs md:text-sm text-muted-foreground">No orders placed this month</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="doctor-target" className="space-y-6">
+          <TabsContent value="doctor-target" className="space-y-3 md:space-y-6">
             {/* Doctor Targets */}
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Doctor Targets</h2>
-              <Button onClick={() => setShowTargetForm(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+              <h2 className="text-base md:text-xl font-semibold">Doctor Targets</h2>
+              <Button size="sm" className="h-9 md:h-10 text-xs md:text-sm" onClick={() => setShowTargetForm(true)}>
+                <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
                 Add Doctor Target
               </Button>
             </div>
 
             {targets.filter(t => t.target_type === 'doctor').length === 0 ? (
               <Card>
-                <CardContent className="text-center py-8">
-                  <TargetIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No doctor targets set</p>
+                <CardContent className="text-center py-6 md:py-8">
+                  <TargetIcon className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+                  <p className="text-xs md:text-sm text-muted-foreground">No doctor targets set</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {targets
                   .filter(target => target.target_type === 'doctor')
                   .map((target) => {
@@ -431,17 +425,17 @@ const Targets = () => {
                     
                     return (
                       <Card key={target.id} className="hover:shadow-md transition-shadow">
-                        <CardHeader>
+                        <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                           <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-primary/10">
-                                <TargetIcon className="h-5 w-5 text-primary" />
+                            <div className="flex items-center gap-2 md:gap-3">
+                              <div className="p-1.5 md:p-2 rounded-lg bg-primary/10">
+                                <TargetIcon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                               </div>
                               <div>
-                                <CardTitle className="text-lg">
+                                <CardTitle className="text-sm md:text-lg">
                                   {target.doctor?.name || 'Doctor Target'}
                                 </CardTitle>
-                                <CardDescription>
+                                <CardDescription className="text-xs md:text-sm">
                                   {new Date(target.target_month).toLocaleDateString('en-US', { 
                                     month: 'long', 
                                     year: 'numeric' 
@@ -452,42 +446,42 @@ const Targets = () => {
                             {getStatusBadge(target.achieved_value, target.target_value)}
                           </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-3">
+                        <CardContent className="p-3 md:p-6 pt-0 space-y-3 md:space-y-4">
+                          <div className="space-y-2 md:space-y-3">
                             <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Progress</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg font-bold text-primary">
+                              <span className="text-xs md:text-sm font-medium">Progress</span>
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <span className="text-base md:text-lg font-bold text-primary">
                                   {achievementPercentage.toFixed(1)}%
                                 </span>
-                                <span className="text-xs text-muted-foreground">completed</span>
+                                <span className="text-[10px] md:text-xs text-muted-foreground">completed</span>
                               </div>
                             </div>
                             
-                            <Progress value={achievementPercentage} className="h-3" />
+                            <Progress value={achievementPercentage} className="h-2 md:h-3" />
                             
-                            <div className="flex justify-between text-xs text-muted-foreground">
+                            <div className="flex justify-between text-[10px] md:text-xs text-muted-foreground">
                               <span>₹0</span>
                               <span className="font-medium">Target: {formatCurrency(target.target_value)}</span>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+                          <div className="grid grid-cols-3 gap-2 md:gap-3 p-2 md:p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
                             <div className="text-center">
-                              <p className="text-xs text-muted-foreground mb-1">Target</p>
-                              <p className="text-sm font-semibold text-primary">
+                              <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Target</p>
+                              <p className="text-xs md:text-sm font-semibold text-primary">
                                 {formatCurrency(target.target_value)}
                               </p>
                             </div>
                             <div className="text-center">
-                              <p className="text-xs text-muted-foreground mb-1">Achieved</p>
-                              <p className="text-sm font-semibold text-green-600">
+                              <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Achieved</p>
+                              <p className="text-xs md:text-sm font-semibold text-green-600">
                                 {formatCurrency(target.achieved_value)}
                               </p>
                             </div>
                             <div className="text-center">
-                              <p className="text-xs text-muted-foreground mb-1">Remaining</p>
-                              <p className="text-sm font-semibold text-orange-600">
+                              <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Remaining</p>
+                              <p className="text-xs md:text-sm font-semibold text-orange-600">
                                 {formatCurrency(Math.max(0, target.target_value - target.achieved_value))}
                               </p>
                             </div>
@@ -524,48 +518,48 @@ const Targets = () => {
         title="Targets Management" 
         description="Monitor MR performance and manage targets"
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Medical Representatives</h2>
-          <Button onClick={() => setShowTargetForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <h2 className="text-base md:text-xl font-semibold">Medical Representatives</h2>
+          <Button size="sm" className="h-9 md:h-10 text-xs md:text-sm" onClick={() => setShowTargetForm(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
             Set Target
           </Button>
         </div>
 
         {/* Summary Statistics */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Total MRs</p>
-                <p className="text-3xl font-bold text-primary">{mrs.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total MRs</p>
+                <p className="text-xl md:text-3xl font-bold text-primary">{mrs.length}</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Targets Set</p>
-                <p className="text-3xl font-bold text-primary">{targets.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Targets Set</p>
+                <p className="text-xl md:text-3xl font-bold text-primary">{targets.length}</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Achieved</p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Achieved</p>
+                <p className="text-xl md:text-3xl font-bold text-green-600">
                   {targets.filter(t => getAchievementPercentage(t.achieved_value, t.target_value) >= 100).length}
                 </p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Avg Progress</p>
-                <p className="text-3xl font-bold text-primary">
+                <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">Avg Progress</p>
+                <p className="text-xl md:text-3xl font-bold text-primary">
                   {targets.length > 0 
                     ? (targets.reduce((sum, t) => sum + getAchievementPercentage(t.achieved_value, t.target_value), 0) / targets.length).toFixed(0)
                     : 0}%
@@ -578,15 +572,14 @@ const Targets = () => {
         {/* MR List */}
         {mrs.length === 0 ? (
           <Card>
-            <CardContent className="text-center py-8">
-              <TargetIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No MRs found</p>
+            <CardContent className="text-center py-6 md:py-8">
+              <TargetIcon className="mx-auto h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+              <p className="text-xs md:text-sm text-muted-foreground">No MRs found</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {mrs.map((mr) => {
-              // Get current month's MR target
               const currentDate = new Date();
               const currentMonthStr = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
               
@@ -604,7 +597,6 @@ const Targets = () => {
                 ? getAchievementPercentage(mrTarget.achieved_value, mrTarget.target_value)
                 : 0;
               
-              // Determine card color based on performance
               const getCardColor = () => {
                 if (!mrTarget) return 'border-muted';
                 if (achievementPercentage >= 100) return 'border-green-500 bg-green-50/50 dark:bg-green-950/20';
@@ -619,49 +611,49 @@ const Targets = () => {
                   className={`cursor-pointer hover:shadow-lg transition-all ${getCardColor()}`}
                   onClick={() => window.location.href = `/dashboard/targets/mr/${mr.id}`}
                 >
-                  <CardHeader>
+                  <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg">{mr.name}</CardTitle>
-                        <CardDescription className="text-xs">{mr.email}</CardDescription>
+                        <CardTitle className="text-sm md:text-lg">{mr.name}</CardTitle>
+                        <CardDescription className="text-[10px] md:text-xs">{mr.email}</CardDescription>
                       </div>
                       {mrTarget && getStatusBadge(mrTarget.achieved_value, mrTarget.target_value)}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="p-3 md:p-6 pt-0 space-y-3 md:space-y-4">
                     {mrTarget ? (
                       <>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
+                        <div className="space-y-1.5 md:space-y-2">
+                          <div className="flex justify-between text-xs md:text-sm">
                             <span>Monthly Target</span>
                             <span className="font-medium">{formatCurrency(mrTarget.target_value)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs md:text-sm">
                             <span>Achieved</span>
                             <span className="font-medium text-green-600">
                               {formatCurrency(mrTarget.achieved_value)}
                             </span>
                           </div>
-                          <Progress value={achievementPercentage} className="h-2" />
+                          <Progress value={achievementPercentage} className="h-1.5 md:h-2" />
                           <div className="text-center">
-                            <span className="text-lg font-bold text-primary">
+                            <span className="text-base md:text-lg font-bold text-primary">
                               {achievementPercentage.toFixed(1)}%
                             </span>
                           </div>
                         </div>
                       </>
                     ) : (
-                      <div className="text-center py-4">
-                        <p className="text-sm text-muted-foreground">No monthly target set</p>
+                      <div className="text-center py-3 md:py-4">
+                        <p className="text-xs md:text-sm text-muted-foreground">No monthly target set</p>
                       </div>
                     )}
                     
                     <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="text-sm text-muted-foreground">
-                        <TargetIcon className="inline h-4 w-4 mr-1" />
+                      <div className="text-xs md:text-sm text-muted-foreground">
+                        <TargetIcon className="inline h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
                         Doctor Targets
                       </div>
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="text-[10px] md:text-xs">
                         {mrDoctorTargets.length}
                       </Badge>
                     </div>
