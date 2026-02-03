@@ -154,26 +154,26 @@ const SecondarySales = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Secondary Sales" description="Track secondary sales data from distributors" />
       
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="px-3 py-2 md:px-4 md:py-8 space-y-3 md:space-y-6">
         {/* Entry Form */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 md:p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
               </div>
-              <CardTitle>Add Secondary Sales Entry</CardTitle>
+              <CardTitle className="text-base md:text-lg">Add Secondary Sales Entry</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0 space-y-3 md:space-y-4">
             {/* Distributor Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="distributor" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+            <div className="space-y-1 md:space-y-2">
+              <Label htmlFor="distributor" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 Select Distributor
               </Label>
               <Select value={selectedDistributor} onValueChange={setSelectedDistributor}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Choose a distributor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -187,13 +187,13 @@ const SecondarySales = () => {
             </div>
 
             {/* Month Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="month" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+            <div className="space-y-1 md:space-y-2">
+              <Label htmlFor="month" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 Select Month
               </Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Choose a month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -207,14 +207,15 @@ const SecondarySales = () => {
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+            <div className="space-y-1 md:space-y-2">
+              <Label htmlFor="description" className="text-xs md:text-sm">Description (Optional)</Label>
               <Textarea
                 id="description"
                 placeholder="Add any notes or description about this sales entry..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+                className="text-sm"
               />
             </div>
 
@@ -229,16 +230,16 @@ const SecondarySales = () => {
             <Button 
               onClick={handleSubmit} 
               disabled={saving || !selectedDistributor}
-              className="w-full"
+              className="w-full h-9 md:h-10 text-sm"
             >
               {saving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
                   Save Entry
                 </>
               )}
@@ -248,49 +249,49 @@ const SecondarySales = () => {
 
         {/* Previous Entries */}
         <Card>
-          <CardHeader>
-            <CardTitle>Previous Entries</CardTitle>
+          <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+            <CardTitle className="text-base md:text-lg">Previous Entries</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center py-6 md:py-8">
+                <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-muted-foreground" />
               </div>
             ) : entries.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground text-center py-6 md:py-8 text-xs md:text-sm">
                 No secondary sales entries yet
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {entries.map((entry) => (
                   <Card key={entry.id} className="bg-muted/50">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col md:flex-row gap-4">
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                         {entry.image_url && (
                           <img 
                             src={entry.image_url} 
                             alt="Sales" 
-                            className="w-full md:w-32 h-32 object-cover rounded-md"
+                            className="w-full md:w-32 h-24 md:h-32 object-cover rounded-md"
                           />
                         )}
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 space-y-1 md:space-y-2">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">
+                            <h4 className="font-semibold text-sm md:text-base">
                               {entry.distributor?.name || 'Unknown Distributor'}
                             </h4>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[10px] md:text-sm text-muted-foreground">
                               {format(new Date(entry.sales_month), 'MMMM yyyy')}
                             </span>
                           </div>
                           {entry.distributor?.city && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs md:text-sm text-muted-foreground">
                               {entry.distributor.city}
                             </p>
                           )}
                           {entry.description && (
-                            <p className="text-sm">{entry.description}</p>
+                            <p className="text-xs md:text-sm">{entry.description}</p>
                           )}
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[10px] md:text-xs text-muted-foreground">
                             Added on {format(new Date(entry.created_at), 'dd MMM yyyy, hh:mm a')}
                           </p>
                         </div>

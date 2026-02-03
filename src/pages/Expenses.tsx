@@ -272,15 +272,15 @@ const Expenses = () => {
         title="Expenses" 
         description={isAdmin ? 'Manage expense approvals and reports' : 'Track your expense submissions'}
       />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         {!isAdmin && (
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setShowAreaForm(true)}>
-              <MapPin className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={() => setShowAreaForm(true)} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+              <MapPin className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
               Add Area
             </Button>
-            <Button onClick={() => setShowForm(!showForm)}>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={() => setShowForm(!showForm)} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+              <Plus className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
               Add Expense
             </Button>
           </div>

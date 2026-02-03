@@ -145,13 +145,13 @@ const TourPlanRequests = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+        return <Badge className="bg-yellow-500 text-[10px] md:text-xs">Pending</Badge>;
       case 'approved':
-        return <Badge className="bg-green-500">Approved</Badge>;
+        return <Badge className="bg-green-500 text-[10px] md:text-xs">Approved</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
+        return <Badge className="bg-red-500 text-[10px] md:text-xs">Rejected</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge className="text-[10px] md:text-xs">{status}</Badge>;
     }
   };
 
@@ -160,7 +160,7 @@ const TourPlanRequests = () => {
       <div className="min-h-screen bg-background">
         <PageHeader title="Tour Plan Edit Requests" description="Manage edit requests from users" />
         <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground text-sm">Loading...</div>
         </div>
       </div>
     );
@@ -170,114 +170,119 @@ const TourPlanRequests = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Tour Plan Edit Requests" description="Manage edit requests from users" />
       
-      <div className="container mx-auto px-4 py-6">
+      <div className="px-3 py-2 md:px-4 md:py-6">
         <div className="bg-card rounded-lg shadow-sm border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Month/Year</TableHead>
-                <TableHead>Requested At</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No edit requests found
-                  </TableCell>
+                  <TableHead className="text-xs md:text-sm">User</TableHead>
+                  <TableHead className="text-xs md:text-sm">Month/Year</TableHead>
+                  <TableHead className="text-xs md:text-sm">Requested At</TableHead>
+                  <TableHead className="text-xs md:text-sm">Status</TableHead>
+                  <TableHead className="text-xs md:text-sm">Actions</TableHead>
                 </TableRow>
-              ) : (
-                requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <div className="font-medium">{request.users.name}</div>
-                      <div className="text-sm text-muted-foreground">{request.users.email}</div>
-                    </TableCell>
-                    <TableCell>
-                      {monthNames[request.tour_plans.month - 1]} {request.tour_plans.year}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(request.requested_at), 'MMM dd, yyyy HH:mm')}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(request.status)}
-                    </TableCell>
-                    <TableCell>
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleOpenModal(request, 'approve')}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleOpenModal(request, 'reject')}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                      {request.status !== 'pending' && request.admin_remarks && (
-                        <div className="text-sm text-muted-foreground">
-                          {request.admin_remarks}
-                        </div>
-                      )}
+              </TableHeader>
+              <TableBody>
+                {requests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
+                      No edit requests found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  requests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="py-2 md:py-4">
+                        <div className="font-medium text-sm md:text-base">{request.users.name}</div>
+                        <div className="text-[10px] md:text-xs text-muted-foreground">{request.users.email}</div>
+                      </TableCell>
+                      <TableCell className="text-xs md:text-sm py-2 md:py-4">
+                        {monthNames[request.tour_plans.month - 1]} {request.tour_plans.year}
+                      </TableCell>
+                      <TableCell className="text-xs md:text-sm py-2 md:py-4">
+                        {format(new Date(request.requested_at), 'MMM dd, yyyy HH:mm')}
+                      </TableCell>
+                      <TableCell className="py-2 md:py-4">
+                        {getStatusBadge(request.status)}
+                      </TableCell>
+                      <TableCell className="py-2 md:py-4">
+                        {request.status === 'pending' && (
+                          <div className="flex gap-1 md:gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenModal(request, 'approve')}
+                              className="bg-green-600 hover:bg-green-700 h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleOpenModal(request, 'reject')}
+                              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                        {request.status !== 'pending' && request.admin_remarks && (
+                          <div className="text-[10px] md:text-sm text-muted-foreground">
+                            {request.admin_remarks}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
 
       {/* Action Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[90vw] md:max-w-md">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base md:text-lg">
               {actionType === 'approve' ? 'Approve Edit Request' : 'Reject Edit Request'}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {selectedRequest && (
-              <div className="bg-muted p-3 rounded-lg">
-                <div className="text-sm">
+              <div className="bg-muted p-2 md:p-3 rounded-lg">
+                <div className="text-xs md:text-sm">
                   <strong>User:</strong> {selectedRequest.users.name}
                 </div>
-                <div className="text-sm">
+                <div className="text-xs md:text-sm">
                   <strong>Period:</strong> {monthNames[selectedRequest.tour_plans.month - 1]} {selectedRequest.tour_plans.year}
                 </div>
               </div>
             )}
 
             <div>
-              <Label>Admin Remarks</Label>
+              <Label className="text-xs md:text-sm">Admin Remarks</Label>
               <Textarea
                 value={adminRemarks}
                 onChange={(e) => setAdminRemarks(e.target.value)}
                 placeholder="Add remarks for this decision..."
                 rows={4}
+                className="text-sm mt-1"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} size="sm" className="h-9 text-xs md:text-sm">
               Cancel
             </Button>
             <Button 
               onClick={handleSubmit}
-              className={actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+              className={`h-9 text-xs md:text-sm ${actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}`}
               variant={actionType === 'reject' ? 'destructive' : 'default'}
+              size="sm"
             >
               {actionType === 'approve' ? 'Approve' : 'Reject'}
             </Button>

@@ -117,11 +117,11 @@ const DoctorDetails = () => {
     return (
       <div className="min-h-screen bg-background">
         <PageHeader title="Doctor Details" />
-        <div className="p-4 md:p-6 space-y-6">
-          <Skeleton className="h-64 w-full" />
-          <div className="grid gap-6 md:grid-cols-2">
-            <Skeleton className="h-96 w-full" />
-            <Skeleton className="h-96 w-full" />
+        <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
+          <Skeleton className="h-48 md:h-64 w-full" />
+          <div className="grid gap-3 md:gap-6 md:grid-cols-2">
+            <Skeleton className="h-72 md:h-96 w-full" />
+            <Skeleton className="h-72 md:h-96 w-full" />
           </div>
         </div>
       </div>
@@ -132,11 +132,11 @@ const DoctorDetails = () => {
     return (
       <div className="min-h-screen bg-background">
         <PageHeader title="Doctor Details" />
-        <div className="p-4 md:p-6">
+        <div className="px-3 py-2 md:p-6">
           <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-muted-foreground">Doctor not found</p>
-              <Button onClick={() => navigate('/dashboard/doctors')} className="mt-4">
+            <CardContent className="text-center py-6 md:py-8">
+              <p className="text-muted-foreground text-xs md:text-sm">Doctor not found</p>
+              <Button onClick={() => navigate('/dashboard/doctors')} className="mt-4 h-9 md:h-10 text-xs md:text-sm">
                 Back to Doctors
               </Button>
             </CardContent>
@@ -149,52 +149,52 @@ const DoctorDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={doctor.name} />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         {/* Main Info Card */}
         <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <User className="h-8 w-8 text-primary" />
+          <CardHeader className="p-3 md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="p-2 md:p-3 rounded-lg bg-primary/10">
+                  <User className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">{doctor.name}</CardTitle>
-                  <p className="text-muted-foreground">{doctor.specialty}</p>
+                  <CardTitle className="text-xl md:text-2xl">{doctor.name}</CardTitle>
+                  <p className="text-xs md:text-sm text-muted-foreground">{doctor.specialty}</p>
                 </div>
               </div>
-              <Button onClick={() => navigate('/dashboard/doctors')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+              <Button onClick={() => navigate('/dashboard/doctors')} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+                <ArrowLeft className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
                 Back
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0 space-y-4 md:space-y-6">
+            <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-center gap-2 md:gap-3">
+                <MapPin className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Area</p>
-                  <p className="text-sm text-muted-foreground">{doctor.area}</p>
+                  <p className="text-xs md:text-sm font-medium">Area</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{doctor.area}</p>
                 </div>
               </div>
 
               {doctor.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Phone className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Phone</p>
-                    <p className="text-sm text-muted-foreground">{doctor.phone}</p>
+                    <p className="text-xs md:text-sm font-medium">Phone</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{doctor.phone}</p>
                   </div>
                 </div>
               )}
 
               {doctor.birthday && (
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Birthday</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm font-medium">Birthday</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {new Date(doctor.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
                     </p>
                   </div>
@@ -202,11 +202,11 @@ const DoctorDetails = () => {
               )}
 
               {doctor.anniversary && (
-                <div className="flex items-center gap-3">
-                  <Heart className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Heart className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Anniversary</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm font-medium">Anniversary</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {new Date(doctor.anniversary).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
                     </p>
                   </div>
@@ -214,48 +214,48 @@ const DoctorDetails = () => {
               )}
 
               {doctor.last_visit_date && (
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Last Visit</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm font-medium">Last Visit</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {new Date(doctor.last_visit_date).toLocaleDateString()} 
-                      <span className="ml-2">({getDaysSinceLastVisit(doctor.last_visit_date)} days ago)</span>
+                      <span className="ml-1 md:ml-2">({getDaysSinceLastVisit(doctor.last_visit_date)} days ago)</span>
                     </p>
                   </div>
                 </div>
               )}
 
               {doctor.relationship_score !== undefined && (
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Relationship Score</p>
-                    <p className="text-sm text-muted-foreground">{doctor.relationship_score.toFixed(1)}</p>
+                    <p className="text-xs md:text-sm font-medium">Relationship Score</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{doctor.relationship_score.toFixed(1)}</p>
                   </div>
                 </div>
               )}
 
               {doctor.monthly_target && (
-                <div className="flex items-center gap-3">
-                  <Target className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Target className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Monthly Target</p>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(doctor.monthly_target)}</p>
+                    <p className="text-xs md:text-sm font-medium">Monthly Target</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{formatCurrency(doctor.monthly_target)}</p>
                   </div>
                 </div>
               )}
             </div>
 
             {doctor.tags && doctor.tags.length > 0 && (
-              <div className="pt-4 border-t">
+              <div className="pt-3 md:pt-4 border-t">
                 <div className="flex items-center gap-2 mb-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">Tags</p>
+                  <Tag className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                  <p className="text-xs md:text-sm font-medium">Tags</p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1.5 md:gap-2 flex-wrap">
                   {doctor.tags.map((tag, idx) => (
-                    <Badge key={idx} variant="secondary">
+                    <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs">
                       {tag}
                     </Badge>
                   ))}
@@ -264,16 +264,16 @@ const DoctorDetails = () => {
             )}
 
             {doctor.notes && (
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium mb-2">Notes</p>
-                <p className="text-sm text-muted-foreground">{doctor.notes}</p>
+              <div className="pt-3 md:pt-4 border-t">
+                <p className="text-xs md:text-sm font-medium mb-1 md:mb-2">Notes</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{doctor.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Prescription Tracking, Visit Notes, and Incentive */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-3 md:gap-6 md:grid-cols-2">
           <PrescriptionTracking doctorId={doctor.id} />
           <VisitNotes doctorId={doctor.id} />
         </div>
@@ -283,19 +283,19 @@ const DoctorDetails = () => {
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate(`/dashboard/doctors/${doctor.id}/incentive`)}
         >
-          <CardHeader>
+          <CardHeader className="p-3 md:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                  <IndianRupee className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-1.5 md:p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                  <IndianRupee className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
                 </div>
-                <CardTitle className="text-lg">Incentive</CardTitle>
+                <CardTitle className="text-sm md:text-lg">Incentive</CardTitle>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xs md:text-sm text-muted-foreground">
               View and manage incentive details for this doctor
             </p>
           </CardContent>
@@ -303,32 +303,32 @@ const DoctorDetails = () => {
 
         {/* Assigned Pharmacies */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Store className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <CardHeader className="p-3 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 md:p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Store className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle className="text-lg">Assigned Pharmacies</CardTitle>
-              <Badge variant="secondary" className="ml-auto">
+              <CardTitle className="text-sm md:text-lg">Assigned Pharmacies</CardTitle>
+              <Badge variant="secondary" className="ml-auto text-[10px] md:text-xs">
                 {assignedPharmacies.length}
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             {assignedPharmacies.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-xs md:text-sm text-muted-foreground text-center py-3 md:py-4">
                 No pharmacies assigned to this doctor
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {assignedPharmacies.map((pharmacy) => (
                   <div
                     key={pharmacy.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
+                    className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-muted/50 border"
                   >
                     <div>
-                      <p className="font-medium">{pharmacy.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-sm md:text-base">{pharmacy.name}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">
                         {pharmacy.city} • {pharmacy.contact_person}
                       </p>
                     </div>

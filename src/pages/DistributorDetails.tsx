@@ -154,19 +154,19 @@ const DistributorDetails = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className="space-y-3 md:space-y-6 p-3 md:p-6">
+        <Skeleton className="h-16 md:h-20 w-full" />
+        <Skeleton className="h-72 md:h-96 w-full" />
       </div>
     );
   }
 
   if (!distributor) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p className="text-muted-foreground mb-4">Distributor not found</p>
-        <Button onClick={() => navigate('/dashboard/distributors')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+      <div className="flex flex-col items-center justify-center h-screen px-4">
+        <p className="text-muted-foreground mb-4 text-xs md:text-sm">Distributor not found</p>
+        <Button onClick={() => navigate('/dashboard/distributors')} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+          <ArrowLeft className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
           Back to Distributors
         </Button>
       </div>
@@ -179,15 +179,15 @@ const DistributorDetails = () => {
         title={distributor.name}
         description={`${distributor.city} - ${distributor.contact_person} (${distributor.phone})`}
       />
-      <div className="p-4 md:p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={() => navigate('/dashboard/distributors')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
+        <div className="flex justify-between items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/dashboard/distributors')} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+            <ArrowLeft className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
             Back
           </Button>
           {profile?.role === 'admin' && (
-            <Button onClick={handleAddProduct}>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={handleAddProduct} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+              <Plus className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
               Add Product
             </Button>
           )}
@@ -195,67 +195,71 @@ const DistributorDetails = () => {
 
         {products.length === 0 ? (
           <Card>
-            <CardContent className="text-center py-8">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No products available</p>
+            <CardContent className="text-center py-6 md:py-8">
+              <Package className="mx-auto h-8 w-8 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+              <p className="text-muted-foreground text-xs md:text-sm">No products available</p>
             </CardContent>
           </Card>
         ) : (
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">PTR</TableHead>
-                    {profile?.role === 'admin' && (
-                      <TableHead className="text-right">Actions</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">
-                        {product.products.name}
-                      </TableCell>
-                      <TableCell>{product.products.category}</TableCell>
-                      <TableCell className="text-right">{product.quantity}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(product.ptr)}
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs md:text-sm">Product Name</TableHead>
+                      <TableHead className="text-xs md:text-sm">Category</TableHead>
+                      <TableHead className="text-xs md:text-sm text-right">Quantity</TableHead>
+                      <TableHead className="text-xs md:text-sm text-right">PTR</TableHead>
                       {profile?.role === 'admin' && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditProduct(product)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteProduct(product.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        <TableHead className="text-xs md:text-sm text-right">Actions</TableHead>
                       )}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium text-xs md:text-sm py-2 md:py-4">
+                          {product.products.name}
+                        </TableCell>
+                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{product.products.category}</TableCell>
+                        <TableCell className="text-xs md:text-sm text-right py-2 md:py-4">{product.quantity}</TableCell>
+                        <TableCell className="text-xs md:text-sm text-right py-2 md:py-4">
+                          {formatCurrency(product.ptr)}
+                        </TableCell>
+                        {profile?.role === 'admin' && (
+                          <TableCell className="text-right py-2 md:py-4">
+                            <div className="flex justify-end gap-1 md:gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditProduct(product)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         )}
 
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-[90vw] md:max-w-2xl">
             <DistributorProductForm
               distributorId={id!}
               product={editingProduct}

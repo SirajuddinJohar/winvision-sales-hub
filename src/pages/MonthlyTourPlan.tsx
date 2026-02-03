@@ -513,16 +513,16 @@ const MonthlyTourPlan = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Monthly Tour Plan" description="Plan your monthly tours" />
       
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="container mx-auto px-3 py-2 md:px-4 md:py-6 max-w-6xl">
         {/* Today's Plan Section */}
-        <Card className="mb-6 border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MapPin className="h-5 w-5 text-primary" />
+        <Card className="mb-4 md:mb-6 border-primary/20 bg-primary/5">
+          <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               Today's Plan - {format(currentDate, 'MMMM dd, yyyy')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             {todayPlanData ? (
               <div className="space-y-3">
                 {todayPlanData.is_holiday ? (
@@ -581,29 +581,29 @@ const MonthlyTourPlan = () => {
         </Card>
 
         {/* Header Section */}
-        <div className="bg-card rounded-lg p-6 mb-6 shadow-sm border">
-          <div className="text-center mb-4">
-            <div className="text-2xl font-semibold text-foreground mb-2">
+        <div className="bg-card rounded-lg p-4 md:p-6 mb-4 md:mb-6 shadow-sm border">
+          <div className="text-center mb-3 md:mb-4">
+            <div className="text-lg md:text-2xl font-semibold text-foreground mb-1 md:mb-2">
               {format(currentDate, 'MMMM dd, yyyy')}
             </div>
-            <div className="text-lg text-muted-foreground">
+            <div className="text-sm md:text-lg text-muted-foreground">
               Hi {profile?.name || 'User'}
             </div>
           </div>
           
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
-              <Calendar className="h-5 w-5" />
+          <div className="text-center mb-4 md:mb-6">
+            <h2 className="text-base md:text-xl font-bold text-foreground flex items-center justify-center gap-2">
+              <Calendar className="h-4 w-4 md:h-5 md:w-5" />
               Tour Plan for {monthNames[selectedMonth - 1]} {selectedYear}
             </h2>
           </div>
 
           {/* Dropdowns */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-2 md:gap-4 mb-4 md:mb-6">
             <div>
-              <Label>Year</Label>
+              <Label className="text-xs md:text-sm">Year</Label>
               <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -614,9 +614,9 @@ const MonthlyTourPlan = () => {
               </Select>
             </div>
             <div>
-              <Label>Month</Label>
+              <Label className="text-xs md:text-sm">Month</Label>
               <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -789,7 +789,7 @@ const MonthlyTourPlan = () => {
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
         {Array.from({ length: getDaysInMonth() }, (_, i) => i + 1).map(date => {
             const dayData = planDays.find(d => d.date === date);
             const dayName = getDayName(date);
@@ -798,9 +798,9 @@ const MonthlyTourPlan = () => {
               <div
                 key={date}
                 onClick={() => handleDateClick(date)}
-                className="bg-card border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow min-h-[120px]"
+                className="bg-card border rounded-lg p-2 md:p-3 cursor-pointer hover:shadow-md transition-shadow min-h-[100px] md:min-h-[120px]"
               >
-                <div className="font-semibold text-sm mb-2">
+                <div className="font-semibold text-xs md:text-sm mb-1 md:mb-2">
                   {String(date).padStart(2, '0')} {dayName}
                 </div>
                 {dayData?.is_weekly_off ? (
