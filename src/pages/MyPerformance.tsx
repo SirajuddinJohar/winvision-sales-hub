@@ -10,20 +10,20 @@ const MyPerformance = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="My Performance" description="View your call reports and expenses" />
-      <div className="p-4 md:p-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="p-4 bg-primary/10 rounded-full">
-                <FileText className="h-12 w-12 text-primary" />
+      <div className="px-3 py-2 md:p-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <Card className="p-6 md:p-8 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+              <div className="p-3 md:p-4 bg-primary/10 rounded-full">
+                <FileText className="h-10 w-10 md:h-12 md:w-12 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Call Reports</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">Call Reports</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 View detailed reports of your daily doctor and pharmacy calls
               </p>
               <Button 
                 onClick={() => navigate('/dashboard/call-reports')}
-                className="w-full"
+                className="w-full h-10 md:h-auto text-sm md:text-base"
                 size="lg"
               >
                 See Call Reports
@@ -31,18 +31,18 @@ const MyPerformance = () => {
             </div>
           </Card>
 
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="p-4 bg-primary/10 rounded-full">
-                <DollarSign className="h-12 w-12 text-primary" />
+          <Card className="p-6 md:p-8 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+              <div className="p-3 md:p-4 bg-primary/10 rounded-full">
+                <DollarSign className="h-10 w-10 md:h-12 md:w-12 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Expenses Reports</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">Expenses Reports</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Track and analyze your monthly expenses
               </p>
               <Button 
                 onClick={() => navigate('/dashboard/expenses-reports')}
-                className="w-full"
+                className="w-full h-10 md:h-auto text-sm md:text-base"
                 size="lg"
               >
                 See Expenses Reports

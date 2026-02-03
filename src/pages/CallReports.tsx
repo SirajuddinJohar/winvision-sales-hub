@@ -185,14 +185,14 @@ const CallReports = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="Call Reports" description="View your monthly call reports" />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         {/* Total Calls Count - Admin Only */}
         {isAdmin && reports.length > 0 && (
-          <Card className="p-6 bg-primary/5 border-primary/20">
+          <Card className="p-3 md:p-6 bg-primary/5 border-primary/20">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Calls</h3>
-              <p className="text-4xl font-bold text-primary">{reports.length}</p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-1 md:mb-2">Total Calls</h3>
+              <p className="text-2xl md:text-4xl font-bold text-primary">{reports.length}</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground mt-1 md:mt-2">
                 {selectedMrId === 'all' ? 'All MRs' : mrsList.find(mr => mr.id === selectedMrId)?.name || 'Selected MR'} - {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
               </p>
             </div>
@@ -200,12 +200,12 @@ const CallReports = () => {
         )}
 
         {/* Filters */}
-        <Card className="p-6">
-          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+        <Card className="p-3 md:p-6">
+          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-2 md:gap-4`}>
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Year</label>
+              <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,9 +216,9 @@ const CallReports = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Month</label>
+              <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select Month</label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -230,9 +230,9 @@ const CallReports = () => {
             </div>
             {isAdmin && (
               <div>
-                <label className="text-sm font-medium mb-2 block">Select MR</label>
+                <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select MR</label>
                 <Select value={selectedMrId} onValueChange={setSelectedMrId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 md:h-10 text-sm">
                     <SelectValue placeholder="Select MR" />
                   </SelectTrigger>
                   <SelectContent>
@@ -252,9 +252,9 @@ const CallReports = () => {
         {/* Reports Table */}
         <Card>
           {loading ? (
-            <div className="p-6 space-y-4">
+            <div className="p-3 md:p-6 space-y-3 md:space-y-4">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-10 md:h-12 w-full" />
               ))}
             </div>
           ) : (
@@ -262,30 +262,30 @@ const CallReports = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    {isAdmin && selectedMrId === 'all' && <TableHead>MR Name</TableHead>}
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Specialty/Area</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="text-xs md:text-sm">Date</TableHead>
+                    {isAdmin && selectedMrId === 'all' && <TableHead className="text-xs md:text-sm">MR Name</TableHead>}
+                    <TableHead className="text-xs md:text-sm">Name</TableHead>
+                    <TableHead className="text-xs md:text-sm">Type</TableHead>
+                    <TableHead className="text-xs md:text-sm">Specialty/Area</TableHead>
+                    <TableHead className="text-xs md:text-sm">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reports.length > 0 ? (
                     reports.map((report, index) => (
                       <TableRow key={index}>
-                        <TableCell>{format(new Date(report.date), 'dd MMM yyyy')}</TableCell>
+                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{format(new Date(report.date), 'dd MMM yyyy')}</TableCell>
                         {isAdmin && selectedMrId === 'all' && (
-                          <TableCell>
+                          <TableCell className="py-2 md:py-4">
                             <div className="flex flex-col">
-                              <span className="font-medium">{report.mrName || 'Unknown'}</span>
-                              <span className="text-xs text-muted-foreground">{report.mrEmail}</span>
+                              <span className="font-medium text-xs md:text-sm">{report.mrName || 'Unknown'}</span>
+                              <span className="text-[10px] md:text-xs text-muted-foreground">{report.mrEmail}</span>
                             </div>
                           </TableCell>
                         )}
-                        <TableCell className="font-medium">{report.targetName}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
+                        <TableCell className="font-medium text-xs md:text-sm py-2 md:py-4">{report.targetName}</TableCell>
+                        <TableCell className="py-2 md:py-4">
+                          <span className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs ${
                             report.targetType === 'doctor' 
                               ? 'bg-blue-100 text-blue-800' 
                               : 'bg-green-100 text-green-800'
@@ -293,9 +293,9 @@ const CallReports = () => {
                             {report.targetType === 'doctor' ? 'Doctor' : 'Pharmacy'}
                           </span>
                         </TableCell>
-                        <TableCell>{report.specialty || report.area || '-'}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
+                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{report.specialty || report.area || '-'}</TableCell>
+                        <TableCell className="py-2 md:py-4">
+                          <span className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs ${
                             report.status === 'complete' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-yellow-100 text-yellow-800'
@@ -307,7 +307,7 @@ const CallReports = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={isAdmin && selectedMrId === 'all' ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={isAdmin && selectedMrId === 'all' ? 6 : 5} className="text-center py-6 md:py-8 text-xs md:text-sm text-muted-foreground">
                         No call reports found for the selected period
                       </TableCell>
                     </TableRow>

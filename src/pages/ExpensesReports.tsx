@@ -164,14 +164,14 @@ const ExpensesReports = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="Expenses Reports" description={isAdmin ? "View and analyze expense reports" : "View your monthly expense reports"} />
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
         {/* Grand Total Display - Admin Only */}
         {isAdmin && !loading && reports.length > 0 && (
-          <Card className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <Card className="p-3 md:p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Total Expenses</p>
-              <p className="text-4xl font-bold text-primary">{formatCurrency(totals.amount)}</p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2 font-medium">Total Expenses</p>
+              <p className="text-2xl md:text-4xl font-bold text-primary">{formatCurrency(totals.amount)}</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1 md:mt-2">
                 {selectedMrId === 'all' ? 'All MRs' : mrsList.find(mr => mr.id === selectedMrId)?.name}
                 {' • '}
                 {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
@@ -181,12 +181,12 @@ const ExpensesReports = () => {
         )}
 
         {/* Filters */}
-        <Card className="p-6">
-          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+        <Card className="p-3 md:p-6">
+          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-2 md:gap-4`}>
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Year</label>
+              <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
                 <SelectContent>
@@ -197,9 +197,9 @@ const ExpensesReports = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Month</label>
+              <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select Month</label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,9 +211,9 @@ const ExpensesReports = () => {
             </div>
             {isAdmin && (
               <div>
-                <label className="text-sm font-medium mb-2 block">Select MR</label>
+                <label className="text-xs md:text-sm font-medium mb-1 md:mb-2 block">Select MR</label>
                 <Select value={selectedMrId} onValueChange={setSelectedMrId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 md:h-10 text-sm">
                     <SelectValue placeholder="Select MR" />
                   </SelectTrigger>
                   <SelectContent>
@@ -232,23 +232,23 @@ const ExpensesReports = () => {
 
         {/* Summary Cards */}
         {!loading && reports.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+            <Card className="p-3 md:p-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Total Amount</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(totals.amount)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2">Total Amount</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{formatCurrency(totals.amount)}</p>
               </div>
             </Card>
-            <Card className="p-6">
+            <Card className="p-3 md:p-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Travel Allowance</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(totals.travelAllowance)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2">Travel Allowance</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{formatCurrency(totals.travelAllowance)}</p>
               </div>
             </Card>
-            <Card className="p-6">
+            <Card className="p-3 md:p-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Other Expenses</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(totals.otherExpenses)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2">Other Expenses</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{formatCurrency(totals.otherExpenses)}</p>
               </div>
             </Card>
           </div>
@@ -257,9 +257,9 @@ const ExpensesReports = () => {
         {/* Reports Table */}
         <Card>
           {loading ? (
-            <div className="p-6 space-y-4">
+            <div className="p-3 md:p-6 space-y-3 md:space-y-4">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-10 md:h-12 w-full" />
               ))}
             </div>
           ) : (
@@ -267,38 +267,38 @@ const ExpensesReports = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    {isAdmin && selectedMrId === 'all' && <TableHead>MR Name</TableHead>}
-                    <TableHead>Type</TableHead>
-                    <TableHead>Area</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Travel</TableHead>
-                    <TableHead className="text-right">Other</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="text-xs md:text-sm">Date</TableHead>
+                    {isAdmin && selectedMrId === 'all' && <TableHead className="text-xs md:text-sm">MR Name</TableHead>}
+                    <TableHead className="text-xs md:text-sm">Type</TableHead>
+                    <TableHead className="text-xs md:text-sm">Area</TableHead>
+                    <TableHead className="text-xs md:text-sm text-right">Amount</TableHead>
+                    <TableHead className="text-xs md:text-sm text-right">Travel</TableHead>
+                    <TableHead className="text-xs md:text-sm text-right">Other</TableHead>
+                    <TableHead className="text-xs md:text-sm">Description</TableHead>
+                    <TableHead className="text-xs md:text-sm">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reports.length > 0 ? (
                     reports.map((report, index) => (
                       <TableRow key={index}>
-                        <TableCell>{format(new Date(report.date), 'dd MMM yyyy')}</TableCell>
+                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{format(new Date(report.date), 'dd MMM yyyy')}</TableCell>
                         {isAdmin && selectedMrId === 'all' && (
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium py-2 md:py-4">
                             <div>
-                              <p>{report.mrName}</p>
-                              <p className="text-xs text-muted-foreground">{report.mrEmail}</p>
+                              <p className="text-xs md:text-sm">{report.mrName}</p>
+                              <p className="text-[10px] md:text-xs text-muted-foreground">{report.mrEmail}</p>
                             </div>
                           </TableCell>
                         )}
-                        <TableCell className="font-medium capitalize">{report.expenseType}</TableCell>
-                        <TableCell>{report.areaName || '-'}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(report.amount)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(report.travelAllowance)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(report.otherExpenses)}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{report.description || '-'}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
+                        <TableCell className="font-medium capitalize text-xs md:text-sm py-2 md:py-4">{report.expenseType}</TableCell>
+                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{report.areaName || '-'}</TableCell>
+                        <TableCell className="text-xs md:text-sm text-right py-2 md:py-4">{formatCurrency(report.amount)}</TableCell>
+                        <TableCell className="text-xs md:text-sm text-right py-2 md:py-4">{formatCurrency(report.travelAllowance)}</TableCell>
+                        <TableCell className="text-xs md:text-sm text-right py-2 md:py-4">{formatCurrency(report.otherExpenses)}</TableCell>
+                        <TableCell className="max-w-[150px] md:max-w-[200px] truncate text-xs md:text-sm py-2 md:py-4">{report.description || '-'}</TableCell>
+                        <TableCell className="py-2 md:py-4">
+                          <span className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs ${
                             report.status === 'approved' 
                               ? 'bg-green-100 text-green-800' 
                               : report.status === 'rejected'
@@ -312,7 +312,7 @@ const ExpensesReports = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={isAdmin && selectedMrId === 'all' ? 9 : 8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={isAdmin && selectedMrId === 'all' ? 9 : 8} className="text-center py-6 md:py-8 text-xs md:text-sm text-muted-foreground">
                         No expense reports found for the selected period
                       </TableCell>
                     </TableRow>

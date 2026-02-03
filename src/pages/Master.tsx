@@ -29,17 +29,17 @@ const Master = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Master" description="Manage master data and samples" />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="px-3 py-2 md:px-4 md:py-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
           {masterItems.map((item) => (
             <Button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="h-28 md:h-32 flex flex-col items-center justify-center gap-3 bg-card hover:bg-gradient-primary hover:text-white text-foreground border-0 shadow-xl rounded-2xl transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 group"
+              className="h-24 md:h-32 flex flex-col items-center justify-center gap-2 md:gap-3 bg-card hover:bg-gradient-primary hover:text-white text-foreground border-0 shadow-xl rounded-2xl transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 group"
               variant="outline"
             >
-              <item.icon className="h-7 w-7 md:h-8 md:w-8 text-primary group-hover:text-white transition-colors" />
-              <span className="text-sm md:text-base font-bold">{item.label}</span>
+              <item.icon className="h-6 w-6 md:h-8 md:w-8 text-primary group-hover:text-white transition-colors" />
+              <span className="text-xs md:text-base font-bold text-center px-1">{item.label}</span>
             </Button>
           ))}
         </div>

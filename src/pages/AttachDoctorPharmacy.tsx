@@ -175,8 +175,8 @@ const AttachDoctorPharmacy = () => {
     return (
       <div className="min-h-screen bg-background">
         <PageHeader title="Attach Dr with Ch" description="Link doctors with pharmacies" />
-        <div className="container mx-auto px-4 py-8">
-          <p className="text-muted-foreground text-center">Loading...</p>
+        <div className="px-3 py-2 md:px-4 md:py-8">
+          <p className="text-muted-foreground text-center text-xs md:text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -186,15 +186,15 @@ const AttachDoctorPharmacy = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Attach Dr with Ch" description="Link doctors with pharmacies" />
       
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="px-3 py-2 md:px-4 md:py-6 space-y-3 md:space-y-6">
         {/* Doctor Selection */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Select Doctor</CardTitle>
+          <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+            <CardTitle className="text-base md:text-lg">Select Doctor</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 md:h-10 text-sm">
                 <SelectValue placeholder="Choose a doctor..." />
               </SelectTrigger>
               <SelectContent className="bg-background border">
@@ -211,12 +211,12 @@ const AttachDoctorPharmacy = () => {
         {/* Selected Doctor Info */}
         {selectedDoctorData && (
           <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-primary" />
+            <CardContent className="py-3 md:py-4 px-3 md:px-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 <div>
-                  <p className="font-semibold">{selectedDoctorData.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-semibold text-sm md:text-base">{selectedDoctorData.name}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     {selectedDoctorData.specialty} • {selectedDoctorData.area}
                   </p>
                 </div>
@@ -228,32 +228,32 @@ const AttachDoctorPharmacy = () => {
         {/* Pharmacy Selection */}
         {selectedDoctor && (
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center justify-between">
+            <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+              <CardTitle className="text-base md:text-lg flex items-center justify-between">
                 <span>Select Pharmacies</span>
-                <span className="text-sm font-normal text-muted-foreground">
+                <span className="text-xs md:text-sm font-normal text-muted-foreground">
                   {selectedPharmacies.length} selected
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 space-y-3 md:space-y-4">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search pharmacies..."
                   value={searchPharmacy}
                   onChange={(e) => setSearchPharmacy(e.target.value)}
-                  className="pl-10"
+                  className="pl-8 md:pl-10 h-9 md:h-10 text-sm"
                 />
               </div>
 
               {/* Pharmacy List */}
-              <div className="max-h-[400px] overflow-y-auto space-y-2">
+              <div className="max-h-[300px] md:max-h-[400px] overflow-y-auto space-y-1.5 md:space-y-2">
                 {filteredPharmacies.map(pharmacy => (
                   <div
                     key={pharmacy.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg border cursor-pointer transition-colors ${
                       selectedPharmacies.includes(pharmacy.id)
                         ? 'bg-primary/10 border-primary/30'
                         : 'bg-card hover:bg-muted/50'
@@ -265,8 +265,8 @@ const AttachDoctorPharmacy = () => {
                       onCheckedChange={() => handlePharmacyToggle(pharmacy.id)}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{pharmacy.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium truncate text-sm md:text-base">{pharmacy.name}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">
                         {pharmacy.city} • {pharmacy.contact_person}
                       </p>
                     </div>
@@ -274,7 +274,7 @@ const AttachDoctorPharmacy = () => {
                 ))}
 
                 {filteredPharmacies.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
+                  <p className="text-center text-muted-foreground py-3 md:py-4 text-xs md:text-sm">
                     No pharmacies found
                   </p>
                 )}
@@ -288,9 +288,9 @@ const AttachDoctorPharmacy = () => {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full h-12 text-lg"
+            className="w-full h-10 md:h-12 text-sm md:text-lg"
           >
-            <Save className="h-5 w-5 mr-2" />
+            <Save className="h-4 w-4 md:h-5 md:w-5 mr-2" />
             {saving ? 'Saving...' : 'Save Assignments'}
           </Button>
         )}

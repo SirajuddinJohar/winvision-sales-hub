@@ -244,30 +244,30 @@ const AreaDoctorVisits = () => {
   // Reusable Assignment Form Component
   const AssignmentForm = () => (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
+      <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           Assign Doctors to Areas
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0 space-y-3 md:space-y-4">
         {/* Area Selection - Multi Select */}
-        <div className="space-y-2">
+        <div className="space-y-1.5 md:space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Select Areas</label>
-            <Badge variant={selectedAreas.length > 0 ? "default" : "secondary"}>
+            <label className="text-xs md:text-sm font-medium">Select Areas</label>
+            <Badge variant={selectedAreas.length > 0 ? "default" : "secondary"} className="text-[10px] md:text-xs">
               {selectedAreas.length} selected
             </Badge>
           </div>
           
           {/* Selected Areas Tags */}
           {selectedAreas.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2">
               {getSelectedAreaNames().map((name, index) => (
-                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                <Badge key={index} variant="outline" className="flex items-center gap-1 text-[10px] md:text-xs">
                   {name}
                   <X 
-                    className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                    className="h-2.5 w-2.5 md:h-3 md:w-3 cursor-pointer hover:text-destructive" 
                     onClick={() => {
                       const area = areas.find(a => a.area_name === name);
                       if (area) handleAreaToggle(area.id);
@@ -278,67 +278,67 @@ const AreaDoctorVisits = () => {
             </div>
           )}
           
-          <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1">
+          <div className="max-h-32 md:max-h-40 overflow-y-auto border rounded-lg p-1.5 md:p-2 space-y-0.5 md:space-y-1">
             {areas.map((area) => (
               <div
                 key={area.id}
-                className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
+                className="flex items-center space-x-2 md:space-x-3 p-1.5 md:p-2 hover:bg-muted rounded-lg cursor-pointer"
                 onClick={() => handleAreaToggle(area.id)}
               >
                 <Checkbox
                   checked={selectedAreas.includes(area.id)}
                   onCheckedChange={() => handleAreaToggle(area.id)}
                 />
-                <span className="font-medium">{area.area_name}</span>
+                <span className="font-medium text-xs md:text-sm">{area.area_name}</span>
               </div>
             ))}
             {areas.length === 0 && (
-              <p className="text-center text-muted-foreground py-2">No areas available</p>
+              <p className="text-center text-muted-foreground py-2 text-xs md:text-sm">No areas available</p>
             )}
           </div>
         </div>
 
         {/* Doctor Selection with Search */}
         {selectedAreas.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-1.5 md:space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Select Doctors (minimum 5)</label>
-              <Badge variant={selectedDoctors.length >= 5 ? "default" : "secondary"}>
+              <label className="text-xs md:text-sm font-medium">Select Doctors (minimum 5)</label>
+              <Badge variant={selectedDoctors.length >= 5 ? "default" : "secondary"} className="text-[10px] md:text-xs">
                 {selectedDoctors.length} selected
               </Badge>
             </div>
             
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name, specialty, or area..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-8 md:pl-10 h-9 md:h-10 text-sm"
               />
               {searchQuery && (
                 <X 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground"
+                  className="absolute right-2.5 md:right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground cursor-pointer hover:text-foreground"
                   onClick={() => setSearchQuery('')}
                 />
               )}
             </div>
             
-            <div className="max-h-64 overflow-y-auto border rounded-lg p-2 space-y-2">
+            <div className="max-h-48 md:max-h-64 overflow-y-auto border rounded-lg p-1.5 md:p-2 space-y-1.5 md:space-y-2">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <div className="flex items-center justify-center py-6 md:py-8">
+                  <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-primary" />
                 </div>
               ) : filteredDoctors.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground py-3 md:py-4 text-xs md:text-sm">
                   {searchQuery ? 'No doctors match your search' : 'No doctors available'}
                 </p>
               ) : (
                 filteredDoctors.map((doctor) => (
                   <div
                     key={doctor.id}
-                    className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
+                    className="flex items-center space-x-2 md:space-x-3 p-1.5 md:p-2 hover:bg-muted rounded-lg cursor-pointer"
                     onClick={() => handleDoctorToggle(doctor.id)}
                   >
                     <Checkbox
@@ -346,8 +346,8 @@ const AreaDoctorVisits = () => {
                       onCheckedChange={() => handleDoctorToggle(doctor.id)}
                     />
                     <div className="flex-1">
-                      <p className="font-medium">{doctor.name}</p>
-                      <p className="text-sm text-muted-foreground">{doctor.specialty} • {doctor.area}</p>
+                      <p className="font-medium text-xs md:text-sm">{doctor.name}</p>
+                      <p className="text-[10px] md:text-sm text-muted-foreground">{doctor.specialty} • {doctor.area}</p>
                     </div>
                   </div>
                 ))
@@ -360,12 +360,12 @@ const AreaDoctorVisits = () => {
         <Button 
           onClick={handleSaveAssignment} 
           disabled={selectedAreas.length === 0 || selectedDoctors.length < 5 || saving}
-          className="w-full"
+          className="w-full h-9 md:h-10 text-sm"
         >
           {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin mr-2" />
           ) : (
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2" />
           )}
           Save Assignment ({selectedAreas.length} area{selectedAreas.length !== 1 ? 's' : ''}, {selectedDoctors.length} doctors)
         </Button>
@@ -376,20 +376,20 @@ const AreaDoctorVisits = () => {
   // Reusable Assignments List Component
   const AssignmentsList = () => (
     <Card>
-      <CardHeader>
-        <CardTitle>My Area Assignments</CardTitle>
+      <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
+        <CardTitle className="text-base md:text-lg">My Area Assignments</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="flex items-center justify-center py-6 md:py-8">
+            <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-primary" />
           </div>
         ) : assignments.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
+          <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
             No area assignments yet. Select areas and assign doctors above.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5 md:space-y-2">
             {assignments.map((assignment) => (
               <Collapsible
                 key={assignment.areaId}
@@ -397,45 +397,45 @@ const AreaDoctorVisits = () => {
                 onOpenChange={() => toggleAreaExpanded(assignment.areaId)}
               >
                 <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      <span className="font-medium">{assignment.areaName}</span>
+                  <div className="flex items-center justify-between p-3 md:p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                      <span className="font-medium text-xs md:text-sm">{assignment.areaName}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                      <Badge variant="secondary" className="text-[10px] md:text-xs">
                         {assignment.doctors.length} doctors
                       </Badge>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteAssignment(assignment.areaId);
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
                       {expandedAreas.includes(assignment.areaId) ? (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       )}
                     </div>
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="mt-2 ml-4 space-y-2">
+                  <div className="mt-1.5 md:mt-2 ml-3 md:ml-4 space-y-1.5 md:space-y-2">
                     {assignment.doctors.map((doctor) => (
                       <div
                         key={doctor.id}
-                        className="flex items-center gap-3 p-3 bg-card border rounded-lg"
+                        className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-card border rounded-lg"
                       >
-                        <User className="h-4 w-4 text-muted-foreground" />
+                        <User className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
                         <div>
-                          <p className="font-medium">{doctor.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-xs md:text-sm">{doctor.name}</p>
+                          <p className="text-[10px] md:text-sm text-muted-foreground">
                             {doctor.specialty} • {doctor.area}
                           </p>
                         </div>
@@ -455,21 +455,21 @@ const AreaDoctorVisits = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Area Wise Doctor Visits" description="Assign doctors to areas for visits" />
       
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="px-3 py-2 md:px-4 md:py-6 space-y-3 md:space-y-6">
         {isAdmin ? (
-          <Tabs defaultValue="my-assignments" className="space-y-6">
+          <Tabs defaultValue="my-assignments" className="space-y-3 md:space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="my-assignments" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+              <TabsTrigger value="my-assignments" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 My Assignments
               </TabsTrigger>
-              <TabsTrigger value="all-mrs" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
+              <TabsTrigger value="all-mrs" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 All MRs
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="my-assignments" className="space-y-6">
+            <TabsContent value="my-assignments" className="space-y-3 md:space-y-6">
               <AssignmentForm />
               <AssignmentsList />
             </TabsContent>
