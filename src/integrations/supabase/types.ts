@@ -284,6 +284,73 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_incentives: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          incentive_amount: number
+          incentive_percentage: number
+          notes: string | null
+          order_amount: number
+          order_id: string
+          paid_at: string | null
+          paid_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          incentive_amount: number
+          incentive_percentage?: number
+          notes?: string | null
+          order_amount: number
+          order_id: string
+          paid_at?: string | null
+          paid_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          incentive_amount?: number
+          incentive_percentage?: number
+          notes?: string | null
+          order_amount?: number
+          order_id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_incentives_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_incentives_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_incentives_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_pharmacy_assignments: {
         Row: {
           created_at: string
@@ -387,6 +454,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          incentive_percentage: number | null
           last_visit_date: string | null
           location: Json | null
           monthly_target: number | null
@@ -409,6 +477,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          incentive_percentage?: number | null
           last_visit_date?: string | null
           location?: Json | null
           monthly_target?: number | null
@@ -431,6 +500,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          incentive_percentage?: number | null
           last_visit_date?: string | null
           location?: Json | null
           monthly_target?: number | null
