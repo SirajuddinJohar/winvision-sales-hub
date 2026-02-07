@@ -25,6 +25,7 @@ interface Doctor {
   tags?: string[];
   notes?: string;
   location?: { latitude: number; longitude: number };
+  incentive_percentage?: number;
 }
 
 interface AssignedPharmacy {
@@ -34,17 +35,24 @@ interface AssignedPharmacy {
   contact_person: string;
 }
 
+interface IncentiveSummary {
+  totalIncentive: number;
+  pendingAmount: number;
+}
+
 const DoctorDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [assignedPharmacies, setAssignedPharmacies] = useState<AssignedPharmacy[]>([]);
+  const [incentiveSummary, setIncentiveSummary] = useState<IncentiveSummary>({ totalIncentive: 0, pendingAmount: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
       fetchDoctor();
       fetchAssignedPharmacies();
+      fetchIncentiveSummary();
     }
   }, [id]);
 
@@ -95,6 +103,29 @@ const DoctorDetails = () => {
       console.error('Error fetching doctor:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchIncentiveSummary = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctor_incentives')
+        .select('incentive_amount, status')
+        .eq('doctor_id', id);
+
+      if (error) throw error;
+
+      const summary = (data || []).reduce((acc, item) => {
+        acc.totalIncentive += item.incentive_amount;
+        if (item.status !== 'paid') {
+          acc.pendingAmount += item.incentive_amount;
+        }
+        return acc;
+      }, { totalIncentive: 0, pendingAmount: 0 });
+
+      setIncentiveSummary(summary);
+    } catch (error) {
+      console.error('Error fetching incentive summary:', error);
     }
   };
 
@@ -283,11 +314,11 @@ const DoctorDetails = () => {
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate(`/dashboard/doctors/${doctor.id}/incentive`)}
         >
-          <CardHeader className="p-3 md:p-6">
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3">
-                <div className="p-1.5 md:p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                  <IndianRupee className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
+                <div className="p-1.5 md:p-2 rounded-lg bg-accent">
+                  <IndianRupee className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
                 <CardTitle className="text-sm md:text-lg">Incentive</CardTitle>
               </div>
@@ -295,9 +326,28 @@ const DoctorDetails = () => {
             </div>
           </CardHeader>
           <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <p className="text-xs md:text-sm text-muted-foreground">
-              View and manage incentive details for this doctor
-            </p>
+            {incentiveSummary.totalIncentive > 0 ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Earned</p>
+                  <p className="text-lg md:text-xl font-bold text-primary">
+                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(incentiveSummary.totalIncentive)}
+                  </p>
+                </div>
+                {incentiveSummary.pendingAmount > 0 && (
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                    <p className="text-sm md:text-base font-medium text-muted-foreground">
+                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(incentiveSummary.pendingAmount)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs md:text-sm text-muted-foreground">
+                No incentives recorded yet. Place orders to generate incentives.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -305,8 +355,8 @@ const DoctorDetails = () => {
         <Card>
           <CardHeader className="p-3 md:p-6">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="p-1.5 md:p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Store className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-1.5 md:p-2 rounded-lg bg-accent">
+                <Store className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
               <CardTitle className="text-sm md:text-lg">Assigned Pharmacies</CardTitle>
               <Badge variant="secondary" className="ml-auto text-[10px] md:text-xs">

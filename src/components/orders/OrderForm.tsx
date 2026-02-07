@@ -124,8 +124,19 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         return;
       }
 
+      // Get doctor's incentive percentage
+      const { data: doctorData } = await supabase
+        .from('doctors')
+        .select('incentive_percentage')
+        .eq('id', data.doctor_id)
+        .single();
+
+      const incentivePercentage = doctorData?.incentive_percentage ?? 30;
+
       // Create multiple orders - one for each product
-      const orderPromises = validProducts.map(product => {
+      for (const product of validProducts) {
+        const orderTotal = Number(product.quantity) * Number(product.unit_price);
+        
         const orderData = {
           doctor_id: data.doctor_id,
           pharmacy_id: data.distributor_id,
@@ -136,16 +147,37 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           mr_id: profile?.id,
         };
 
-        return supabase.from('orders').insert([orderData]);
-      });
+        const { data: orderResult, error: orderError } = await supabase
+          .from('orders')
+          .insert([orderData])
+          .select('id')
+          .single();
 
-      const results = await Promise.all(orderPromises);
-      
-      // Check for any errors
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        console.error('Order creation errors:', errors);
-        throw errors[0].error;
+        if (orderError) {
+          console.error('Order creation error:', orderError);
+          throw orderError;
+        }
+
+        // Create incentive record for this order
+        if (orderResult) {
+          const incentiveAmount = (orderTotal * incentivePercentage) / 100;
+          
+          const { error: incentiveError } = await supabase
+            .from('doctor_incentives')
+            .insert([{
+              doctor_id: data.doctor_id,
+              order_id: orderResult.id,
+              order_amount: orderTotal,
+              incentive_percentage: incentivePercentage,
+              incentive_amount: incentiveAmount,
+              status: 'pending'
+            }]);
+
+          if (incentiveError) {
+            console.error('Incentive creation error:', incentiveError);
+            // Don't throw - order was created successfully, just log the error
+          }
+        }
       }
       
       toast({ title: "Orders placed successfully" });
