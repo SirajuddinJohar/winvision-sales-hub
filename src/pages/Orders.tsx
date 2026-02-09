@@ -284,12 +284,14 @@ const Orders = () => {
                   </div>
                 </div>
                 <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+                  {order.doctor?.name && (
                   <div>
                     <p className="text-xs md:text-sm font-medium">Doctor</p>
                     <p className="text-xs md:text-sm text-muted-foreground truncate">
-                      {order.doctor?.name || 'N/A'} - {order.doctor?.specialty || 'N/A'}
+                      {order.doctor.name} - {order.doctor?.specialty || 'N/A'}
                     </p>
                   </div>
+                  )}
                   <div>
                     <p className="text-xs md:text-sm font-medium">Pharmacy</p>
                     <p className="text-xs md:text-sm text-muted-foreground truncate">

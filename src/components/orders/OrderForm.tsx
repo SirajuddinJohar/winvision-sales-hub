@@ -95,15 +95,6 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
       setLoading(true);
       
       // Validate required fields
-      if (!data.doctor_id) {
-        toast({ 
-          title: "Error", 
-          description: "Please select a doctor", 
-          variant: "destructive" 
-        });
-        return;
-      }
-
       if (!data.distributor_id) {
         toast({ 
           title: "Error", 
@@ -124,21 +115,22 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         return;
       }
 
-      // Get doctor's incentive percentage
-      const { data: doctorData } = await supabase
-        .from('doctors')
-        .select('incentive_percentage')
-        .eq('id', data.doctor_id)
-        .single();
-
-      const incentivePercentage = doctorData?.incentive_percentage ?? 30;
+      // Get doctor's incentive percentage (only if doctor selected)
+      let incentivePercentage = 30;
+      if (data.doctor_id) {
+        const { data: doctorData } = await supabase
+          .from('doctors')
+          .select('incentive_percentage')
+          .eq('id', data.doctor_id)
+          .single();
+        incentivePercentage = doctorData?.incentive_percentage ?? 30;
+      }
 
       // Create multiple orders - one for each product
       for (const product of validProducts) {
         const orderTotal = Number(product.quantity) * Number(product.unit_price);
         
-        const orderData = {
-          doctor_id: data.doctor_id,
+        const orderData: any = {
           pharmacy_id: data.distributor_id,
           product_id: product.product_id,
           quantity: Number(product.quantity),
@@ -146,6 +138,11 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           order_date: data.order_date,
           mr_id: profile?.id,
         };
+
+        // Only include doctor_id if selected
+        if (data.doctor_id) {
+          orderData.doctor_id = data.doctor_id;
+        }
 
         const { data: orderResult, error: orderError } = await supabase
           .from('orders')
@@ -158,8 +155,8 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           throw orderError;
         }
 
-        // Create incentive record for this order
-        if (orderResult) {
+        // Create incentive record only if doctor is selected
+        if (orderResult && data.doctor_id) {
           const incentiveAmount = (orderTotal * incentivePercentage) / 100;
           
           const { error: incentiveError } = await supabase
@@ -175,7 +172,6 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
 
           if (incentiveError) {
             console.error('Incentive creation error:', incentiveError);
-            // Don't throw - order was created successfully, just log the error
           }
         }
       }
@@ -234,7 +230,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           {/* Basic Order Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Doctor *</Label>
+              <Label>Doctor (Optional)</Label>
               <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -253,6 +249,22 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                     <CommandList>
                       <CommandEmpty>No doctor found.</CommandEmpty>
                       <CommandGroup>
+                        <CommandItem
+                          value="__none__"
+                          onSelect={() => {
+                            setSelectedDoctor('');
+                            setValue('doctor_id', '');
+                            setDoctorOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              !selectedDoctor ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          No Doctor (Pharmacy Order)
+                        </CommandItem>
                         {doctors.map((doctor) => (
                           <CommandItem
                             key={doctor.id}

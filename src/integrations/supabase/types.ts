@@ -641,7 +641,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
-          doctor_id: string
+          doctor_id: string | null
           id: string
           mr_id: string
           order_date: string | null
@@ -653,7 +653,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          doctor_id: string
+          doctor_id?: string | null
           id?: string
           mr_id: string
           order_date?: string | null
@@ -665,7 +665,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          doctor_id?: string
+          doctor_id?: string | null
           id?: string
           mr_id?: string
           order_date?: string | null
