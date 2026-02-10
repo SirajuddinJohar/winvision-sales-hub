@@ -20,7 +20,7 @@ interface ProductItem {
 }
 
 interface OrderFormData {
-  doctor_id: string;
+  pharmacy_selection_id: string;
   distributor_id: string;
   order_date: string;
   products: ProductItem[];
@@ -35,13 +35,14 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [doctors, setDoctors] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [distributors, setDistributors] = useState<any[]>([]);
   
-  const [doctorOpen, setDoctorOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
+  const [pharmacyOpen, setPharmacyOpen] = useState(false);
+  const [selectedPharmacy, setSelectedPharmacy] = useState<string>('');
+  const [attachedDoctor, setAttachedDoctor] = useState<any>(null);
   const [productOpen, setProductOpen] = useState<number | null>(null);
+  const [pharmacies, setPharmacies] = useState<any[]>([]);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<OrderFormData>({
     defaultValues: {
@@ -61,10 +62,10 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch doctors
-        const { data: doctorsData } = await supabase
-          .from('doctors')
-          .select('id, name, specialty')
+        // Fetch pharmacies
+        const { data: pharmaciesData } = await supabase
+          .from('pharmacies')
+          .select('id, name, city, contact_person')
           .order('name');
 
         // Fetch products
@@ -79,7 +80,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           .select('id, name, address')
           .order('name');
 
-        setDoctors(doctorsData || []);
+        setPharmacies(pharmaciesData || []);
         setProducts(productsData || []);
         setDistributors(distributorsData || []);
       } catch (error) {
@@ -90,43 +91,46 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
     fetchData();
   }, []);
 
+  // When pharmacy is selected, auto-lookup attached doctor
+  const handlePharmacySelect = async (pharmacyId: string) => {
+    setSelectedPharmacy(pharmacyId);
+    setValue('pharmacy_selection_id', pharmacyId);
+    setPharmacyOpen(false);
+    setAttachedDoctor(null);
+
+    if (!pharmacyId) return;
+
+    // Look up doctor attached to this pharmacy
+    const { data: assignment } = await supabase
+      .from('doctor_pharmacy_assignments')
+      .select('doctor_id, doctors(id, name, specialty, incentive_percentage)')
+      .eq('pharmacy_id', pharmacyId)
+      .limit(1)
+      .maybeSingle();
+
+    if (assignment?.doctors) {
+      setAttachedDoctor(assignment.doctors);
+    }
+  };
+
   const onSubmit = async (data: OrderFormData) => {
     try {
       setLoading(true);
       
-      // Validate required fields
       if (!data.distributor_id) {
-        toast({ 
-          title: "Error", 
-          description: "Please select a distributor", 
-          variant: "destructive" 
-        });
+        toast({ title: "Error", description: "Please select a distributor", variant: "destructive" });
         return;
       }
 
-      // Validate that all products have been selected
       const validProducts = data.products.filter(p => p.product_id && p.quantity > 0);
       if (validProducts.length === 0) {
-        toast({ 
-          title: "Error", 
-          description: "Please add at least one product", 
-          variant: "destructive" 
-        });
+        toast({ title: "Error", description: "Please add at least one product", variant: "destructive" });
         return;
       }
 
-      // Get doctor's incentive percentage (only if doctor selected)
-      let incentivePercentage = 30;
-      if (data.doctor_id) {
-        const { data: doctorData } = await supabase
-          .from('doctors')
-          .select('incentive_percentage')
-          .eq('id', data.doctor_id)
-          .single();
-        incentivePercentage = doctorData?.incentive_percentage ?? 30;
-      }
+      // Use attached doctor's incentive percentage or default 30%
+      const incentivePercentage = attachedDoctor?.incentive_percentage ?? 30;
 
-      // Create multiple orders - one for each product
       for (const product of validProducts) {
         const orderTotal = Number(product.quantity) * Number(product.unit_price);
         
@@ -139,9 +143,9 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           mr_id: profile?.id,
         };
 
-        // Only include doctor_id if selected
-        if (data.doctor_id) {
-          orderData.doctor_id = data.doctor_id;
+        // Auto-assign doctor from pharmacy attachment
+        if (attachedDoctor) {
+          orderData.doctor_id = attachedDoctor.id;
         }
 
         const { data: orderResult, error: orderError } = await supabase
@@ -155,14 +159,14 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           throw orderError;
         }
 
-        // Create incentive record only if doctor is selected
-        if (orderResult && data.doctor_id) {
+        // Auto-generate incentive for the attached doctor
+        if (orderResult && attachedDoctor) {
           const incentiveAmount = (orderTotal * incentivePercentage) / 100;
           
           const { error: incentiveError } = await supabase
             .from('doctor_incentives')
             .insert([{
-              doctor_id: data.doctor_id,
+              doctor_id: attachedDoctor.id,
               order_id: orderResult.id,
               order_amount: orderTotal,
               incentive_percentage: incentivePercentage,
@@ -207,9 +211,9 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
     }
   };
 
-  const getSelectedDoctorName = () => {
-    const doctor = doctors.find(d => d.id === selectedDoctor);
-    return doctor ? `${doctor.name} - ${doctor.specialty}` : '';
+  const getSelectedPharmacyName = () => {
+    const pharmacy = pharmacies.find(p => p.id === selectedPharmacy);
+    return pharmacy ? `${pharmacy.name} - ${pharmacy.city}` : '';
   };
 
   const getSelectedProductName = (productId: string) => {
@@ -230,58 +234,38 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           {/* Basic Order Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Doctor (Optional)</Label>
-              <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
+              <Label>Pharmacy *</Label>
+              <Popover open={pharmacyOpen} onOpenChange={setPharmacyOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
-                    aria-expanded={doctorOpen}
+                    aria-expanded={pharmacyOpen}
                     className="w-full justify-between font-normal"
                   >
-                    {selectedDoctor ? getSelectedDoctorName() : "Search doctor..."}
+                    {selectedPharmacy ? getSelectedPharmacyName() : "Search pharmacy..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[300px] p-0">
                   <Command>
-                    <CommandInput placeholder="Search doctor..." />
+                    <CommandInput placeholder="Search pharmacy..." />
                     <CommandList>
-                      <CommandEmpty>No doctor found.</CommandEmpty>
+                      <CommandEmpty>No pharmacy found.</CommandEmpty>
                       <CommandGroup>
-                        <CommandItem
-                          value="__none__"
-                          onSelect={() => {
-                            setSelectedDoctor('');
-                            setValue('doctor_id', '');
-                            setDoctorOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              !selectedDoctor ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          No Doctor (Pharmacy Order)
-                        </CommandItem>
-                        {doctors.map((doctor) => (
+                        {pharmacies.map((pharmacy) => (
                           <CommandItem
-                            key={doctor.id}
-                            value={`${doctor.name} ${doctor.specialty}`}
-                            onSelect={() => {
-                              setSelectedDoctor(doctor.id);
-                              setValue('doctor_id', doctor.id);
-                              setDoctorOpen(false);
-                            }}
+                            key={pharmacy.id}
+                            value={`${pharmacy.name} ${pharmacy.city}`}
+                            onSelect={() => handlePharmacySelect(pharmacy.id)}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                selectedDoctor === doctor.id ? "opacity-100" : "opacity-0"
+                                selectedPharmacy === pharmacy.id ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {doctor.name} - {doctor.specialty}
+                            {pharmacy.name} - {pharmacy.city}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -289,6 +273,18 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {/* Show attached doctor info */}
+              {selectedPharmacy && (
+                <div className="text-xs mt-1">
+                  {attachedDoctor ? (
+                    <span className="text-primary font-medium">
+                      📋 Attached Doctor: {attachedDoctor.name} ({attachedDoctor.specialty}) — Incentive: {attachedDoctor.incentive_percentage ?? 30}%
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">No doctor attached to this pharmacy</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
