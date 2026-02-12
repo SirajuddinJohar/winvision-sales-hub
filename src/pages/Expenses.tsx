@@ -318,7 +318,7 @@ const Expenses = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select working area" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
                           {areas.map((area) => (
                             <SelectItem key={area.id} value={area.id}>
                               {area.area_name} ({area.from_location} → {area.to_location})

@@ -136,7 +136,7 @@ const DistributorProductForm = ({
             <SelectTrigger>
               <SelectValue placeholder="Select a product" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
               {products.map((prod) => (
                 <SelectItem key={prod.id} value={prod.id}>
                   {prod.name} - {prod.category}
