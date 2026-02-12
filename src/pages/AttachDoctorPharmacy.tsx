@@ -197,7 +197,7 @@ const AttachDoctorPharmacy = () => {
               <SelectTrigger className="h-9 md:h-10 text-sm">
                 <SelectValue placeholder="Choose a doctor..." />
               </SelectTrigger>
-              <SelectContent className="bg-background border">
+              <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
                 {doctors.map(doctor => (
                   <SelectItem key={doctor.id} value={doctor.id}>
                     {doctor.name} - {doctor.specialty} ({doctor.area})

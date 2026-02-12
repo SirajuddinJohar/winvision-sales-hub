@@ -161,7 +161,7 @@ const TargetFormModal = ({ open, onOpenChange, doctors, mrs, onSuccess }: Target
                 <SelectTrigger>
                   <SelectValue placeholder="Select MR" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
                   {mrs?.map((mr) => (
                     <SelectItem key={mr.id} value={mr.id}>
                       {mr.name} ({mr.email})
@@ -182,7 +182,7 @@ const TargetFormModal = ({ open, onOpenChange, doctors, mrs, onSuccess }: Target
                 <SelectTrigger>
                   <SelectValue placeholder="Select doctor or general target" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
                   <SelectItem value="general">General Target (All Doctors)</SelectItem>
                   {doctors.map((doctor) => (
                     <SelectItem key={doctor.id} value={doctor.id}>

@@ -380,7 +380,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                 <SelectTrigger>
                   <SelectValue placeholder="Select distributor" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[200px] overflow-y-auto">
+                <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
                   {distributors.map((distributor) => (
                     <SelectItem key={distributor.id} value={distributor.id}>
                       {distributor.name}
