@@ -284,7 +284,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                   <PopoverContent className="w-[300px] p-0">
                     <Command>
                       <CommandInput placeholder="Search pharmacy..." />
-                      <CommandList>
+                      <CommandList className="max-h-[200px] overflow-y-auto">
                         <CommandEmpty>No pharmacy found.</CommandEmpty>
                         <CommandGroup>
                           {pharmacies.map((pharmacy) => (
@@ -339,7 +339,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                   <PopoverContent className="w-[300px] p-0">
                     <Command>
                       <CommandInput placeholder="Search doctor..." />
-                      <CommandList>
+                      <CommandList className="max-h-[200px] overflow-y-auto">
                         <CommandEmpty>No doctor found.</CommandEmpty>
                         <CommandGroup>
                           {doctors.map((doctor) => (
@@ -434,7 +434,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                       <PopoverContent className="w-[350px] p-0">
                         <Command>
                           <CommandInput placeholder="Search product..." />
-                          <CommandList>
+                          <CommandList className="max-h-[200px] overflow-y-auto">
                             <CommandEmpty>No product found.</CommandEmpty>
                             <CommandGroup>
                               {products.map((product) => (
