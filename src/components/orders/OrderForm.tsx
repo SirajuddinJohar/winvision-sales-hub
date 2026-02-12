@@ -38,11 +38,15 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   const [products, setProducts] = useState<any[]>([]);
   const [distributors, setDistributors] = useState<any[]>([]);
   
+  const [orderType, setOrderType] = useState<'pharmacy' | 'doctor'>('pharmacy');
   const [pharmacyOpen, setPharmacyOpen] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState<string>('');
   const [attachedDoctor, setAttachedDoctor] = useState<any>(null);
   const [productOpen, setProductOpen] = useState<number | null>(null);
   const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [doctorOpen, setDoctorOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<OrderFormData>({
     defaultValues: {
@@ -62,27 +66,30 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch pharmacies
         const { data: pharmaciesData } = await supabase
           .from('pharmacies')
           .select('id, name, city, contact_person')
           .order('name');
 
-        // Fetch products
         const { data: productsData } = await supabase
           .from('products')
           .select('id, name, price, category')
           .order('name');
 
-        // Fetch distributors
         const { data: distributorsData } = await supabase
           .from('Distributors')
           .select('id, name, address')
           .order('name');
 
+        const { data: doctorsData } = await supabase
+          .from('doctors')
+          .select('id, name, specialty, area')
+          .order('name');
+
         setPharmacies(pharmaciesData || []);
         setProducts(productsData || []);
         setDistributors(distributorsData || []);
+        setDoctors(doctorsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -128,7 +135,8 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         return;
       }
 
-      // Use attached doctor's incentive percentage or default 30%
+      // Only generate incentive for pharmacy orders with attached doctor
+      const shouldGenerateIncentive = orderType === 'pharmacy' && attachedDoctor;
       const incentivePercentage = attachedDoctor?.incentive_percentage ?? 30;
 
       for (const product of validProducts) {
@@ -143,9 +151,12 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           mr_id: profile?.id,
         };
 
-        // Auto-assign doctor from pharmacy attachment
-        if (attachedDoctor) {
+        // For pharmacy orders, auto-assign doctor from pharmacy attachment
+        // For doctor orders, assign the selected doctor (no incentive)
+        if (orderType === 'pharmacy' && attachedDoctor) {
           orderData.doctor_id = attachedDoctor.id;
+        } else if (orderType === 'doctor' && selectedDoctor) {
+          orderData.doctor_id = selectedDoctor;
         }
 
         const { data: orderResult, error: orderError } = await supabase
@@ -159,8 +170,8 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           throw orderError;
         }
 
-        // Auto-generate incentive for the attached doctor
-        if (orderResult && attachedDoctor) {
+        // Auto-generate incentive ONLY for pharmacy orders with attached doctor
+        if (orderResult && shouldGenerateIncentive) {
           const incentiveAmount = (orderTotal * incentivePercentage) / 100;
           
           const { error: incentiveError } = await supabase
@@ -231,61 +242,134 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Order Type Selection */}
+          <div className="space-y-2">
+            <Label>Order Type *</Label>
+            <Select 
+              value={orderType} 
+              onValueChange={(value: 'pharmacy' | 'doctor') => {
+                setOrderType(value);
+                setSelectedPharmacy('');
+                setSelectedDoctor('');
+                setAttachedDoctor(null);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pharmacy">Pharmacy Order (Incentive Generated)</SelectItem>
+                <SelectItem value="doctor">Doctor Order (No Incentive)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Basic Order Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Pharmacy *</Label>
-              <Popover open={pharmacyOpen} onOpenChange={setPharmacyOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={pharmacyOpen}
-                    className="w-full justify-between font-normal"
-                  >
-                    {selectedPharmacy ? getSelectedPharmacyName() : "Search pharmacy..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search pharmacy..." />
-                    <CommandList>
-                      <CommandEmpty>No pharmacy found.</CommandEmpty>
-                      <CommandGroup>
-                        {pharmacies.map((pharmacy) => (
-                          <CommandItem
-                            key={pharmacy.id}
-                            value={`${pharmacy.name} ${pharmacy.city}`}
-                            onSelect={() => handlePharmacySelect(pharmacy.id)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedPharmacy === pharmacy.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {pharmacy.name} - {pharmacy.city}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {/* Show attached doctor info */}
-              {selectedPharmacy && (
-                <div className="text-xs mt-1">
-                  {attachedDoctor ? (
-                    <span className="text-primary font-medium">
-                      📋 Attached Doctor: {attachedDoctor.name} ({attachedDoctor.specialty}) — Incentive: {attachedDoctor.incentive_percentage ?? 30}%
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">No doctor attached to this pharmacy</span>
-                  )}
+            {orderType === 'pharmacy' ? (
+              <div className="space-y-2">
+                <Label>Pharmacy *</Label>
+                <Popover open={pharmacyOpen} onOpenChange={setPharmacyOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={pharmacyOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedPharmacy ? getSelectedPharmacyName() : "Search pharmacy..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search pharmacy..." />
+                      <CommandList>
+                        <CommandEmpty>No pharmacy found.</CommandEmpty>
+                        <CommandGroup>
+                          {pharmacies.map((pharmacy) => (
+                            <CommandItem
+                              key={pharmacy.id}
+                              value={`${pharmacy.name} ${pharmacy.city}`}
+                              onSelect={() => handlePharmacySelect(pharmacy.id)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedPharmacy === pharmacy.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {pharmacy.name} - {pharmacy.city}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {selectedPharmacy && (
+                  <div className="text-xs mt-1">
+                    {attachedDoctor ? (
+                      <span className="text-primary font-medium">
+                        📋 Attached Doctor: {attachedDoctor.name} ({attachedDoctor.specialty}) — Incentive: {attachedDoctor.incentive_percentage ?? 30}%
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">No doctor attached to this pharmacy</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Doctor *</Label>
+                <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={doctorOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedDoctor 
+                        ? doctors.find(d => d.id === selectedDoctor)?.name || "Select doctor..."
+                        : "Search doctor..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search doctor..." />
+                      <CommandList>
+                        <CommandEmpty>No doctor found.</CommandEmpty>
+                        <CommandGroup>
+                          {doctors.map((doctor) => (
+                            <CommandItem
+                              key={doctor.id}
+                              value={`${doctor.name} ${doctor.specialty} ${doctor.area}`}
+                              onSelect={() => {
+                                setSelectedDoctor(doctor.id);
+                                setDoctorOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedDoctor === doctor.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {doctor.name} - {doctor.specialty} ({doctor.area})
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="text-xs text-muted-foreground mt-1">
+                  ⚠️ No incentive will be generated for doctor orders
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="distributor_id">Distributor *</Label>
