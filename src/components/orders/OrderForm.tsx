@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { notifyAdmins } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -190,6 +191,14 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           }
         }
       }
+      
+      // Notify admins about the new order
+      notifyAdmins(
+        'New Order Placed 🛒',
+        `${profile?.name} placed an order worth ₹${totalAmount.toLocaleString('en-IN')}`,
+        'order',
+        '/dashboard/orders'
+      );
       
       toast({ title: "Orders placed successfully" });
       onSuccess();

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { notifyAdmins } from '@/lib/notifications';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -171,6 +172,14 @@ const Expenses = () => {
         
       if (error) throw error;
       
+      // Notify admins about new expense
+      notifyAdmins(
+        'New Expense Submitted',
+        `${profile?.name} submitted an expense of ₹${totalAmount.toFixed(2)}`,
+        'expense',
+        '/dashboard/expenses'
+      );
+      
       toast({ 
         title: "Expense Added Successfully ✅", 
         description: "Your expense has been submitted for approval." 
@@ -192,6 +201,9 @@ const Expenses = () => {
 
   const handleApproval = async (expenseId: string, status: 'approved' | 'rejected') => {
     try {
+      // Get expense details first for notification
+      const expense = expenses.find(e => e.id === expenseId);
+      
       const { error } = await supabase
         .from('expenses')
         .update({
@@ -202,6 +214,18 @@ const Expenses = () => {
         .eq('id', expenseId);
 
       if (error) throw error;
+
+      // Notify the MR
+      if (expense) {
+        const { createNotification } = await import('@/lib/notifications');
+        createNotification({
+          userId: expense.mr_id,
+          title: status === 'approved' ? 'Expense Approved ✅' : 'Expense Rejected ❌',
+          message: `Your expense of ₹${expense.amount.toFixed(2)} has been ${status}`,
+          type: 'expense',
+          link: '/dashboard/expenses'
+        });
+      }
 
       toast({ 
         title: `Expense ${status}`, 

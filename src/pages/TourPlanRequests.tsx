@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createNotification } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -132,6 +133,17 @@ const TourPlanRequests = () => {
         return;
       }
     }
+
+    // Notify the MR user
+    createNotification({
+      userId: selectedRequest.user_id,
+      title: actionType === 'approve' ? 'Tour Plan Edit Approved ✅' : 'Tour Plan Edit Rejected ❌',
+      message: actionType === 'approve' 
+        ? 'Your tour plan edit request has been approved. You can now edit your plan.'
+        : `Your tour plan edit request has been rejected.${adminRemarks ? ` Reason: ${adminRemarks}` : ''}`,
+      type: 'tour_plan',
+      link: '/dashboard/tour-plan'
+    });
 
     toast({ 
       title: `Request ${actionType === 'approve' ? 'approved' : 'rejected'}`,

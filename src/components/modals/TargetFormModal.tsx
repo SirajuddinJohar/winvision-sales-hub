@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { createNotification } from '@/lib/notifications';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,18 @@ const TargetFormModal = ({ open, onOpenChange, doctors, mrs, onSuccess }: Target
         .insert([targetData]);
         
       if (error) throw error;
+      
+      // Notify MR when admin assigns target
+      if (profile?.role === 'admin' && data.target_type === 'mr' && data.mr_id) {
+        const targetMonth = new Date(data.target_month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        createNotification({
+          userId: data.mr_id,
+          title: 'New Target Assigned 🎯',
+          message: `Admin assigned you a monthly target of ₹${Number(data.target_value).toLocaleString('en-IN')} for ${targetMonth}`,
+          type: 'target',
+          link: '/dashboard/targets'
+        });
+      }
       
       toast({ title: "Target set successfully" });
       reset();
