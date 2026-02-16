@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
+import NotificationBell from '@/components/layout/NotificationBell';
 import {
   Building2, 
   Users, 
@@ -169,6 +170,7 @@ const DashboardLayout = () => {
                 </p>
               </div>
             </div>
+            <NotificationBell />
           </div>
         </div>
 

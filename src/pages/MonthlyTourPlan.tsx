@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyAdmins } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -383,6 +384,15 @@ const MonthlyTourPlan = () => {
       console.log('Request created successfully:', data);
       setLastRequest(data);
       setHasPendingRequest(true);
+      
+      // Notify admins
+      notifyAdmins(
+        'Tour Plan Edit Request',
+        `${profile?.name} requested to edit their ${monthNames[selectedMonth - 1]} ${selectedYear} tour plan`,
+        'tour_plan',
+        '/dashboard/tour-plan-requests'
+      );
+      
       toast({ 
         title: 'Edit request sent', 
         description: 'Your request has been sent to the admin for approval.' 
