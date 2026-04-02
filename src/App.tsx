@@ -35,6 +35,7 @@ import SecondarySales from "./pages/SecondarySales";
 import PrimarySales from "./pages/PrimarySales";
 import AreaDoctorVisits from "./pages/AreaDoctorVisits";
 import WorkingAreas from "./pages/WorkingAreas";
+import FinancialYear from "./pages/FinancialYear";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
