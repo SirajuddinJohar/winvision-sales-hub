@@ -255,7 +255,7 @@ const FinancialYear = () => {
     <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <PageHeader title="Financial Year Report" subtitle="Winvision — Complete yearly overview" onBack={() => navigate('/dashboard')} />
+        <PageHeader title="Financial Year Report" description="Winvision — Complete yearly overview" />
         <Select value={String(fyYear)} onValueChange={(v) => setFyYear(Number(v))}>
           <SelectTrigger className="w-[140px]">
             <SelectValue />
