@@ -35,6 +35,7 @@ import SecondarySales from "./pages/SecondarySales";
 import PrimarySales from "./pages/PrimarySales";
 import AreaDoctorVisits from "./pages/AreaDoctorVisits";
 import WorkingAreas from "./pages/WorkingAreas";
+import FinancialYear from "./pages/FinancialYear";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/dashboard/master/primary-sales" element={<PrimarySales />} />
               <Route path="/dashboard/master/area-doctor-visits" element={<AreaDoctorVisits />} />
               <Route path="/dashboard/master/working-areas" element={<WorkingAreas />} />
+              <Route path="/dashboard/financial-year" element={<FinancialYear />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
