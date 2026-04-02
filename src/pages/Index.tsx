@@ -26,6 +26,7 @@ const Index = () => {
     { icon: Target, label: 'Targets', path: '/dashboard/targets' },
     { icon: BarChart3, label: 'My Performance', path: '/dashboard/my-performance' },
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting' },
+    { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year' },
     { icon: Database, label: 'Master', path: '/dashboard/master' }
   ];
 
