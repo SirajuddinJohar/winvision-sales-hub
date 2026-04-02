@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3, ClipboardList, CalendarDays, Database } from 'lucide-react';
+import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3, ClipboardList, CalendarDays, Database, IndianRupee } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
