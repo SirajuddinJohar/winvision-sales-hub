@@ -87,6 +87,7 @@ const App = () => (
               <Route path="/dashboard/master/primary-sales" element={<PrimarySales />} />
               <Route path="/dashboard/master/area-doctor-visits" element={<AreaDoctorVisits />} />
               <Route path="/dashboard/master/working-areas" element={<WorkingAreas />} />
+              <Route path="/dashboard/financial-year" element={<FinancialYear />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
