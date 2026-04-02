@@ -243,7 +243,7 @@ const FinancialYear = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-3 md:p-6">
-        <PageHeader title="Financial Year Report" subtitle="Loading..." onBack={() => navigate('/dashboard')} />
+        <PageHeader title="Financial Year Report" description="Loading..." />
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
         </div>
