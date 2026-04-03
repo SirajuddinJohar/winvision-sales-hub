@@ -93,9 +93,10 @@ export const requestAllPermissions = async (): Promise<PermissionStatus> => {
 
 export const checkPermissionStatus = async (): Promise<PermissionStatus> => {
   if (!Capacitor.isNativePlatform()) {
+    const notifPerm = 'Notification' in window ? Notification.permission : 'default';
     return {
-      location: 'prompt',
-      notifications: 'prompt'
+      location: navigator.geolocation ? 'prompt' : 'denied',
+      notifications: notifPerm === 'granted' ? 'granted' : notifPerm === 'denied' ? 'denied' : 'prompt',
     };
   }
 
