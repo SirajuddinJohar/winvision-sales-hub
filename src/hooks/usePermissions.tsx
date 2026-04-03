@@ -16,18 +16,22 @@ export const usePermissions = () => {
 
   useEffect(() => {
     const initializePermissions = async () => {
-      // Only request on native platforms
-      if (!Capacitor.isNativePlatform()) {
-        return;
-      }
-
       // Check if we've already requested permissions this session
       const alreadyRequested = sessionStorage.getItem('permissions_requested');
       
       if (alreadyRequested) {
         // Just check current status
-        const status = await checkPermissionStatus();
-        setPermissions(status);
+        if (Capacitor.isNativePlatform()) {
+          const status = await checkPermissionStatus();
+          setPermissions(status);
+        } else {
+          // Check web notification status
+          const notifPerm = 'Notification' in window ? Notification.permission : 'default';
+          setPermissions({
+            location: 'granted',
+            notifications: notifPerm === 'granted' ? 'granted' : notifPerm === 'denied' ? 'denied' : 'prompt',
+          });
+        }
         setHasRequested(true);
         return;
       }
