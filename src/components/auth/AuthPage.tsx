@@ -134,7 +134,18 @@ const AuthPage = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0 h-auto text-xs text-primary"
+                        onClick={handleForgotPassword}
+                        disabled={loading}
+                      >
+                        Forgot Password?
+                      </Button>
+                    </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
