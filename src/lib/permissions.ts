@@ -9,8 +9,15 @@ export interface PermissionStatus {
 
 export const requestLocationPermission = async (): Promise<boolean> => {
   if (!Capacitor.isNativePlatform()) {
-    // Web fallback - browser will handle permission
-    return true;
+    // Web fallback - request browser geolocation permission
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   try {
