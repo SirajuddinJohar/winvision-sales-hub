@@ -13,6 +13,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 const Index = lazy(() => import("./pages/Index"));
 const AuthPage = lazy(() => import("./components/auth/AuthPage"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const DashboardLayout = lazy(() => import("./components/dashboard/DashboardLayout"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Doctors = lazy(() => import("./pages/Doctors"));
@@ -43,7 +44,16 @@ const WorkingAreas = lazy(() => import("./pages/WorkingAreas"));
 const FinancialYear = lazy(() => import("./pages/FinancialYear"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -55,15 +65,10 @@ const PageLoader = () => (
   </div>
 );
 
-// Component to initialize permissions on app load
 const PermissionInitializer = ({ children }: { children: React.ReactNode }) => {
   const { isRequesting } = usePermissions();
   return <>{children}</>;
 };
-
-const P = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>{children}</ProtectedRoute>
-);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -78,34 +83,43 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/dashboard" element={<P><Dashboard /></P>} />
-                <Route path="/dashboard/doctors" element={<P><Doctors /></P>} />
-                <Route path="/dashboard/doctors/:id" element={<P><DoctorDetails /></P>} />
-                <Route path="/dashboard/doctors/:id/incentive" element={<P><DoctorIncentive /></P>} />
-                <Route path="/dashboard/distributors" element={<P><Distributors /></P>} />
-                <Route path="/dashboard/distributors/:id" element={<P><DistributorDetails /></P>} />
-                <Route path="/dashboard/pharmacies" element={<P><Pharmacies /></P>} />
-                <Route path="/dashboard/products" element={<P><Products /></P>} />
-                <Route path="/dashboard/orders" element={<P><Orders /></P>} />
-                <Route path="/dashboard/expenses" element={<P><Expenses /></P>} />
-                <Route path="/dashboard/targets" element={<P><Targets /></P>} />
-                <Route path="/dashboard/targets/mr/:mrId" element={<P><MRTargetDetails /></P>} />
-                <Route path="/dashboard/daily-working" element={<P><DailyWorking /></P>} />
-                <Route path="/dashboard/reporting" element={<P><Reporting /></P>} />
-                <Route path="/dashboard/tour-plan" element={<P><MonthlyTourPlan /></P>} />
-                <Route path="/dashboard/tour-plan-requests" element={<P><TourPlanRequests /></P>} />
-                <Route path="/dashboard/my-performance" element={<P><MyPerformance /></P>} />
-                <Route path="/dashboard/call-reports" element={<P><CallReports /></P>} />
-                <Route path="/dashboard/expenses-reports" element={<P><ExpensesReports /></P>} />
-                <Route path="/dashboard/master" element={<P><Master /></P>} />
-                <Route path="/dashboard/master/add-sample" element={<P><AddSample /></P>} />
-                <Route path="/dashboard/master/attach-doctor-pharmacy" element={<P><AttachDoctorPharmacy /></P>} />
-                <Route path="/dashboard/master/sales-and-stocks" element={<P><SalesAndStocks /></P>} />
-                <Route path="/dashboard/master/secondary-sales" element={<P><SecondarySales /></P>} />
-                <Route path="/dashboard/master/primary-sales" element={<P><PrimarySales /></P>} />
-                <Route path="/dashboard/master/area-doctor-visits" element={<P><AreaDoctorVisits /></P>} />
-                <Route path="/dashboard/master/working-areas" element={<P><WorkingAreas /></P>} />
-                <Route path="/dashboard/financial-year" element={<P><FinancialYear /></P>} />
+                
+                {/* Dashboard with nested layout */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<Dashboard />} />
+                  <Route path="doctors" element={<Doctors />} />
+                  <Route path="doctors/:id" element={<DoctorDetails />} />
+                  <Route path="doctors/:id/incentive" element={<DoctorIncentive />} />
+                  <Route path="distributors" element={<Distributors />} />
+                  <Route path="distributors/:id" element={<DistributorDetails />} />
+                  <Route path="pharmacies" element={<Pharmacies />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="expenses" element={<Expenses />} />
+                  <Route path="targets" element={<Targets />} />
+                  <Route path="targets/mr/:mrId" element={<MRTargetDetails />} />
+                  <Route path="daily-working" element={<DailyWorking />} />
+                  <Route path="reporting" element={<Reporting />} />
+                  <Route path="tour-plan" element={<MonthlyTourPlan />} />
+                  <Route path="tour-plan-requests" element={<TourPlanRequests />} />
+                  <Route path="my-performance" element={<MyPerformance />} />
+                  <Route path="call-reports" element={<CallReports />} />
+                  <Route path="expenses-reports" element={<ExpensesReports />} />
+                  <Route path="master" element={<Master />} />
+                  <Route path="master/add-sample" element={<AddSample />} />
+                  <Route path="master/attach-doctor-pharmacy" element={<AttachDoctorPharmacy />} />
+                  <Route path="master/sales-and-stocks" element={<SalesAndStocks />} />
+                  <Route path="master/secondary-sales" element={<SecondarySales />} />
+                  <Route path="master/primary-sales" element={<PrimarySales />} />
+                  <Route path="master/area-doctor-visits" element={<AreaDoctorVisits />} />
+                  <Route path="master/working-areas" element={<WorkingAreas />} />
+                  <Route path="financial-year" element={<FinancialYear />} />
+                </Route>
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
