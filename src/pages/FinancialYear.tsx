@@ -74,6 +74,15 @@ interface ExpenseRow {
   status: string | null;
 }
 
+interface PurchaseRow {
+  id: string;
+  total_cost: number;
+  purchase_date: string;
+  product_id: string;
+  quantity: number;
+  supplier_name: string;
+}
+
 interface ProductRow {
   id: string;
   name: string;
@@ -97,6 +106,7 @@ const FinancialYear = () => {
   const [fyYear, setFyYear] = useState<number>(getFYOptions()[0].value);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [doctors, setDoctors] = useState<DoctorRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -119,11 +129,15 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
+      isAdmin
+        ? supabase.from('purchases').select('id, total_cost, purchase_date, product_id, quantity, supplier_name')
+            .gte('purchase_date', range.from).lte('purchase_date', range.to)
+        : Promise.resolve({ data: [] }),
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
       isAdmin ? supabase.from('users').select('id, name, role') : Promise.resolve({ data: [] }),
@@ -133,6 +147,7 @@ const FinancialYear = () => {
 
     setOrders((ordersRes.data || []) as OrderRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
+    setPurchases((purchasesRes.data || []) as PurchaseRow[]);
     setProducts((productsRes.data || []) as ProductRow[]);
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
@@ -143,7 +158,9 @@ const FinancialYear = () => {
   // Calculations
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
-  const netProfit = totalSales - totalExpenses;
+  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.total_cost, 0), [purchases]);
+  const grossProfit = totalSales - totalPurchases;
+  const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
   const totalQty = useMemo(() => orders.reduce((s, o) => s + o.quantity, 0), [orders]);
   const prevYearSales = useMemo(() => prevYearOrders.reduce((s, o) => s + (o.total_amount || 0), 0), [prevYearOrders]);
@@ -163,12 +180,17 @@ const FinancialYear = () => {
         const d = new Date(e.expense_date);
         return d.getMonth() + 1 === monthNum && d.getFullYear() === year && e.status === 'approved';
       });
+      const monthPurchases = purchases.filter(p => {
+        const d = new Date(p.purchase_date);
+        return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
+      });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, profit: sales - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
+      const purch = monthPurchases.reduce((s, p) => s + p.total_cost, 0);
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
     });
     return data;
-  }, [orders, expenses, fyYear]);
+  }, [orders, expenses, purchases, fyYear]);
 
   // Product performance
   const productData = useMemo(() => {
@@ -378,10 +400,10 @@ const FinancialYear = () => {
                     <TableRow>
                       <TableHead className="text-xs">Month</TableHead>
                       <TableHead className="text-xs text-right">Sales</TableHead>
+                      {isAdmin && <TableHead className="text-xs text-right">Purchases</TableHead>}
                       <TableHead className="text-xs text-right">Expenses</TableHead>
                       <TableHead className="text-xs text-right">Profit</TableHead>
                       <TableHead className="text-xs text-right">Orders</TableHead>
-                      <TableHead className="text-xs text-right">Qty</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -389,15 +411,16 @@ const FinancialYear = () => {
                       <TableRow key={m.month}>
                         <TableCell className="text-xs font-medium">{m.fullMonth}</TableCell>
                         <TableCell className="text-xs text-right">{formatCurrency(m.sales)}</TableCell>
+                        {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(m.purchases)}</TableCell>}
                         <TableCell className="text-xs text-right">{formatCurrency(m.expenses)}</TableCell>
                         <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>
                         <TableCell className="text-xs text-right">{m.orders}</TableCell>
-                        <TableCell className="text-xs text-right">{m.qty}</TableCell>
                       </TableRow>
                     ))}
                     <TableRow className="font-bold bg-muted/50">
                       <TableCell className="text-xs">Total</TableCell>
                       <TableCell className="text-xs text-right">{formatCurrency(totalSales)}</TableCell>
+                      {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(totalPurchases)}</TableCell>}
                       <TableCell className="text-xs text-right">{formatCurrency(totalExpenses)}</TableCell>
                       <TableCell className={`text-xs text-right ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(netProfit)}</TableCell>
                       <TableCell className="text-xs text-right">{totalOrders}</TableCell>
@@ -579,11 +602,23 @@ const FinancialYear = () => {
               <span className="text-sm">Total Revenue (Sales)</span>
               <span className="text-sm font-bold">{formatCurrency(totalSales)}</span>
             </div>
+            {isAdmin && totalPurchases > 0 && (
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm">Cost of Goods (Purchases)</span>
+                <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalPurchases)}</span>
+              </div>
+            )}
+            {isAdmin && totalPurchases > 0 && (
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm font-medium">Gross Profit</span>
+                <span className={`text-sm font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(grossProfit)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-sm">Total Expenses</span>
+              <span className="text-sm">Operating Expenses</span>
               <span className="text-sm font-bold text-destructive">- {formatCurrency(totalExpenses)}</span>
             </div>
-            <div className={`flex justify-between items-center py-3 rounded-lg px-3 ${netProfit >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`flex justify-between items-center py-3 rounded-lg px-3 ${netProfit >= 0 ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
               <span className="text-sm font-bold">{netProfit >= 0 ? 'Net Profit' : 'Net Loss'}</span>
               <span className={`text-lg font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(Math.abs(netProfit))}</span>
             </div>
