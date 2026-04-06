@@ -158,7 +158,9 @@ const FinancialYear = () => {
   // Calculations
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
-  const netProfit = totalSales - totalExpenses;
+  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.total_cost, 0), [purchases]);
+  const grossProfit = totalSales - totalPurchases;
+  const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
   const totalQty = useMemo(() => orders.reduce((s, o) => s + o.quantity, 0), [orders]);
   const prevYearSales = useMemo(() => prevYearOrders.reduce((s, o) => s + (o.total_amount || 0), 0), [prevYearOrders]);
