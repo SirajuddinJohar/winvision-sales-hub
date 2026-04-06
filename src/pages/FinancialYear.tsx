@@ -400,10 +400,10 @@ const FinancialYear = () => {
                     <TableRow>
                       <TableHead className="text-xs">Month</TableHead>
                       <TableHead className="text-xs text-right">Sales</TableHead>
+                      {isAdmin && <TableHead className="text-xs text-right">Purchases</TableHead>}
                       <TableHead className="text-xs text-right">Expenses</TableHead>
                       <TableHead className="text-xs text-right">Profit</TableHead>
                       <TableHead className="text-xs text-right">Orders</TableHead>
-                      <TableHead className="text-xs text-right">Qty</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -411,15 +411,16 @@ const FinancialYear = () => {
                       <TableRow key={m.month}>
                         <TableCell className="text-xs font-medium">{m.fullMonth}</TableCell>
                         <TableCell className="text-xs text-right">{formatCurrency(m.sales)}</TableCell>
+                        {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(m.purchases)}</TableCell>}
                         <TableCell className="text-xs text-right">{formatCurrency(m.expenses)}</TableCell>
                         <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>
                         <TableCell className="text-xs text-right">{m.orders}</TableCell>
-                        <TableCell className="text-xs text-right">{m.qty}</TableCell>
                       </TableRow>
                     ))}
                     <TableRow className="font-bold bg-muted/50">
                       <TableCell className="text-xs">Total</TableCell>
                       <TableCell className="text-xs text-right">{formatCurrency(totalSales)}</TableCell>
+                      {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(totalPurchases)}</TableCell>}
                       <TableCell className="text-xs text-right">{formatCurrency(totalExpenses)}</TableCell>
                       <TableCell className={`text-xs text-right ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(netProfit)}</TableCell>
                       <TableCell className="text-xs text-right">{totalOrders}</TableCell>
