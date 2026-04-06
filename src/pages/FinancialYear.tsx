@@ -180,12 +180,17 @@ const FinancialYear = () => {
         const d = new Date(e.expense_date);
         return d.getMonth() + 1 === monthNum && d.getFullYear() === year && e.status === 'approved';
       });
+      const monthPurchases = purchases.filter(p => {
+        const d = new Date(p.purchase_date);
+        return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
+      });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, profit: sales - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
+      const purch = monthPurchases.reduce((s, p) => s + p.total_cost, 0);
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
     });
     return data;
-  }, [orders, expenses, fyYear]);
+  }, [orders, expenses, purchases, fyYear]);
 
   // Product performance
   const productData = useMemo(() => {
