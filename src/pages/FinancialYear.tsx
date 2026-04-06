@@ -74,6 +74,15 @@ interface ExpenseRow {
   status: string | null;
 }
 
+interface PurchaseRow {
+  id: string;
+  total_cost: number;
+  purchase_date: string;
+  product_id: string;
+  quantity: number;
+  supplier_name: string;
+}
+
 interface ProductRow {
   id: string;
   name: string;
