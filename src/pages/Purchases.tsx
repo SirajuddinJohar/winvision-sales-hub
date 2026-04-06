@@ -59,13 +59,13 @@ const Purchases = () => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (isAdmin) fetchData();
+  }, [isAdmin]);
+
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     setLoading(true);
