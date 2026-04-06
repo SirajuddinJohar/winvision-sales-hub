@@ -106,6 +106,7 @@ const FinancialYear = () => {
   const [fyYear, setFyYear] = useState<number>(getFYOptions()[0].value);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [doctors, setDoctors] = useState<DoctorRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
