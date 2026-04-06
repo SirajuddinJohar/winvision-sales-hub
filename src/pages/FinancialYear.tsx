@@ -129,11 +129,15 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
+      isAdmin
+        ? supabase.from('purchases').select('id, total_cost, purchase_date, product_id, quantity, supplier_name')
+            .gte('purchase_date', range.from).lte('purchase_date', range.to)
+        : Promise.resolve({ data: [] }),
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
       isAdmin ? supabase.from('users').select('id, name, role') : Promise.resolve({ data: [] }),
@@ -143,6 +147,7 @@ const FinancialYear = () => {
 
     setOrders((ordersRes.data || []) as OrderRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
+    setPurchases((purchasesRes.data || []) as PurchaseRow[]);
     setProducts((productsRes.data || []) as ProductRow[]);
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
