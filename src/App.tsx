@@ -42,6 +42,7 @@ const PrimarySales = lazy(() => import("./pages/PrimarySales"));
 const AreaDoctorVisits = lazy(() => import("./pages/AreaDoctorVisits"));
 const WorkingAreas = lazy(() => import("./pages/WorkingAreas"));
 const FinancialYear = lazy(() => import("./pages/FinancialYear"));
+const Purchases = lazy(() => import("./pages/Purchases"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
