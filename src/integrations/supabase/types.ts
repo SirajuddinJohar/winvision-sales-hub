@@ -874,6 +874,59 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          product_id: string
+          purchase_date: string
+          quantity: number
+          supplier_name: string
+          total_cost: number | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          product_id: string
+          purchase_date?: string
+          quantity?: number
+          supplier_name: string
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          product_id?: string
+          purchase_date?: string
+          quantity?: number
+          supplier_name?: string
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secondary_sales: {
         Row: {
           created_at: string
