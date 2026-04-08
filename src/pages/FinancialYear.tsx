@@ -135,8 +135,11 @@ const FinancialYear = () => {
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
       isAdmin
-        ? supabase.from('purchases').select('id, total_cost, purchase_date, product_id, quantity, supplier_name')
+        ? supabase.from('purchases').select('id, purchase_date, supplier_name, gst_amount, transport_amount')
             .gte('purchase_date', range.from).lte('purchase_date', range.to)
+        : Promise.resolve({ data: [] }),
+      isAdmin
+        ? supabase.from('purchase_items').select('id, purchase_id, product_id, quantity, unit_cost, total_cost')
         : Promise.resolve({ data: [] }),
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
