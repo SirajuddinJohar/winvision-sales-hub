@@ -874,10 +874,56 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          purchase_id: string
+          quantity: number
+          total_cost: number | null
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          purchase_id: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          purchase_id?: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchases: {
         Row: {
           created_at: string
           created_by: string
+          gst_amount: number
           id: string
           invoice_number: string | null
           notes: string | null
@@ -886,12 +932,14 @@ export type Database = {
           quantity: number
           supplier_name: string
           total_cost: number | null
+          transport_amount: number
           unit_cost: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          gst_amount?: number
           id?: string
           invoice_number?: string | null
           notes?: string | null
@@ -900,12 +948,14 @@ export type Database = {
           quantity?: number
           supplier_name: string
           total_cost?: number | null
+          transport_amount?: number
           unit_cost?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          gst_amount?: number
           id?: string
           invoice_number?: string | null
           notes?: string | null
@@ -914,6 +964,7 @@ export type Database = {
           quantity?: number
           supplier_name?: string
           total_cost?: number | null
+          transport_amount?: number
           unit_cost?: number
           updated_at?: string
         }

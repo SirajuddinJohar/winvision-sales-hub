@@ -76,11 +76,11 @@ interface ExpenseRow {
 
 interface PurchaseRow {
   id: string;
-  total_cost: number;
   purchase_date: string;
-  product_id: string;
-  quantity: number;
   supplier_name: string;
+  gst_amount: number;
+  transport_amount: number;
+  items_total: number; // computed from purchase_items
 }
 
 interface ProductRow {
@@ -129,14 +129,17 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
       isAdmin
-        ? supabase.from('purchases').select('id, total_cost, purchase_date, product_id, quantity, supplier_name')
+        ? supabase.from('purchases').select('id, purchase_date, supplier_name, gst_amount, transport_amount')
             .gte('purchase_date', range.from).lte('purchase_date', range.to)
+        : Promise.resolve({ data: [] }),
+      isAdmin
+        ? supabase.from('purchase_items').select('id, purchase_id, product_id, quantity, unit_cost, total_cost')
         : Promise.resolve({ data: [] }),
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
@@ -145,9 +148,18 @@ const FinancialYear = () => {
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
     ]);
 
+    // Build purchase rows with items_total computed from purchase_items
+    const rawPurchases = (purchasesRes.data || []) as any[];
+    const allItems = (purchaseItemsRes.data || []) as any[];
+    const purchaseRows: PurchaseRow[] = rawPurchases.map(p => {
+      const pItems = allItems.filter((i: any) => i.purchase_id === p.id);
+      const items_total = pItems.reduce((s: number, i: any) => s + (i.total_cost || 0), 0);
+      return { ...p, items_total };
+    });
+
     setOrders((ordersRes.data || []) as OrderRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
-    setPurchases((purchasesRes.data || []) as PurchaseRow[]);
+    setPurchases(purchaseRows);
     setProducts((productsRes.data || []) as ProductRow[]);
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
@@ -158,7 +170,7 @@ const FinancialYear = () => {
   // Calculations
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
-  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.total_cost, 0), [purchases]);
+  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0), [purchases]);
   const grossProfit = totalSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
@@ -186,7 +198,7 @@ const FinancialYear = () => {
       });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
-      const purch = monthPurchases.reduce((s, p) => s + p.total_cost, 0);
+      const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
       return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
     });
     return data;
