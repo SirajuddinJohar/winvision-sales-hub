@@ -62,6 +62,7 @@ const Orders = () => {
           id,
           order_date,
           quantity,
+          scheme,
           unit_price,
           total_amount,
           products:product_id (
@@ -272,10 +273,13 @@ const Orders = () => {
                       {new Date(order.order_date).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 md:gap-2">
-                    <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
-                    <span className="text-xs md:text-sm">Qty: {order.quantity}</span>
-                  </div>
+                   <div className="flex items-center gap-1.5 md:gap-2">
+                     <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+                     <span className="text-xs md:text-sm">
+                       Qty: {order.quantity}
+                       {(order as any).scheme && <span className="ml-1 text-primary font-medium">({(order as any).scheme})</span>}
+                     </span>
+                   </div>
                   <div className="flex items-center gap-1.5 md:gap-2">
                     <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
                     <span className="text-xs md:text-sm truncate">
