@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 interface ProductItem {
   product_id: string;
   quantity: number;
+  scheme: string;
   unit_price: number;
 }
 
@@ -52,7 +53,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<OrderFormData>({
     defaultValues: {
       order_date: new Date().toISOString().split('T')[0],
-      products: [{ product_id: '', quantity: 1, unit_price: 0 }],
+      products: [{ product_id: '', quantity: 1, scheme: '', unit_price: 0 }],
     }
   });
 
@@ -147,6 +148,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
           pharmacy_id: data.distributor_id,
           product_id: product.product_id,
           quantity: Number(product.quantity),
+          scheme: product.scheme || null,
           unit_price: Number(product.unit_price),
           order_date: data.order_date,
           mr_id: profile?.id,
@@ -222,7 +224,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
   };
 
   const addProduct = () => {
-    append({ product_id: '', quantity: 1, unit_price: 0 });
+    append({ product_id: '', quantity: 1, scheme: '', unit_price: 0 });
   };
 
   const removeProduct = (index: number) => {
@@ -424,7 +426,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
 
             {fields.map((field, index) => (
               <Card key={field.id} className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                   <div className="space-y-2 md:col-span-2">
                     <Label>Product</Label>
                     <Popover open={productOpen === index} onOpenChange={(open) => setProductOpen(open ? index : null)}>
@@ -482,6 +484,15 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
                         min: { value: 1, message: 'Quantity must be at least 1' }
                       })}
                       placeholder="1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Scheme</Label>
+                    <Input
+                      type="text"
+                      {...register(`products.${index}.scheme`)}
+                      placeholder="e.g. 10+2"
                     />
                   </div>
 
