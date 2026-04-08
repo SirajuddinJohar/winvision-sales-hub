@@ -129,7 +129,7 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
@@ -148,9 +148,18 @@ const FinancialYear = () => {
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
     ]);
 
+    // Build purchase rows with items_total computed from purchase_items
+    const rawPurchases = (purchasesRes.data || []) as any[];
+    const allItems = (purchaseItemsRes.data || []) as any[];
+    const purchaseRows: PurchaseRow[] = rawPurchases.map(p => {
+      const pItems = allItems.filter((i: any) => i.purchase_id === p.id);
+      const items_total = pItems.reduce((s: number, i: any) => s + (i.total_cost || 0), 0);
+      return { ...p, items_total };
+    });
+
     setOrders((ordersRes.data || []) as OrderRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
-    setPurchases((purchasesRes.data || []) as PurchaseRow[]);
+    setPurchases(purchaseRows);
     setProducts((productsRes.data || []) as ProductRow[]);
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
