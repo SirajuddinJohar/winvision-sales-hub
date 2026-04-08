@@ -681,6 +681,7 @@ export type Database = {
           pharmacy_id: string
           product_id: string
           quantity: number
+          scheme: string | null
           total_amount: number | null
           unit_price: number
         }
@@ -693,6 +694,7 @@ export type Database = {
           pharmacy_id: string
           product_id: string
           quantity: number
+          scheme?: string | null
           total_amount?: number | null
           unit_price: number
         }
@@ -705,6 +707,7 @@ export type Database = {
           pharmacy_id?: string
           product_id?: string
           quantity?: number
+          scheme?: string | null
           total_amount?: number | null
           unit_price?: number
         }
