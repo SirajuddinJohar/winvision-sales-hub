@@ -76,11 +76,11 @@ interface ExpenseRow {
 
 interface PurchaseRow {
   id: string;
-  total_cost: number;
   purchase_date: string;
-  product_id: string;
-  quantity: number;
   supplier_name: string;
+  gst_amount: number;
+  transport_amount: number;
+  items_total: number; // computed from purchase_items
 }
 
 interface ProductRow {
