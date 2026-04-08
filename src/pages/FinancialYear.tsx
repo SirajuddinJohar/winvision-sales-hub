@@ -170,7 +170,7 @@ const FinancialYear = () => {
   // Calculations
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
-  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.total_cost, 0), [purchases]);
+  const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0), [purchases]);
   const grossProfit = totalSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
@@ -198,7 +198,7 @@ const FinancialYear = () => {
       });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
-      const purch = monthPurchases.reduce((s, p) => s + p.total_cost, 0);
+      const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
       return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
     });
     return data;
