@@ -250,26 +250,25 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
             synced: false
           });
 
-          // Save orders for offline sync
-          const orderRecords = ordersToPlace.map(order => ({
-            doctor_id: doctorId,
-            pharmacy_id: selectedDistributor,
-            product_id: order.product_id,
-            quantity: order.order_qty,
-            unit_price: order.price,
-            mr_id: user?.id,
-            order_date: new Date().toISOString().split('T')[0]
-          }));
-
-          for (const order of orderRecords) {
-            await queueForSync({
-              id: `order_${Date.now()}_${Math.random()}`,
-              type: 'order',
-              data: order,
-              timestamp: Date.now(),
-              synced: false
-            });
-          }
+          // Save order + items for offline sync
+          await queueForSync({
+            id: `order_${Date.now()}`,
+            type: 'order',
+            data: {
+              doctor_id: doctorId,
+              pharmacy_id: selectedDistributor,
+              mr_id: user?.id,
+              order_date: new Date().toISOString().split('T')[0],
+              total_amount: getTotalAmount(),
+              items: ordersToPlace.map(order => ({
+                product_id: order.product_id,
+                quantity: order.order_qty,
+                unit_price: order.price,
+              })),
+            },
+            timestamp: Date.now(),
+            synced: false
+          });
         }
       }
 
