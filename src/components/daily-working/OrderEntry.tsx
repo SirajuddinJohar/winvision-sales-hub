@@ -196,22 +196,36 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
 
           if (dailyWorkingError) throw dailyWorkingError;
 
-          // Create individual order records
-          const orderRecords = ordersToPlace.map(order => ({
+          // Create ONE order record
+          const orderRecord = {
             doctor_id: doctorId,
             pharmacy_id: selectedDistributor,
+            mr_id: user?.id,
+            order_date: new Date().toISOString().split('T')[0],
+            total_amount: getTotalAmount(),
+          };
+
+          const { data: orderResult, error: orderError } = await supabase
+            .from('orders')
+            .insert(orderRecord)
+            .select('id')
+            .single();
+
+          if (orderError) throw orderError;
+
+          // Create order_items for each product
+          const orderItemRecords = ordersToPlace.map(order => ({
+            order_id: orderResult.id,
             product_id: order.product_id,
             quantity: order.order_qty,
             unit_price: order.price,
-            mr_id: user?.id,
-            order_date: new Date().toISOString().split('T')[0]
           }));
 
-          const { error: ordersError } = await supabase
-            .from('orders')
-            .insert(orderRecords);
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItemRecords);
 
-          if (ordersError) throw ordersError;
+          if (itemsError) throw itemsError;
 
           // Reduce stock from distributor_products
           for (const order of ordersToPlace) {
