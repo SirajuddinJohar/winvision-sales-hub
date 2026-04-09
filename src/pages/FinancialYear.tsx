@@ -184,7 +184,10 @@ const FinancialYear = () => {
   const grossProfit = totalSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
-  const totalQty = useMemo(() => orders.reduce((s, o) => s + o.quantity, 0), [orders]);
+  const totalQty = useMemo(() => {
+    const orderIds = new Set(orders.map(o => o.id));
+    return orderItems.filter(i => orderIds.has(i.order_id)).reduce((s, i) => s + i.quantity, 0);
+  }, [orders, orderItems]);
   const prevYearSales = useMemo(() => prevYearOrders.reduce((s, o) => s + (o.total_amount || 0), 0), [prevYearOrders]);
   const growthPercent = prevYearSales > 0 ? ((totalSales - prevYearSales) / prevYearSales) * 100 : 0;
 
