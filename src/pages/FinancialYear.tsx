@@ -112,6 +112,7 @@ const FinancialYear = () => {
   const { user, profile } = useAuth();
   const [fyYear, setFyYear] = useState<number>(getFYOptions()[0].value);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
