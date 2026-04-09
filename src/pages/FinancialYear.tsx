@@ -59,10 +59,17 @@ interface OrderRow {
   id: string;
   total_amount: number | null;
   order_date: string | null;
-  product_id: string;
-  quantity: number;
   mr_id: string;
   doctor_id: string | null;
+}
+
+interface OrderItemRow {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number | null;
 }
 
 interface ExpenseRow {
