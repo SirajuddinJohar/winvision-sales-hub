@@ -219,21 +219,23 @@ const FinancialYear = () => {
     return data;
   }, [orders, expenses, purchases, fyYear]);
 
-  // Product performance
+  // Product performance (from order_items)
   const productData = useMemo(() => {
+    const orderIds = new Set(orders.map(o => o.id));
+    const relevantItems = orderItems.filter(i => orderIds.has(i.order_id));
     const productMap = new Map<string, { qty: number; revenue: number }>();
-    orders.forEach(o => {
-      const existing = productMap.get(o.product_id) || { qty: 0, revenue: 0 };
-      existing.qty += o.quantity;
-      existing.revenue += o.total_amount || 0;
-      productMap.set(o.product_id, existing);
+    relevantItems.forEach(item => {
+      const existing = productMap.get(item.product_id) || { qty: 0, revenue: 0 };
+      existing.qty += item.quantity;
+      existing.revenue += item.total_amount || 0;
+      productMap.set(item.product_id, existing);
     });
     const result = Array.from(productMap.entries()).map(([pid, data]) => {
       const product = products.find(p => p.id === pid);
       return { name: product?.name || 'Unknown', category: product?.category || '', ...data, share: totalSales > 0 ? (data.revenue / totalSales) * 100 : 0 };
     }).sort((a, b) => b.revenue - a.revenue);
     return result;
-  }, [orders, products, totalSales]);
+  }, [orders, orderItems, products, totalSales]);
 
   // MR performance (admin only)
   const mrData = useMemo(() => {
