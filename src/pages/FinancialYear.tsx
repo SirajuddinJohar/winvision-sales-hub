@@ -212,7 +212,9 @@ const FinancialYear = () => {
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
       const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
+      const monthOrderIds = new Set(monthOrders.map(o => o.id));
+      const monthOrderItems = orderItems.filter(i => monthOrderIds.has(i.order_id));
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
     });
     return data;
   }, [orders, expenses, purchases, fyYear]);
