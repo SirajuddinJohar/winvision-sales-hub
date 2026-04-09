@@ -137,8 +137,8 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
-      supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes] = await Promise.all([
+      supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
@@ -152,20 +152,22 @@ const FinancialYear = () => {
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
       isAdmin ? supabase.from('users').select('id, name, role') : Promise.resolve({ data: [] }),
-      supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
+      supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
+      supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_amount'),
     ]);
 
     // Build purchase rows with items_total computed from purchase_items
     const rawPurchases = (purchasesRes.data || []) as any[];
-    const allItems = (purchaseItemsRes.data || []) as any[];
+    const allPurchaseItems = (purchaseItemsRes.data || []) as any[];
     const purchaseRows: PurchaseRow[] = rawPurchases.map(p => {
-      const pItems = allItems.filter((i: any) => i.purchase_id === p.id);
+      const pItems = allPurchaseItems.filter((i: any) => i.purchase_id === p.id);
       const items_total = pItems.reduce((s: number, i: any) => s + (i.total_cost || 0), 0);
       return { ...p, items_total };
     });
 
     setOrders((ordersRes.data || []) as OrderRow[]);
+    setOrderItems((orderItemsRes.data || []) as OrderItemRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
     setPurchases(purchaseRows);
     setProducts((productsRes.data || []) as ProductRow[]);
