@@ -59,10 +59,17 @@ interface OrderRow {
   id: string;
   total_amount: number | null;
   order_date: string | null;
-  product_id: string;
-  quantity: number;
   mr_id: string;
   doctor_id: string | null;
+}
+
+interface OrderItemRow {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number | null;
 }
 
 interface ExpenseRow {
@@ -105,6 +112,7 @@ const FinancialYear = () => {
   const { user, profile } = useAuth();
   const [fyYear, setFyYear] = useState<number>(getFYOptions()[0].value);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -129,8 +137,8 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes] = await Promise.all([
-      supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes] = await Promise.all([
+      supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
         .gte('expense_date', range.from).lte('expense_date', range.to),
@@ -144,20 +152,22 @@ const FinancialYear = () => {
       supabase.from('products').select('id, name, category'),
       supabase.from('doctors').select('id, name'),
       isAdmin ? supabase.from('users').select('id, name, role') : Promise.resolve({ data: [] }),
-      supabase.from('orders').select('id, total_amount, order_date, product_id, quantity, mr_id, doctor_id')
+      supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
+      supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_amount'),
     ]);
 
     // Build purchase rows with items_total computed from purchase_items
     const rawPurchases = (purchasesRes.data || []) as any[];
-    const allItems = (purchaseItemsRes.data || []) as any[];
+    const allPurchaseItems = (purchaseItemsRes.data || []) as any[];
     const purchaseRows: PurchaseRow[] = rawPurchases.map(p => {
-      const pItems = allItems.filter((i: any) => i.purchase_id === p.id);
+      const pItems = allPurchaseItems.filter((i: any) => i.purchase_id === p.id);
       const items_total = pItems.reduce((s: number, i: any) => s + (i.total_cost || 0), 0);
       return { ...p, items_total };
     });
 
     setOrders((ordersRes.data || []) as OrderRow[]);
+    setOrderItems((orderItemsRes.data || []) as OrderItemRow[]);
     setExpenses((expensesRes.data || []) as ExpenseRow[]);
     setPurchases(purchaseRows);
     setProducts((productsRes.data || []) as ProductRow[]);
@@ -174,7 +184,10 @@ const FinancialYear = () => {
   const grossProfit = totalSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
-  const totalQty = useMemo(() => orders.reduce((s, o) => s + o.quantity, 0), [orders]);
+  const totalQty = useMemo(() => {
+    const orderIds = new Set(orders.map(o => o.id));
+    return orderItems.filter(i => orderIds.has(i.order_id)).reduce((s, i) => s + i.quantity, 0);
+  }, [orders, orderItems]);
   const prevYearSales = useMemo(() => prevYearOrders.reduce((s, o) => s + (o.total_amount || 0), 0), [prevYearOrders]);
   const growthPercent = prevYearSales > 0 ? ((totalSales - prevYearSales) / prevYearSales) * 100 : 0;
 
@@ -199,26 +212,30 @@ const FinancialYear = () => {
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
       const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrders.reduce((s, o) => s + o.quantity, 0) };
+      const monthOrderIds = new Set(monthOrders.map(o => o.id));
+      const monthOrderItems = orderItems.filter(i => monthOrderIds.has(i.order_id));
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
     });
     return data;
   }, [orders, expenses, purchases, fyYear]);
 
-  // Product performance
+  // Product performance (from order_items)
   const productData = useMemo(() => {
+    const orderIds = new Set(orders.map(o => o.id));
+    const relevantItems = orderItems.filter(i => orderIds.has(i.order_id));
     const productMap = new Map<string, { qty: number; revenue: number }>();
-    orders.forEach(o => {
-      const existing = productMap.get(o.product_id) || { qty: 0, revenue: 0 };
-      existing.qty += o.quantity;
-      existing.revenue += o.total_amount || 0;
-      productMap.set(o.product_id, existing);
+    relevantItems.forEach(item => {
+      const existing = productMap.get(item.product_id) || { qty: 0, revenue: 0 };
+      existing.qty += item.quantity;
+      existing.revenue += item.total_amount || 0;
+      productMap.set(item.product_id, existing);
     });
     const result = Array.from(productMap.entries()).map(([pid, data]) => {
       const product = products.find(p => p.id === pid);
       return { name: product?.name || 'Unknown', category: product?.category || '', ...data, share: totalSales > 0 ? (data.revenue / totalSales) * 100 : 0 };
     }).sort((a, b) => b.revenue - a.revenue);
     return result;
-  }, [orders, products, totalSales]);
+  }, [orders, orderItems, products, totalSales]);
 
   // MR performance (admin only)
   const mrData = useMemo(() => {

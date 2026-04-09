@@ -671,6 +671,47 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
+          scheme: string | null
+          total_amount: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          quantity?: number
+          scheme?: string | null
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          scheme?: string | null
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string | null
@@ -679,11 +720,11 @@ export type Database = {
           mr_id: string
           order_date: string | null
           pharmacy_id: string
-          product_id: string
-          quantity: number
+          product_id: string | null
+          quantity: number | null
           scheme: string | null
           total_amount: number | null
-          unit_price: number
+          unit_price: number | null
         }
         Insert: {
           created_at?: string | null
@@ -692,11 +733,11 @@ export type Database = {
           mr_id: string
           order_date?: string | null
           pharmacy_id: string
-          product_id: string
-          quantity: number
+          product_id?: string | null
+          quantity?: number | null
           scheme?: string | null
           total_amount?: number | null
-          unit_price: number
+          unit_price?: number | null
         }
         Update: {
           created_at?: string | null
@@ -705,11 +746,11 @@ export type Database = {
           mr_id?: string
           order_date?: string | null
           pharmacy_id?: string
-          product_id?: string
-          quantity?: number
+          product_id?: string | null
+          quantity?: number | null
           scheme?: string | null
           total_amount?: number | null
-          unit_price?: number
+          unit_price?: number | null
         }
         Relationships: [
           {

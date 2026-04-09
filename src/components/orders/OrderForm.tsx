@@ -141,56 +141,69 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
       const shouldGenerateIncentive = orderType === 'pharmacy' && attachedDoctor;
       const incentivePercentage = attachedDoctor?.incentive_percentage ?? 30;
 
-      for (const product of validProducts) {
-        const orderTotal = Number(product.quantity) * Number(product.unit_price);
+      // Determine doctor_id
+      let doctorId: string | null = null;
+      if (orderType === 'pharmacy' && attachedDoctor) {
+        doctorId = attachedDoctor.id;
+      } else if (orderType === 'doctor' && selectedDoctor) {
+        doctorId = selectedDoctor;
+      }
+
+      // Create ONE order header
+      const orderData: any = {
+        pharmacy_id: data.distributor_id,
+        order_date: data.order_date,
+        mr_id: profile?.id,
+        total_amount: totalAmount,
+        doctor_id: doctorId,
+      };
+
+      const { data: orderResult, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select('id')
+        .single();
+
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw orderError;
+      }
+
+      // Create order_items for each product
+      const orderItems = validProducts.map(product => ({
+        order_id: orderResult.id,
+        product_id: product.product_id,
+        quantity: Number(product.quantity),
+        unit_price: Number(product.unit_price),
+        scheme: product.scheme || null,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('Order items creation error:', itemsError);
+        throw itemsError;
+      }
+
+      // Auto-generate incentive ONLY for pharmacy orders with attached doctor
+      if (orderResult && shouldGenerateIncentive) {
+        const incentiveAmount = (totalAmount * incentivePercentage) / 100;
         
-        const orderData: any = {
-          pharmacy_id: data.distributor_id,
-          product_id: product.product_id,
-          quantity: Number(product.quantity),
-          scheme: product.scheme || null,
-          unit_price: Number(product.unit_price),
-          order_date: data.order_date,
-          mr_id: profile?.id,
-        };
+        const { error: incentiveError } = await supabase
+          .from('doctor_incentives')
+          .insert([{
+            doctor_id: attachedDoctor.id,
+            order_id: orderResult.id,
+            order_amount: totalAmount,
+            incentive_percentage: incentivePercentage,
+            incentive_amount: incentiveAmount,
+            status: 'pending'
+          }]);
 
-        // For pharmacy orders, auto-assign doctor from pharmacy attachment
-        // For doctor orders, assign the selected doctor (no incentive)
-        if (orderType === 'pharmacy' && attachedDoctor) {
-          orderData.doctor_id = attachedDoctor.id;
-        } else if (orderType === 'doctor' && selectedDoctor) {
-          orderData.doctor_id = selectedDoctor;
-        }
-
-        const { data: orderResult, error: orderError } = await supabase
-          .from('orders')
-          .insert([orderData])
-          .select('id')
-          .single();
-
-        if (orderError) {
-          console.error('Order creation error:', orderError);
-          throw orderError;
-        }
-
-        // Auto-generate incentive ONLY for pharmacy orders with attached doctor
-        if (orderResult && shouldGenerateIncentive) {
-          const incentiveAmount = (orderTotal * incentivePercentage) / 100;
-          
-          const { error: incentiveError } = await supabase
-            .from('doctor_incentives')
-            .insert([{
-              doctor_id: attachedDoctor.id,
-              order_id: orderResult.id,
-              order_amount: orderTotal,
-              incentive_percentage: incentivePercentage,
-              incentive_amount: incentiveAmount,
-              status: 'pending'
-            }]);
-
-          if (incentiveError) {
-            console.error('Incentive creation error:', incentiveError);
-          }
+        if (incentiveError) {
+          console.error('Incentive creation error:', incentiveError);
         }
       }
       
@@ -202,7 +215,7 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         '/dashboard/orders'
       );
       
-      toast({ title: "Orders placed successfully" });
+      toast({ title: "Order placed successfully" });
       onSuccess();
     } catch (error: any) {
       console.error('Error placing order:', error);
