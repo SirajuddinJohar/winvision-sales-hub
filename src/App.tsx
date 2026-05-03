@@ -33,6 +33,7 @@ const TourPlanRequests = lazy(() => import("./pages/TourPlanRequests"));
 const MyPerformance = lazy(() => import("./pages/MyPerformance"));
 const CallReports = lazy(() => import("./pages/CallReports"));
 const ExpensesReports = lazy(() => import("./pages/ExpensesReports"));
+const MonthlyReports = lazy(() => import("./pages/MonthlyReports"));
 const Master = lazy(() => import("./pages/Master"));
 const AddSample = lazy(() => import("./pages/AddSample"));
 const AttachDoctorPharmacy = lazy(() => import("./pages/AttachDoctorPharmacy"));
@@ -110,6 +111,7 @@ const App = () => (
                   <Route path="my-performance" element={<MyPerformance />} />
                   <Route path="call-reports" element={<CallReports />} />
                   <Route path="expenses-reports" element={<ExpensesReports />} />
+                  <Route path="monthly-reports" element={<MonthlyReports />} />
                   <Route path="master" element={<Master />} />
                   <Route path="master/add-sample" element={<AddSample />} />
                   <Route path="master/attach-doctor-pharmacy" element={<AttachDoctorPharmacy />} />
