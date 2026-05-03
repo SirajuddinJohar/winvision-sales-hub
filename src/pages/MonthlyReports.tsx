@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,14 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import PageHeader from '@/components/layout/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Target as TargetIcon, TrendingUp, ShoppingCart, IndianRupee,
-  Stethoscope, Building2, Receipt, Package,
-} from 'lucide-react';
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip,
-  CartesianGrid, LineChart, Line, Legend,
-} from 'recharts';
 
 const CALLS_PER_DAY_TARGET = 8;
 
@@ -27,105 +20,97 @@ const months = [
 const fmtINR = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
-interface DoctorRow { id: string; name: string }
-interface OrderRow { id: string; order_date: string; total_amount: number | null; doctor_id: string | null }
-interface DailyRow { work_date: string; doctor_id: string | null; distributor_id: string | null; sample_details: any }
-interface ExpenseRow { amount: number | null; expense_date: string }
-interface TourDayRow { date: number; is_holiday: boolean | null; is_weekly_off: boolean | null }
+interface OrderRow { id: string; order_date: string; total_amount: number | null; doctor_id: string | null; mr_id: string }
+interface DailyRow { work_date: string; doctor_id: string | null; distributor_id: string | null; sample_details: any; mr_id: string }
+interface ExpenseRow { amount: number | null; expense_date: string; mr_id: string }
+interface MRRow { id: string; name: string; email: string }
 
 const MonthlyReports = () => {
   const { user } = useAuth();
+  const { isAdmin } = useRoleAccess();
   const { toast } = useToast();
   const now = new Date();
   const [year, setYear] = useState<number>(now.getFullYear());
-  const [month, setMonth] = useState<number>(now.getMonth() + 1); // 1-12
+  const [month, setMonth] = useState<number>(now.getMonth() + 1);
   const [loading, setLoading] = useState(false);
 
-  const [targetValue, setTargetValue] = useState(0);
-  const [achievedValue, setAchievedValue] = useState(0);
+  const [mrList, setMrList] = useState<MRRow[]>([]);
+  const [selectedMr, setSelectedMr] = useState<string>('all'); // 'all' or mr_id
+
+  const [targetsRows, setTargetsRows] = useState<any[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [dailyRows, setDailyRows] = useState<DailyRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
-  const [tourDays, setTourDays] = useState<TourDayRow[]>([]);
-  const [doctorMap, setDoctorMap] = useState<Record<string, string>>({});
+  const [workingDaysByMr, setWorkingDaysByMr] = useState<Record<string, number>>({});
 
   const monthStart = useMemo(() => `${year}-${String(month).padStart(2,'0')}-01`, [year, month]);
   const monthEnd = useMemo(() => {
-    const d = new Date(year, month, 0); // last day
+    const d = new Date(year, month, 0);
     return `${year}-${String(month).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }, [year, month]);
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
+
+  // Load MR list for admin
+  useEffect(() => {
+    if (!isAdmin) return;
+    (async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('id, name, email, role')
+        .eq('role', 'mr')
+        .order('name');
+      setMrList((data || []) as any);
+    })();
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!user) return;
     void fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, year, month]);
+  }, [user, year, month, selectedMr, isAdmin]);
 
   const fetchAll = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [targetsRes, ordersRes, dailyRes, expensesRes, planRes] = await Promise.all([
-        supabase
-          .from('targets')
-          .select('target_value, achieved_value, target_month, target_type')
-          .eq('mr_id', user.id)
-          .eq('target_type', 'mr')
-          .gte('target_month', monthStart)
-          .lte('target_month', monthEnd),
-        supabase
-          .from('orders')
-          .select('id, order_date, total_amount, doctor_id')
-          .eq('mr_id', user.id)
-          .gte('order_date', monthStart)
-          .lte('order_date', monthEnd),
-        supabase
-          .from('daily_working')
-          .select('work_date, doctor_id, distributor_id, sample_details')
-          .eq('mr_id', user.id)
-          .gte('work_date', monthStart)
-          .lte('work_date', monthEnd),
-        supabase
-          .from('expenses')
-          .select('amount, expense_date')
-          .eq('mr_id', user.id)
-          .gte('expense_date', monthStart)
-          .lte('expense_date', monthEnd),
-        supabase
-          .from('tour_plans')
-          .select('id, status, tour_plan_days(date, is_holiday, is_weekly_off)')
-          .eq('user_id', user.id)
-          .eq('month', month)
-          .eq('year', year)
-          .maybeSingle(),
-      ]);
+      const mrFilter = isAdmin ? (selectedMr === 'all' ? null : selectedMr) : user.id;
 
-      if (targetsRes.error) throw targetsRes.error;
-      if (ordersRes.error) throw ordersRes.error;
-      if (dailyRes.error) throw dailyRes.error;
-      if (expensesRes.error) throw expensesRes.error;
+      let tQ = supabase.from('targets').select('mr_id, target_value, achieved_value, target_month, target_type')
+        .eq('target_type', 'mr').gte('target_month', monthStart).lte('target_month', monthEnd);
+      let oQ = supabase.from('orders').select('id, order_date, total_amount, doctor_id, mr_id')
+        .gte('order_date', monthStart).lte('order_date', monthEnd);
+      let dQ = supabase.from('daily_working').select('work_date, doctor_id, distributor_id, sample_details, mr_id')
+        .gte('work_date', monthStart).lte('work_date', monthEnd);
+      let eQ = supabase.from('expenses').select('amount, expense_date, mr_id')
+        .gte('expense_date', monthStart).lte('expense_date', monthEnd);
+      let pQ = supabase.from('tour_plans').select('user_id, tour_plan_days(date, is_holiday, is_weekly_off)')
+        .eq('month', month).eq('year', year);
 
-      const tSum = (targetsRes.data || []).reduce((s, r: any) => s + Number(r.target_value || 0), 0);
-      const aSum = (targetsRes.data || []).reduce((s, r: any) => s + Number(r.achieved_value || 0), 0);
-      setTargetValue(tSum);
-      setAchievedValue(aSum);
-      setOrders((ordersRes.data || []) as any);
-      setDailyRows((dailyRes.data || []) as any);
-      setExpenses((expensesRes.data || []) as any);
-      const planDays = (planRes.data as any)?.tour_plan_days || [];
-      setTourDays(planDays as any);
-
-      // doctor names for top-doctor table
-      const docIds = Array.from(new Set((ordersRes.data || []).map((o: any) => o.doctor_id).filter(Boolean))) as string[];
-      if (docIds.length) {
-        const { data: docs } = await supabase.from('doctors').select('id, name').in('id', docIds);
-        const map: Record<string, string> = {};
-        (docs || []).forEach((d: any) => { map[d.id] = d.name; });
-        setDoctorMap(map);
-      } else {
-        setDoctorMap({});
+      if (mrFilter) {
+        tQ = tQ.eq('mr_id', mrFilter);
+        oQ = oQ.eq('mr_id', mrFilter);
+        dQ = dQ.eq('mr_id', mrFilter);
+        eQ = eQ.eq('mr_id', mrFilter);
+        pQ = pQ.eq('user_id', mrFilter);
       }
+
+      const [tRes, oRes, dRes, eRes, pRes] = await Promise.all([tQ, oQ, dQ, eQ, pQ]);
+      if (tRes.error) throw tRes.error;
+      if (oRes.error) throw oRes.error;
+      if (dRes.error) throw dRes.error;
+      if (eRes.error) throw eRes.error;
+
+      setTargetsRows(tRes.data || []);
+      setOrders((oRes.data || []) as any);
+      setDailyRows((dRes.data || []) as any);
+      setExpenses((eRes.data || []) as any);
+
+      const wdMap: Record<string, number> = {};
+      (pRes.data || []).forEach((p: any) => {
+        const days = (p.tour_plan_days || []).filter((d: any) => !d.is_holiday && !d.is_weekly_off).length;
+        wdMap[p.user_id] = (wdMap[p.user_id] || 0) + days;
+      });
+      setWorkingDaysByMr(wdMap);
     } catch (e: any) {
       console.error(e);
       toast({ title: 'Failed to load monthly data', description: e.message, variant: 'destructive' });
@@ -134,95 +119,79 @@ const MonthlyReports = () => {
     }
   };
 
-  // Derived metrics
-  const ordersCount = orders.length;
-  const orderValue = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const doctorCalls = dailyRows.filter(r => r.doctor_id).length;
-  const distributorVisits = dailyRows.filter(r => r.distributor_id).length;
-  const expensesTotal = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const samplesTotal = dailyRows.reduce((s, r) => {
-    const arr = Array.isArray(r.sample_details) ? r.sample_details : [];
-    return s + arr.reduce((ss: number, item: any) => ss + Number(item?.quantity || 0), 0);
-  }, 0);
+  // Build per-MR rows
+  const reportRows = useMemo(() => {
+    const ids = new Set<string>();
+    if (isAdmin && selectedMr === 'all') {
+      mrList.forEach(m => ids.add(m.id));
+    } else if (isAdmin) {
+      ids.add(selectedMr);
+    } else if (user) {
+      ids.add(user.id);
+    }
+    targetsRows.forEach(r => ids.add(r.mr_id));
+    orders.forEach(r => ids.add(r.mr_id));
+    dailyRows.forEach(r => ids.add(r.mr_id));
+    expenses.forEach(r => ids.add(r.mr_id));
 
-  const workingDaysFromPlan = tourDays.filter(d => !d.is_holiday && !d.is_weekly_off).length;
-  const expectedCalls = (workingDaysFromPlan || daysInMonth) * CALLS_PER_DAY_TARGET;
-  const expectedOrders = workingDaysFromPlan || Math.round(daysInMonth * 0.7);
-  const achievementPct = targetValue > 0 ? Math.min(100, (achievedValue / targetValue) * 100) : 0;
-  const callsPct = expectedCalls > 0 ? Math.min(100, (doctorCalls / expectedCalls) * 100) : 0;
-  const ordersPct = expectedOrders > 0 ? Math.min(100, (ordersCount / expectedOrders) * 100) : 0;
+    const nameOf = (id: string) => {
+      const m = mrList.find(x => x.id === id);
+      return m?.name || (id === user?.id ? 'You' : id.slice(0, 8));
+    };
 
-  // Daily orders chart
-  const dailyChart = useMemo(() => {
-    const arr = Array.from({ length: daysInMonth }, (_, i) => ({
-      day: i + 1,
-      orders: 0,
-      value: 0,
-    }));
-    orders.forEach(o => {
-      const d = new Date(o.order_date).getDate();
-      if (arr[d - 1]) {
-        arr[d - 1].orders += 1;
-        arr[d - 1].value += Number(o.total_amount || 0);
-      }
-    });
-    return arr;
-  }, [orders, daysInMonth]);
+    return Array.from(ids).map(id => {
+      const tgt = targetsRows.filter(r => r.mr_id === id).reduce((s, r: any) => s + Number(r.target_value || 0), 0);
+      const ach = targetsRows.filter(r => r.mr_id === id).reduce((s, r: any) => s + Number(r.achieved_value || 0), 0);
+      const oList = orders.filter(o => o.mr_id === id);
+      const ordersCount = oList.length;
+      const orderValue = oList.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+      const dList = dailyRows.filter(r => r.mr_id === id);
+      const calls = dList.filter(r => r.doctor_id).length;
+      const distVisits = dList.filter(r => r.distributor_id).length;
+      const samples = dList.reduce((s, r) => {
+        const arr = Array.isArray(r.sample_details) ? r.sample_details : [];
+        return s + arr.reduce((ss: number, item: any) => ss + Number(item?.quantity || 0), 0);
+      }, 0);
+      const exp = expenses.filter(e => e.mr_id === id).reduce((s, e) => s + Number(e.amount || 0), 0);
+      const wd = workingDaysByMr[id] || 0;
+      const expectedCalls = (wd || daysInMonth) * CALLS_PER_DAY_TARGET;
+      const expectedOrders = wd || Math.round(daysInMonth * 0.7);
+      const achPct = tgt > 0 ? (ach / tgt) * 100 : 0;
+      return {
+        id, name: nameOf(id), target: tgt, achieved: ach, achPct,
+        ordersCount, orderValue, expectedOrders,
+        calls, expectedCalls, distVisits, samples, expenses: exp,
+        workingDays: wd,
+      };
+    }).sort((a, b) => b.orderValue - a.orderValue);
+  }, [targetsRows, orders, dailyRows, expenses, workingDaysByMr, mrList, isAdmin, selectedMr, user, daysInMonth]);
 
-  // Cumulative achieved vs proportional target
-  const cumulativeChart = useMemo(() => {
-    let cum = 0;
-    return dailyChart.map((d) => {
-      cum += d.value;
-      const linearTarget = targetValue * (d.day / daysInMonth);
-      return { day: d.day, achieved: Math.round(cum), target: Math.round(linearTarget) };
-    });
-  }, [dailyChart, targetValue, daysInMonth]);
+  // Totals row
+  const totals = useMemo(() => {
+    return reportRows.reduce((acc, r) => ({
+      target: acc.target + r.target,
+      achieved: acc.achieved + r.achieved,
+      ordersCount: acc.ordersCount + r.ordersCount,
+      orderValue: acc.orderValue + r.orderValue,
+      expectedOrders: acc.expectedOrders + r.expectedOrders,
+      calls: acc.calls + r.calls,
+      expectedCalls: acc.expectedCalls + r.expectedCalls,
+      distVisits: acc.distVisits + r.distVisits,
+      samples: acc.samples + r.samples,
+      expenses: acc.expenses + r.expenses,
+      workingDays: acc.workingDays + r.workingDays,
+    }), { target: 0, achieved: 0, ordersCount: 0, orderValue: 0, expectedOrders: 0, calls: 0, expectedCalls: 0, distVisits: 0, samples: 0, expenses: 0, workingDays: 0 });
+  }, [reportRows]);
 
-  // Top doctors
-  const topDoctors = useMemo(() => {
-    const grouped: Record<string, { value: number; count: number }> = {};
-    orders.forEach(o => {
-      const id = o.doctor_id || 'unknown';
-      if (!grouped[id]) grouped[id] = { value: 0, count: 0 };
-      grouped[id].value += Number(o.total_amount || 0);
-      grouped[id].count += 1;
-    });
-    return Object.entries(grouped)
-      .map(([id, v]) => ({ id, name: doctorMap[id] || (id === 'unknown' ? '—' : 'Unknown'), ...v }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
-  }, [orders, doctorMap]);
+  const totalAchPct = totals.target > 0 ? (totals.achieved / totals.target) * 100 : 0;
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
-  const KpiCard = ({ icon: Icon, label, value, sub, progress }: any) => (
-    <Card className="p-4 md:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
-          <p className="text-xs md:text-sm text-muted-foreground">{label}</p>
-          <p className="text-lg md:text-2xl font-bold text-foreground truncate">{value}</p>
-          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-        </div>
-        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-          <Icon className="h-5 w-5 text-primary" />
-        </div>
-      </div>
-      {typeof progress === 'number' && (
-        <div className="mt-3">
-          <Progress value={progress} className="h-2" />
-          <p className="text-[11px] text-muted-foreground mt-1">{progress.toFixed(0)}%</p>
-        </div>
-      )}
-    </Card>
-  );
-
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Monthly Reports" description="Your monthly performance at a glance" />
+      <PageHeader title="Monthly Reports" description="Monthly performance summary in table format" />
 
       <div className="px-3 py-3 md:p-6 space-y-4 md:space-y-6 max-w-7xl mx-auto">
-        {/* Filters */}
         <Card className="p-3 md:p-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -247,94 +216,93 @@ const MonthlyReports = () => {
                 </SelectContent>
               </Select>
             </div>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">MR</span>
+                <Select value={selectedMr} onValueChange={setSelectedMr}>
+                  <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All MRs</SelectItem>
+                    {mrList.map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </Card>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
-          </div>
+          <Skeleton className="h-64 w-full" />
         ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <KpiCard icon={TargetIcon} label="Monthly Target" value={fmtINR(targetValue)} />
-              <KpiCard
-                icon={TrendingUp}
-                label="Achieved"
-                value={fmtINR(achievedValue)}
-                sub={`${achievementPct.toFixed(0)}% of target`}
-                progress={achievementPct}
-              />
-              <KpiCard icon={ShoppingCart} label="Orders Placed" value={ordersCount} sub={`${expectedOrders} expected`} progress={ordersPct} />
-              <KpiCard icon={IndianRupee} label="Order Value" value={fmtINR(orderValue)} />
-              <KpiCard icon={Stethoscope} label="Doctor Calls" value={doctorCalls} sub={`${expectedCalls} expected`} progress={callsPct} />
-              <KpiCard icon={Building2} label="Distributor Visits" value={distributorVisits} />
-              <KpiCard icon={Package} label="Samples Given" value={samplesTotal} />
-              <KpiCard icon={Receipt} label="Expenses" value={fmtINR(expensesTotal)} />
+          <Card className="p-3 md:p-4">
+            <h3 className="text-base md:text-lg font-semibold mb-3">
+              Monthly Performance — {months[month - 1]} {year}
+            </h3>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {(isAdmin && selectedMr === 'all') && <TableHead>MR</TableHead>}
+                    <TableHead className="text-right">Target</TableHead>
+                    <TableHead className="text-right">Achieved</TableHead>
+                    <TableHead className="text-right">Achievement %</TableHead>
+                    <TableHead className="text-right">Working Days</TableHead>
+                    <TableHead className="text-right">Calls (Done / Expected)</TableHead>
+                    <TableHead className="text-right">Orders (Done / Expected)</TableHead>
+                    <TableHead className="text-right">Order Value</TableHead>
+                    <TableHead className="text-right">Distributor Visits</TableHead>
+                    <TableHead className="text-right">Samples</TableHead>
+                    <TableHead className="text-right">Expenses</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportRows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={isAdmin && selectedMr === 'all' ? 11 : 10} className="text-center text-muted-foreground py-6">
+                        No data for this month.
+                      </TableCell>
+                    </TableRow>
+                  ) : reportRows.map(r => (
+                    <TableRow key={r.id}>
+                      {(isAdmin && selectedMr === 'all') && <TableCell className="font-medium">{r.name}</TableCell>}
+                      <TableCell className="text-right">{fmtINR(r.target)}</TableCell>
+                      <TableCell className="text-right">{fmtINR(r.achieved)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2 min-w-[120px]">
+                          <Progress value={Math.min(100, r.achPct)} className="h-2 w-16" />
+                          <span className="text-xs">{r.achPct.toFixed(0)}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{r.workingDays || '—'}</TableCell>
+                      <TableCell className="text-right">{r.calls} / {r.expectedCalls}</TableCell>
+                      <TableCell className="text-right">{r.ordersCount} / {r.expectedOrders}</TableCell>
+                      <TableCell className="text-right">{fmtINR(r.orderValue)}</TableCell>
+                      <TableCell className="text-right">{r.distVisits}</TableCell>
+                      <TableCell className="text-right">{r.samples}</TableCell>
+                      <TableCell className="text-right">{fmtINR(r.expenses)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {reportRows.length > 1 && (
+                    <TableRow className="bg-muted/40 font-semibold">
+                      {(isAdmin && selectedMr === 'all') && <TableCell>Grand Total</TableCell>}
+                      <TableCell className="text-right">{fmtINR(totals.target)}</TableCell>
+                      <TableCell className="text-right">{fmtINR(totals.achieved)}</TableCell>
+                      <TableCell className="text-right">{totalAchPct.toFixed(0)}%</TableCell>
+                      <TableCell className="text-right">{totals.workingDays || '—'}</TableCell>
+                      <TableCell className="text-right">{totals.calls} / {totals.expectedCalls}</TableCell>
+                      <TableCell className="text-right">{totals.ordersCount} / {totals.expectedOrders}</TableCell>
+                      <TableCell className="text-right">{fmtINR(totals.orderValue)}</TableCell>
+                      <TableCell className="text-right">{totals.distVisits}</TableCell>
+                      <TableCell className="text-right">{totals.samples}</TableCell>
+                      <TableCell className="text-right">{fmtINR(totals.expenses)}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              <Card className="p-4">
-                <h3 className="text-base md:text-lg font-semibold mb-3">Daily Orders</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dailyChart}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <RTooltip />
-                      <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <h3 className="text-base md:text-lg font-semibold mb-3">Achievement Trend</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={cumulativeChart}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <RTooltip formatter={(v: any) => fmtINR(Number(v))} />
-                      <Legend />
-                      <Line type="monotone" dataKey="achieved" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="target" stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </div>
-
-            <Card className="p-4">
-              <h3 className="text-base md:text-lg font-semibold mb-3">Top Doctors (by Order Value)</h3>
-              {topDoctors.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No orders this month yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead className="text-right">Orders</TableHead>
-                        <TableHead className="text-right">Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topDoctors.map((d) => (
-                        <TableRow key={d.id}>
-                          <TableCell className="font-medium">{d.name}</TableCell>
-                          <TableCell className="text-right">{d.count}</TableCell>
-                          <TableCell className="text-right">{fmtINR(d.value)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </Card>
-          </>
+          </Card>
         )}
       </div>
     </div>
