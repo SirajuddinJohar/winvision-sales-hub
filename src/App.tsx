@@ -44,6 +44,7 @@ const AreaDoctorVisits = lazy(() => import("./pages/AreaDoctorVisits"));
 const WorkingAreas = lazy(() => import("./pages/WorkingAreas"));
 const FinancialYear = lazy(() => import("./pages/FinancialYear"));
 const Purchases = lazy(() => import("./pages/Purchases"));
+const Incentives = lazy(() => import("./pages/Incentives"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -121,6 +122,7 @@ const App = () => (
                   <Route path="master/area-doctor-visits" element={<AreaDoctorVisits />} />
                   <Route path="master/working-areas" element={<WorkingAreas />} />
                   <Route path="purchases" element={<Purchases />} />
+                  <Route path="incentives" element={<Incentives />} />
                   <Route path="financial-year" element={<FinancialYear />} />
                 </Route>
                 

@@ -57,6 +57,7 @@ const DashboardLayout = () => {
     { icon: Briefcase, label: 'Master', path: '/dashboard/master', roles: ['admin', 'mr'] },
     { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
     { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year', roles: ['admin', 'mr'] },
+    { icon: IndianRupee, label: 'Incentives', path: '/dashboard/incentives', roles: ['admin', 'mr'] },
     ...(isAdmin ? [{ icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] }] : []),
   ];
 
