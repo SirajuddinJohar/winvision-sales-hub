@@ -154,7 +154,8 @@ const OrderForm = ({ onSuccess, onCancel }: OrderFormProps) => {
         pharmacy_id: data.distributor_id,
         order_date: data.order_date,
         mr_id: profile?.id,
-        total_amount: totalAmount,
+        quantity: 1,
+        unit_price: totalAmount,
         doctor_id: doctorId,
       };
 
