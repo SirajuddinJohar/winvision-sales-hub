@@ -13,6 +13,7 @@ import { Plus, Package, DollarSign, Loader2, Pencil, Trash2 } from 'lucide-react
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PageHeader from '@/components/layout/PageHeader';
+import { logStockChange } from '@/lib/stockHistory';
 
 interface Product {
   id: string;
