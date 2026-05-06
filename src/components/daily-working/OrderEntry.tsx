@@ -202,7 +202,8 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
             pharmacy_id: selectedDistributor,
             mr_id: user?.id,
             order_date: new Date().toISOString().split('T')[0],
-            total_amount: getTotalAmount(),
+            quantity: 1,
+            unit_price: getTotalAmount(),
           };
 
           const { data: orderResult, error: orderError } = await supabase
@@ -259,7 +260,8 @@ const OrderEntry = ({ doctorId, doctorName, sampleData, onComplete, onBack }: Or
               pharmacy_id: selectedDistributor,
               mr_id: user?.id,
               order_date: new Date().toISOString().split('T')[0],
-              total_amount: getTotalAmount(),
+              quantity: 1,
+              unit_price: getTotalAmount(),
               items: ordersToPlace.map(order => ({
                 product_id: order.product_id,
                 quantity: order.order_qty,
