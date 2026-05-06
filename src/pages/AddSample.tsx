@@ -180,19 +180,22 @@ const AddSample = () => {
             <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-1 md:space-y-2">
-                  <Label htmlFor="product" className="text-xs md:text-sm">Product</Label>
-                  <Select value={productId} onValueChange={setProductId}>
+                  <Label htmlFor="product" className="text-xs md:text-sm">Sale Product (source)</Label>
+                  <Select value={productId} onValueChange={setProductId} disabled={saleProductsLoading}>
                     <SelectTrigger className="h-9 md:h-10 text-sm">
-                      <SelectValue placeholder="Select a product" />
+                      <SelectValue placeholder={saleProductsLoading ? 'Loading…' : 'Select a sale product'} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {allProducts?.map((product) => (
+                    <SelectContent className="max-h-[240px] overflow-y-auto">
+                      {saleProducts?.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} - {product.category}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Picking here only copies name/category to the separate sample row — the sale product stock is never touched.
+                  </p>
                 </div>
 
                 <div className="space-y-1 md:space-y-2">
