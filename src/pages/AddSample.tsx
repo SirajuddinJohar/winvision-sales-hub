@@ -45,15 +45,31 @@ const AddSample = () => {
     }
   });
 
-  // Fetch all products for adding samples
-  const { data: allProducts, isLoading: allProductsLoading } = useQuery({
-    queryKey: ['all-products'],
+  // Sale products only — used as the SOURCE catalog when adding a sample.
+  // We exclude product_type='sample' so picking here never surfaces a sample row.
+  const { data: saleProducts, isLoading: saleProductsLoading } = useQuery({
+    queryKey: ['sale-products-for-sample'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .neq('product_type', 'sample')
         .order('name');
-      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Audit history for sample stock
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ['sample-stock-history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_stock_history')
+        .select('*')
+        .eq('product_type', 'sample')
+        .order('created_at', { ascending: false })
+        .limit(200);
       if (error) throw error;
       return data;
     }
