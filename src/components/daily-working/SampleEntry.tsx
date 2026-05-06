@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { logStockChange } from '@/lib/stockHistory';
 
 interface Product {
   id: string;
