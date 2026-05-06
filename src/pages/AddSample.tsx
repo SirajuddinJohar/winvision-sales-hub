@@ -86,15 +86,16 @@ const AddSample = () => {
     setIsSubmitting(true);
 
     try {
-      const selectedProduct = allProducts?.find(p => p.id === productId);
-      
+      const selectedProduct = saleProducts?.find(p => p.id === productId);
+
       if (!selectedProduct) {
         toast.error('Product not found');
         return;
       }
 
+      const qty = parseInt(quantity);
+
       // Samples are kept as SEPARATE rows from sale products.
-      // Look for an existing sample row with the same name (not the source sale product).
       const { data: existingSamples } = await supabase
         .from('products')
         .select('*')
@@ -104,15 +105,26 @@ const AddSample = () => {
       const existingSample = existingSamples?.[0];
 
       if (existingSample) {
-        // Add stock to the existing sample row (do NOT touch the sale product)
+        const prevStock = existingSample.stock || 0;
+        const newStock = prevStock + qty;
         const { error } = await supabase
           .from('products')
-          .update({ stock: (existingSample.stock || 0) + parseInt(quantity) })
+          .update({ stock: newStock })
           .eq('id', existingSample.id);
         if (error) throw error;
+
+        await logStockChange({
+          product_id: existingSample.id,
+          product_name: existingSample.name,
+          product_type: 'sample',
+          change_type: 'added',
+          quantity_change: qty,
+          previous_stock: prevStock,
+          new_stock: newStock,
+          reason: 'Sample stock topped up via Add Sample',
+        });
       } else {
-        // Create a new, independent sample product row
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('products')
           .insert({
             name: selectedProduct.name,
@@ -120,16 +132,30 @@ const AddSample = () => {
             price: selectedProduct.price,
             description: selectedProduct.description,
             product_type: 'sample',
-            stock: parseInt(quantity),
-          });
+            stock: qty,
+          })
+          .select()
+          .single();
         if (error) throw error;
+
+        await logStockChange({
+          product_id: inserted.id,
+          product_name: inserted.name,
+          product_type: 'sample',
+          change_type: 'created',
+          quantity_change: qty,
+          previous_stock: 0,
+          new_stock: qty,
+          reason: 'New sample product created',
+        });
       }
 
       toast.success('Sample added successfully');
       setProductId('');
       setQuantity('');
       queryClient.invalidateQueries({ queryKey: ['sample-products'] });
-      queryClient.invalidateQueries({ queryKey: ['all-products'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-products-for-sample'] });
+      queryClient.invalidateQueries({ queryKey: ['sample-stock-history'] });
     } catch (error: any) {
       toast.error(error.message || 'Failed to add sample');
     } finally {
