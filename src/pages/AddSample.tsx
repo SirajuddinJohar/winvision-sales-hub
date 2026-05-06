@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, FlaskConical, Loader2 } from 'lucide-react';
+import { Plus, FlaskConical, Loader2, History } from 'lucide-react';
+import { logStockChange } from '@/lib/stockHistory';
+import { format } from 'date-fns';
 
 const AddSample = () => {
   const navigate = useNavigate();
