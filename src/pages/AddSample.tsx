@@ -220,49 +220,101 @@ const AddSample = () => {
           </CardContent>
         </Card>
 
-        {/* Samples List */}
-        <Card>
-          <CardHeader className="p-3 pb-2 md:p-6 md:pb-3">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <FlaskConical className="h-4 w-4 md:h-5 md:w-5" />
-              Sample Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            {productsLoading ? (
-              <div className="flex justify-center py-6 md:py-8">
-                <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin text-primary" />
-              </div>
-            ) : products && products.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs md:text-sm">Product Name</TableHead>
-                      <TableHead className="text-xs md:text-sm">Category</TableHead>
-                      <TableHead className="text-xs md:text-sm">Stock</TableHead>
-                      <TableHead className="text-xs md:text-sm">Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium text-xs md:text-sm py-2 md:py-4">{product.name}</TableCell>
-                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{product.category}</TableCell>
-                        <TableCell className="text-xs md:text-sm py-2 md:py-4">{product.stock || 0}</TableCell>
-                        <TableCell className="text-xs md:text-sm py-2 md:py-4">₹{product.price}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
-                No sample products found. Add a sample above to get started.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Samples List + History */}
+        <Tabs defaultValue="stock" className="w-full">
+          <TabsList>
+            <TabsTrigger value="stock" className="text-xs md:text-sm">
+              <FlaskConical className="h-3.5 w-3.5 mr-1" /> Sample Stock
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs md:text-sm">
+              <History className="h-3.5 w-3.5 mr-1" /> Stock History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="stock">
+            <Card>
+              <CardContent className="p-3 md:p-6">
+                {productsLoading ? (
+                  <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                ) : products && products.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs md:text-sm">Product Name</TableHead>
+                          <TableHead className="text-xs md:text-sm">Category</TableHead>
+                          <TableHead className="text-xs md:text-sm">Stock</TableHead>
+                          <TableHead className="text-xs md:text-sm">Price</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {products.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell className="font-medium text-xs md:text-sm py-2">{product.name}</TableCell>
+                            <TableCell className="text-xs md:text-sm py-2">{product.category}</TableCell>
+                            <TableCell className="text-xs md:text-sm py-2">{product.stock || 0}</TableCell>
+                            <TableCell className="text-xs md:text-sm py-2">₹{product.price}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-6 text-xs md:text-sm">
+                    No sample products found. Add a sample above to get started.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card>
+              <CardContent className="p-3 md:p-6">
+                {historyLoading ? (
+                  <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                ) : history && history.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs md:text-sm">Date</TableHead>
+                          <TableHead className="text-xs md:text-sm">Product</TableHead>
+                          <TableHead className="text-xs md:text-sm">Change</TableHead>
+                          <TableHead className="text-xs md:text-sm">Qty</TableHead>
+                          <TableHead className="text-xs md:text-sm">Prev → New</TableHead>
+                          <TableHead className="text-xs md:text-sm">By</TableHead>
+                          <TableHead className="text-xs md:text-sm">Reason</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {history.map((h: any) => (
+                          <TableRow key={h.id}>
+                            <TableCell className="text-xs py-2 whitespace-nowrap">
+                              {format(new Date(h.created_at), 'dd MMM yyyy HH:mm')}
+                            </TableCell>
+                            <TableCell className="text-xs py-2">{h.product_name}</TableCell>
+                            <TableCell className="text-xs py-2 capitalize">{h.change_type.replace('_', ' ')}</TableCell>
+                            <TableCell className={`text-xs py-2 font-medium ${h.quantity_change >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                              {h.quantity_change >= 0 ? '+' : ''}{h.quantity_change}
+                            </TableCell>
+                            <TableCell className="text-xs py-2">{h.previous_stock} → {h.new_stock}</TableCell>
+                            <TableCell className="text-xs py-2">{h.changed_by_name || '—'}</TableCell>
+                            <TableCell className="text-xs py-2 text-muted-foreground">{h.reason || '—'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-6 text-xs md:text-sm">
+                    No stock changes logged yet.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
