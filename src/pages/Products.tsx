@@ -82,19 +82,48 @@ const Products = () => {
       };
 
       if (editingProduct) {
+        const prevStock = editingProduct.stock || 0;
+        const newStock = Number(data.stock);
         const { error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', editingProduct.id);
-          
+
         if (error) throw error;
+
+        if (newStock !== prevStock) {
+          await logStockChange({
+            product_id: editingProduct.id,
+            product_name: data.name,
+            product_type: (editingProduct as any).product_type || 'regular',
+            change_type: 'adjustment',
+            quantity_change: newStock - prevStock,
+            previous_stock: prevStock,
+            new_stock: newStock,
+            reason: 'Admin manual edit',
+          });
+        }
         toast({ title: "Product updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('products')
-          .insert([productData]);
-          
+          .insert([productData])
+          .select()
+          .single();
+
         if (error) throw error;
+        if (inserted && Number(data.stock) > 0) {
+          await logStockChange({
+            product_id: inserted.id,
+            product_name: inserted.name,
+            product_type: inserted.product_type || 'regular',
+            change_type: 'created',
+            quantity_change: Number(data.stock),
+            previous_stock: 0,
+            new_stock: Number(data.stock),
+            reason: 'Admin created new product',
+          });
+        }
         toast({ title: "Product added successfully" });
       }
       
