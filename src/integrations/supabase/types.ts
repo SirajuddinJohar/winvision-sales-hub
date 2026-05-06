@@ -882,6 +882,51 @@ export type Database = {
           },
         ]
       }
+      product_stock_history: {
+        Row: {
+          change_type: string
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          new_stock: number
+          previous_stock: number
+          product_id: string
+          product_name: string
+          product_type: string
+          quantity_change: number
+          reason: string | null
+        }
+        Insert: {
+          change_type: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_stock: number
+          previous_stock: number
+          product_id: string
+          product_name: string
+          product_type: string
+          quantity_change: number
+          reason?: string | null
+        }
+        Update: {
+          change_type?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_stock?: number
+          previous_stock?: number
+          product_id?: string
+          product_name?: string
+          product_type?: string
+          quantity_change?: number
+          reason?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { logStockChange } from '@/lib/stockHistory';
 
 interface Product {
   id: string;
@@ -85,13 +86,24 @@ const SampleEntry = ({ doctorName, onNext, onBack }: SampleEntryProps) => {
       if (samplesGiven.length > 0) {
         for (const sample of samplesGiven) {
           const newStock = sample.current_stock - sample.qty_given;
-          
+
           const { error } = await supabase
             .from('products')
             .update({ stock: newStock })
             .eq('id', sample.product_id);
 
           if (error) throw error;
+
+          await logStockChange({
+            product_id: sample.product_id,
+            product_name: sample.product_name,
+            product_type: 'sample',
+            change_type: 'sample_given',
+            quantity_change: -sample.qty_given,
+            previous_stock: sample.current_stock,
+            new_stock: newStock,
+            reason: `Sample given to ${doctorName}`,
+          });
         }
       }
 
