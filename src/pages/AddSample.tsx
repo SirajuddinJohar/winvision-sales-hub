@@ -74,23 +74,35 @@ const AddSample = () => {
         return;
       }
 
-      // Check if sample already exists
-      const { data: existingSample } = await supabase
+      // Samples are kept as SEPARATE rows from sale products.
+      // Look for an existing sample row with the same name (not the source sale product).
+      const { data: existingSamples } = await supabase
         .from('products')
         .select('*')
-        .eq('id', productId)
-        .single();
+        .eq('product_type', 'sample')
+        .eq('name', selectedProduct.name);
+
+      const existingSample = existingSamples?.[0];
 
       if (existingSample) {
-        // Update the stock
+        // Add stock to the existing sample row (do NOT touch the sale product)
         const { error } = await supabase
           .from('products')
-          .update({ 
-            stock: (existingSample.stock || 0) + parseInt(quantity),
-            product_type: 'sample'
-          })
-          .eq('id', productId);
-
+          .update({ stock: (existingSample.stock || 0) + parseInt(quantity) })
+          .eq('id', existingSample.id);
+        if (error) throw error;
+      } else {
+        // Create a new, independent sample product row
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            name: selectedProduct.name,
+            category: selectedProduct.category,
+            price: selectedProduct.price,
+            description: selectedProduct.description,
+            product_type: 'sample',
+            stock: parseInt(quantity),
+          });
         if (error) throw error;
       }
 
