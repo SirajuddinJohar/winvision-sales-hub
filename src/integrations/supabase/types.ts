@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      area_doctor_delete_requests: {
+        Row: {
+          admin_notes: string | null
+          area_id: string
+          created_at: string
+          doctor_id: string | null
+          id: string
+          reason: string | null
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          area_id: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          reason?: string | null
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          area_id?: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          reason?: string | null
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       area_doctor_visits: {
         Row: {
           area_id: string
