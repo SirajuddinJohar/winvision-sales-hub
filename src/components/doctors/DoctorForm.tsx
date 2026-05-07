@@ -355,6 +355,30 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
               </p>
             </div>
 
+            {profile?.role !== 'admin' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label>Assign to Areas (Area Wise Doctor Visits)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select areas where you'll visit this doctor. You can also manage this from the Area Wise Doctor Visits page.
+                </p>
+                {areas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No areas available. Create areas first.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                    {areas.map(area => (
+                      <label key={area.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <Checkbox
+                          checked={selectedAreaIds.includes(area.id)}
+                          onCheckedChange={() => toggleArea(area.id)}
+                        />
+                        <span>{area.area_name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2 md:col-span-2">
               <PhotoUpload
                 value={photoUrl || undefined}
