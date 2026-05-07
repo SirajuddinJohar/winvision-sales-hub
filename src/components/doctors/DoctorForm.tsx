@@ -175,7 +175,6 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
           .eq('created_by', profile.id);
         const existingIds = new Set((existing || []).map((v: any) => v.area_id));
         const toAdd = selectedAreaIds.filter(id => !existingIds.has(id));
-        const toRemove = [...existingIds].filter(id => !selectedAreaIds.includes(id as string));
 
         if (toAdd.length > 0) {
           await supabase.from('area_doctor_visits').insert(
@@ -185,14 +184,6 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
               created_by: profile.id,
             }))
           );
-        }
-        if (toRemove.length > 0) {
-          await supabase
-            .from('area_doctor_visits')
-            .delete()
-            .eq('doctor_id', doctorId)
-            .eq('created_by', profile.id)
-            .in('area_id', toRemove as string[]);
         }
       }
 
