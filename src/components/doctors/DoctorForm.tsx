@@ -145,6 +145,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         prescribing_preferences: data.prescribing_preferences ? JSON.parse(data.prescribing_preferences) : {},
       };
 
+      let doctorId = doctor?.id;
       if (doctor) {
         const { error } = await supabase
           .from('doctors')
@@ -154,12 +155,45 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         if (error) throw error;
         toast({ title: "Doctor updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('doctors')
-          .insert([doctorData]);
+          .insert([doctorData])
+          .select('id')
+          .single();
           
         if (error) throw error;
+        doctorId = inserted?.id;
         toast({ title: "Doctor added successfully" });
+      }
+
+      // Sync area assignments for this doctor (current MR scope)
+      if (doctorId && profile?.id && profile?.role !== 'admin') {
+        const { data: existing } = await supabase
+          .from('area_doctor_visits')
+          .select('area_id')
+          .eq('doctor_id', doctorId)
+          .eq('created_by', profile.id);
+        const existingIds = new Set((existing || []).map((v: any) => v.area_id));
+        const toAdd = selectedAreaIds.filter(id => !existingIds.has(id));
+        const toRemove = [...existingIds].filter(id => !selectedAreaIds.includes(id as string));
+
+        if (toAdd.length > 0) {
+          await supabase.from('area_doctor_visits').insert(
+            toAdd.map(area_id => ({
+              area_id,
+              doctor_id: doctorId,
+              created_by: profile.id,
+            }))
+          );
+        }
+        if (toRemove.length > 0) {
+          await supabase
+            .from('area_doctor_visits')
+            .delete()
+            .eq('doctor_id', doctorId)
+            .eq('created_by', profile.id)
+            .in('area_id', toRemove as string[]);
+        }
       }
 
       onSuccess();
