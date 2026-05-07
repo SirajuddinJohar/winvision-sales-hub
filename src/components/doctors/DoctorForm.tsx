@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/ui/photo-upload';
 import { Loader2, MapPin } from 'lucide-react';
 import { getCurrentLocation } from '@/lib/geolocation';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useEffect } from 'react';
 
 interface DoctorFormData {
   name: string;
@@ -42,6 +44,30 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
     doctor?.location || null
   );
   const [capturingLocation, setCapturingLocation] = useState(false);
+  const [areas, setAreas] = useState<{ id: string; area_name: string }[]>([]);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadAreas = async () => {
+      const { data } = await supabase.from('areas').select('id, area_name').order('area_name');
+      setAreas(data || []);
+      if (doctor?.id && profile?.id) {
+        const { data: visits } = await supabase
+          .from('area_doctor_visits')
+          .select('area_id')
+          .eq('doctor_id', doctor.id)
+          .eq('created_by', profile.id);
+        setSelectedAreaIds([...new Set((visits || []).map((v: any) => v.area_id))]);
+      }
+    };
+    loadAreas();
+  }, [doctor?.id, profile?.id]);
+
+  const toggleArea = (areaId: string) => {
+    setSelectedAreaIds(prev =>
+      prev.includes(areaId) ? prev.filter(id => id !== areaId) : [...prev, areaId]
+    );
+  };
 
   const { register, handleSubmit, formState: { errors } } = useForm<DoctorFormData>({
     defaultValues: {
@@ -119,6 +145,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         prescribing_preferences: data.prescribing_preferences ? JSON.parse(data.prescribing_preferences) : {},
       };
 
+      let doctorId = doctor?.id;
       if (doctor) {
         const { error } = await supabase
           .from('doctors')
@@ -128,12 +155,36 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         if (error) throw error;
         toast({ title: "Doctor updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('doctors')
-          .insert([doctorData]);
+          .insert([doctorData])
+          .select('id')
+          .single();
           
         if (error) throw error;
+        doctorId = inserted?.id;
         toast({ title: "Doctor added successfully" });
+      }
+
+      // Sync area assignments for this doctor (current MR scope)
+      if (doctorId && profile?.id && profile?.role !== 'admin') {
+        const { data: existing } = await supabase
+          .from('area_doctor_visits')
+          .select('area_id')
+          .eq('doctor_id', doctorId)
+          .eq('created_by', profile.id);
+        const existingIds = new Set((existing || []).map((v: any) => v.area_id));
+        const toAdd = selectedAreaIds.filter(id => !existingIds.has(id));
+
+        if (toAdd.length > 0) {
+          await supabase.from('area_doctor_visits').insert(
+            toAdd.map(area_id => ({
+              area_id,
+              doctor_id: doctorId,
+              created_by: profile.id,
+            }))
+          );
+        }
       }
 
       onSuccess();
@@ -294,6 +345,30 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
                 Location is required for proximity-based call tracking (200m range)
               </p>
             </div>
+
+            {profile?.role !== 'admin' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label>Assign to Areas (Area Wise Doctor Visits)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select areas to assign this doctor. To remove an area assignment, request deletion from the Area Wise Doctor Visits page (admin approval required).
+                </p>
+                {areas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No areas available. Create areas first.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                    {areas.map(area => (
+                      <label key={area.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <Checkbox
+                          checked={selectedAreaIds.includes(area.id)}
+                          onCheckedChange={() => toggleArea(area.id)}
+                        />
+                        <span>{area.area_name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2 md:col-span-2">
               <PhotoUpload
