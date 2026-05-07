@@ -44,6 +44,30 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
     doctor?.location || null
   );
   const [capturingLocation, setCapturingLocation] = useState(false);
+  const [areas, setAreas] = useState<{ id: string; area_name: string }[]>([]);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadAreas = async () => {
+      const { data } = await supabase.from('areas').select('id, area_name').order('area_name');
+      setAreas(data || []);
+      if (doctor?.id && profile?.id) {
+        const { data: visits } = await supabase
+          .from('area_doctor_visits')
+          .select('area_id')
+          .eq('doctor_id', doctor.id)
+          .eq('created_by', profile.id);
+        setSelectedAreaIds([...new Set((visits || []).map((v: any) => v.area_id))]);
+      }
+    };
+    loadAreas();
+  }, [doctor?.id, profile?.id]);
+
+  const toggleArea = (areaId: string) => {
+    setSelectedAreaIds(prev =>
+      prev.includes(areaId) ? prev.filter(id => id !== areaId) : [...prev, areaId]
+    );
+  };
 
   const { register, handleSubmit, formState: { errors } } = useForm<DoctorFormData>({
     defaultValues: {
