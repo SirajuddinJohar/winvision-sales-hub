@@ -350,7 +350,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
               <div className="space-y-2 md:col-span-2">
                 <Label>Assign to Areas (Area Wise Doctor Visits)</Label>
                 <p className="text-xs text-muted-foreground">
-                  Select areas where you'll visit this doctor. You can also manage this from the Area Wise Doctor Visits page.
+                  Select areas to assign this doctor. To remove an area assignment, request deletion from the Area Wise Doctor Visits page (admin approval required).
                 </p>
                 {areas.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No areas available. Create areas first.</p>
