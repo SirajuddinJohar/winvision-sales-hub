@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/ui/photo-upload';
 import { Loader2, MapPin } from 'lucide-react';
 import { getCurrentLocation } from '@/lib/geolocation';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useEffect } from 'react';
 
 interface DoctorFormData {
   name: string;
