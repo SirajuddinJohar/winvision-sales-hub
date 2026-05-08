@@ -192,7 +192,9 @@ const FinancialYear = () => {
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
   const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0), [purchases]);
-  const grossProfit = totalSales - totalPurchases;
+  const totalIncentives = useMemo(() => incentives.reduce((s, i) => s + Number(i.incentive_amount || 0), 0), [incentives]);
+  const netSales = totalSales - totalIncentives;
+  const grossProfit = netSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
   const totalQty = useMemo(() => {
@@ -220,15 +222,20 @@ const FinancialYear = () => {
         const d = new Date(p.purchase_date);
         return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
       });
+      const monthIncentives = incentives.filter(inc => {
+        const d = new Date(inc.paid_at || inc.created_at);
+        return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
+      });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
       const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
+      const inc = monthIncentives.reduce((s, x) => s + Number(x.incentive_amount || 0), 0);
       const monthOrderIds = new Set(monthOrders.map(o => o.id));
       const monthOrderItems = orderItems.filter(i => monthOrderIds.has(i.order_id));
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, incentives: inc, profit: sales - purch - exp - inc, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
     });
     return data;
-  }, [orders, expenses, purchases, fyYear]);
+  }, [orders, expenses, purchases, incentives, orderItems, fyYear]);
 
   // Product performance (from order_items)
   const productData = useMemo(() => {
