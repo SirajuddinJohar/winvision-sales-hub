@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import NotificationBell from '@/components/layout/NotificationBell';
+import GlobalSearch from '@/components/layout/GlobalSearch';
 import {
   Building2, 
   Users, 
@@ -167,7 +168,10 @@ const DashboardLayout = () => {
                 {isAdmin ? 'Manage your pharmaceutical operations' : 'Track your targets and activities'}
               </p>
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <NotificationBell />
+            </div>
           </div>
         </div>
 
