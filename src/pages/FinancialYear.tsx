@@ -138,7 +138,7 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes, incentivesRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
@@ -156,6 +156,8 @@ const FinancialYear = () => {
       supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
       supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_amount'),
+      supabase.from('doctor_incentives').select('id, incentive_amount, status, paid_at, created_at')
+        .eq('status', 'paid'),
     ]);
 
     // Build purchase rows with items_total computed from purchase_items
@@ -175,6 +177,14 @@ const FinancialYear = () => {
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
     setPrevYearOrders((prevOrdersRes.data || []) as OrderRow[]);
+    // Filter incentives within FY using paid_at (fallback created_at)
+    const incRows = ((incentivesRes.data || []) as any[]).filter(i => {
+      const d = new Date(i.paid_at || i.created_at);
+      const from = new Date(range.from);
+      const to = new Date(range.to);
+      return d >= from && d <= to;
+    });
+    setIncentives(incRows);
     setLoading(false);
   };
 
