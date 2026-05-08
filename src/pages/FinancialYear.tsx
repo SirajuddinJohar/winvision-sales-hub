@@ -651,6 +651,18 @@ const FinancialYear = () => {
               <span className="text-sm">Total Revenue (Sales)</span>
               <span className="text-sm font-bold">{formatCurrency(totalSales)}</span>
             </div>
+            {totalIncentives > 0 && (
+              <>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm">Doctor Incentives (Approved)</span>
+                  <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalIncentives)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm font-medium">Net Sales</span>
+                  <span className="text-sm font-bold">{formatCurrency(netSales)}</span>
+                </div>
+              </>
+            )}
             {isAdmin && totalPurchases > 0 && (
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-sm">Cost of Goods (Purchases)</span>
