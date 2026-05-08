@@ -119,6 +119,7 @@ const FinancialYear = () => {
   const [doctors, setDoctors] = useState<DoctorRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [prevYearOrders, setPrevYearOrders] = useState<OrderRow[]>([]);
+  const [incentives, setIncentives] = useState<{ id: string; incentive_amount: number; status: string; paid_at: string | null; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isAdmin = profile?.role === 'admin';
@@ -137,7 +138,7 @@ const FinancialYear = () => {
     const range = getFYRange(fyYear);
     const prevRange = getFYRange(fyYear - 1);
 
-    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes] = await Promise.all([
+    const [ordersRes, expensesRes, purchasesRes, purchaseItemsRes, productsRes, doctorsRes, usersRes, prevOrdersRes, orderItemsRes, incentivesRes] = await Promise.all([
       supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', range.from).lte('order_date', range.to),
       supabase.from('expenses').select('id, amount, expense_date, expense_type, mr_id, status')
@@ -155,6 +156,8 @@ const FinancialYear = () => {
       supabase.from('orders').select('id, total_amount, order_date, mr_id, doctor_id')
         .gte('order_date', prevRange.from).lte('order_date', prevRange.to),
       supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_amount'),
+      supabase.from('doctor_incentives').select('id, incentive_amount, status, paid_at, created_at')
+        .eq('status', 'paid'),
     ]);
 
     // Build purchase rows with items_total computed from purchase_items
@@ -174,6 +177,14 @@ const FinancialYear = () => {
     setDoctors((doctorsRes.data || []) as DoctorRow[]);
     setUsers((usersRes.data || []) as UserRow[]);
     setPrevYearOrders((prevOrdersRes.data || []) as OrderRow[]);
+    // Filter incentives within FY using paid_at (fallback created_at)
+    const incRows = ((incentivesRes.data || []) as any[]).filter(i => {
+      const d = new Date(i.paid_at || i.created_at);
+      const from = new Date(range.from);
+      const to = new Date(range.to);
+      return d >= from && d <= to;
+    });
+    setIncentives(incRows);
     setLoading(false);
   };
 
@@ -181,7 +192,9 @@ const FinancialYear = () => {
   const totalSales = useMemo(() => orders.reduce((s, o) => s + (o.total_amount || 0), 0), [orders]);
   const totalExpenses = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), [expenses]);
   const totalPurchases = useMemo(() => purchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0), [purchases]);
-  const grossProfit = totalSales - totalPurchases;
+  const totalIncentives = useMemo(() => incentives.reduce((s, i) => s + Number(i.incentive_amount || 0), 0), [incentives]);
+  const netSales = totalSales - totalIncentives;
+  const grossProfit = netSales - totalPurchases;
   const netProfit = grossProfit - totalExpenses;
   const totalOrders = orders.length;
   const totalQty = useMemo(() => {
@@ -209,15 +222,20 @@ const FinancialYear = () => {
         const d = new Date(p.purchase_date);
         return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
       });
+      const monthIncentives = incentives.filter(inc => {
+        const d = new Date(inc.paid_at || inc.created_at);
+        return d.getMonth() + 1 === monthNum && d.getFullYear() === year;
+      });
       const sales = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
       const exp = monthExpenses.reduce((s, e) => s + e.amount, 0);
       const purch = monthPurchases.reduce((s, p) => s + p.items_total + (p.gst_amount || 0) + (p.transport_amount || 0), 0);
+      const inc = monthIncentives.reduce((s, x) => s + Number(x.incentive_amount || 0), 0);
       const monthOrderIds = new Set(monthOrders.map(o => o.id));
       const monthOrderItems = orderItems.filter(i => monthOrderIds.has(i.order_id));
-      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, profit: sales - purch - exp, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
+      return { month: m, fullMonth: FULL_MONTH_NAMES[i], sales, expenses: exp, purchases: purch, incentives: inc, profit: sales - purch - exp - inc, orders: monthOrders.length, qty: monthOrderItems.reduce((s, i) => s + i.quantity, 0) };
     });
     return data;
-  }, [orders, expenses, purchases, fyYear]);
+  }, [orders, expenses, purchases, incentives, orderItems, fyYear]);
 
   // Product performance (from order_items)
   const productData = useMemo(() => {
@@ -429,6 +447,7 @@ const FinancialYear = () => {
                     <TableRow>
                       <TableHead className="text-xs">Month</TableHead>
                       <TableHead className="text-xs text-right">Sales</TableHead>
+                      <TableHead className="text-xs text-right">Incentives</TableHead>
                       {isAdmin && <TableHead className="text-xs text-right">Purchases</TableHead>}
                       <TableHead className="text-xs text-right">Expenses</TableHead>
                       <TableHead className="text-xs text-right">Profit</TableHead>
@@ -440,6 +459,7 @@ const FinancialYear = () => {
                       <TableRow key={m.month}>
                         <TableCell className="text-xs font-medium">{m.fullMonth}</TableCell>
                         <TableCell className="text-xs text-right">{formatCurrency(m.sales)}</TableCell>
+                        <TableCell className="text-xs text-right text-orange-600">{formatCurrency(m.incentives)}</TableCell>
                         {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(m.purchases)}</TableCell>}
                         <TableCell className="text-xs text-right">{formatCurrency(m.expenses)}</TableCell>
                         <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>
@@ -449,11 +469,11 @@ const FinancialYear = () => {
                     <TableRow className="font-bold bg-muted/50">
                       <TableCell className="text-xs">Total</TableCell>
                       <TableCell className="text-xs text-right">{formatCurrency(totalSales)}</TableCell>
+                      <TableCell className="text-xs text-right text-orange-600">{formatCurrency(totalIncentives)}</TableCell>
                       {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(totalPurchases)}</TableCell>}
                       <TableCell className="text-xs text-right">{formatCurrency(totalExpenses)}</TableCell>
                       <TableCell className={`text-xs text-right ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(netProfit)}</TableCell>
                       <TableCell className="text-xs text-right">{totalOrders}</TableCell>
-                      <TableCell className="text-xs text-right">{totalQty}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -631,6 +651,18 @@ const FinancialYear = () => {
               <span className="text-sm">Total Revenue (Sales)</span>
               <span className="text-sm font-bold">{formatCurrency(totalSales)}</span>
             </div>
+            {totalIncentives > 0 && (
+              <>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm">Doctor Incentives (Approved)</span>
+                  <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalIncentives)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm font-medium">Net Sales</span>
+                  <span className="text-sm font-bold">{formatCurrency(netSales)}</span>
+                </div>
+              </>
+            )}
             {isAdmin && totalPurchases > 0 && (
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-sm">Cost of Goods (Purchases)</span>
