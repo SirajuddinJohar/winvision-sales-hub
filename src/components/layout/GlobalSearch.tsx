@@ -28,7 +28,7 @@ const fetchAll = async (): Promise<Result[]> => {
   const [doctors, pharmacies, distributors, products, orders] = await Promise.all([
     supabase.from('doctors').select('id, name, specialty, hospital_clinic').limit(200),
     supabase.from('pharmacies').select('id, name, address').limit(200),
-    supabase.from('distributors').select('id, name, city').limit(200),
+    supabase.from('Distributors' as any).select('id, name, city').limit(200) as any,
     supabase.from('products').select('id, name, category').limit(200),
     supabase
       .from('orders')
