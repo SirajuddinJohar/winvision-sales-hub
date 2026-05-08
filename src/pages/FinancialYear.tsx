@@ -119,6 +119,7 @@ const FinancialYear = () => {
   const [doctors, setDoctors] = useState<DoctorRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [prevYearOrders, setPrevYearOrders] = useState<OrderRow[]>([]);
+  const [incentives, setIncentives] = useState<{ id: string; incentive_amount: number; status: string; paid_at: string | null; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isAdmin = profile?.role === 'admin';
