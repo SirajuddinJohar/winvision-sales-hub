@@ -170,6 +170,26 @@ const Reporting = () => {
       />
       <div className="px-3 py-2 md:p-6 space-y-3 md:space-y-6">
 
+      {/* Analytics shortcuts */}
+      <Card
+        className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary"
+        onClick={() => (window.location.href = '/dashboard/product-analytics')}
+      >
+        <CardContent className="p-3 md:p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm md:text-base font-semibold">Product Analytics</p>
+            <p className="text-[11px] md:text-xs text-muted-foreground">
+              Current month Sales / Scheme / Sample qty per product (with MR breakdown)
+            </p>
+          </div>
+          <Button size="sm" variant="outline" className="h-8 text-xs">Open</Button>
+        </CardContent>
+      </Card>
+
+
       {/* Filters */}
       <Card>
         <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
