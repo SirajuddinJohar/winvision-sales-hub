@@ -76,13 +76,24 @@ const Orders = () => {
       const orderIds = (data || []).map(o => o.id);
       let items: any[] = [];
       if (orderIds.length > 0) {
-        // Fetch in batches if needed (Supabase IN limit)
         const { data: itemsData, error: itemsError } = await supabase
           .from('order_items')
-          .select(`id, order_id, product_id, quantity, unit_price, total_amount, scheme, products:product_id (name, category)`)
+          .select(`id, order_id, product_id, quantity, unit_price, total_amount, scheme`)
           .in('order_id', orderIds);
         if (!itemsError) items = itemsData || [];
+
+        // Fetch products separately (no FK relationship in schema)
+        const productIds = Array.from(new Set(items.map((i: any) => i.product_id).filter(Boolean)));
+        if (productIds.length > 0) {
+          const { data: productsData } = await supabase
+            .from('products')
+            .select('id, name, category')
+            .in('id', productIds);
+          const productMap = new Map((productsData || []).map((p: any) => [p.id, p]));
+          items = items.map((i: any) => ({ ...i, products: productMap.get(i.product_id) || null }));
+        }
       }
+
 
       let transformedOrders: Order[] = (data || []).map((order: any) => ({
         id: order.id,
