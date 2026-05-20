@@ -45,6 +45,7 @@ const WorkingAreas = lazy(() => import("./pages/WorkingAreas"));
 const FinancialYear = lazy(() => import("./pages/FinancialYear"));
 const Purchases = lazy(() => import("./pages/Purchases"));
 const Incentives = lazy(() => import("./pages/Incentives"));
+const ProductAnalytics = lazy(() => import("./pages/ProductAnalytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -124,6 +125,7 @@ const App = () => (
                   <Route path="purchases" element={<Purchases />} />
                   <Route path="incentives" element={<Incentives />} />
                   <Route path="financial-year" element={<FinancialYear />} />
+                  <Route path="product-analytics" element={<ProductAnalytics />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />

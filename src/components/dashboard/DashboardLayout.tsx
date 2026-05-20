@@ -55,6 +55,7 @@ const DashboardLayout = () => {
     { icon: Calendar, label: 'Daily Working', path: '/dashboard/daily-working', roles: ['admin', 'mr'] },
     { icon: Map, label: 'Tour Plan', path: '/dashboard/tour-plan', roles: ['admin', 'mr'] },
     { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting', roles: ['admin', 'mr'] },
+    { icon: Package, label: 'Product Analytics', path: '/dashboard/product-analytics', roles: ['admin', 'mr'] },
     { icon: Briefcase, label: 'Master', path: '/dashboard/master', roles: ['admin', 'mr'] },
     { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
     { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year', roles: ['admin', 'mr'] },
