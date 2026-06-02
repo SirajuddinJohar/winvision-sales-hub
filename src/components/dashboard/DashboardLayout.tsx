@@ -22,7 +22,8 @@ import {
   FileText,
   Map,
   Briefcase,
-  IndianRupee
+  IndianRupee,
+  Gift
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -60,6 +61,7 @@ const DashboardLayout = () => {
     { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
     { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year', roles: ['admin', 'mr'] },
     { icon: IndianRupee, label: 'Incentives', path: '/dashboard/incentives', roles: ['admin', 'mr'] },
+    { icon: Gift, label: 'Rewards', path: '/dashboard/rewards', roles: ['admin', 'mr'] },
     ...(isAdmin ? [{ icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] }] : []),
   ];
 
