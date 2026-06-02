@@ -1109,6 +1109,151 @@ export type Database = {
           },
         ]
       }
+      reward_campaigns: {
+        Row: {
+          beneficiary_type: string
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean
+          name: string
+          product_id: string
+          reward_description: string
+          reward_image_url: string | null
+          start_date: string
+          target_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          beneficiary_type: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          product_id: string
+          reward_description: string
+          reward_image_url?: string | null
+          start_date?: string
+          target_quantity: number
+          updated_at?: string
+        }
+        Update: {
+          beneficiary_type?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          product_id?: string
+          reward_description?: string
+          reward_image_url?: string | null
+          start_date?: string
+          target_quantity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reward_claim_orders: {
+        Row: {
+          claim_id: string
+          created_at: string
+          id: string
+          order_item_id: string
+          quantity_counted: number
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          id?: string
+          order_item_id: string
+          quantity_counted: number
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          id?: string
+          order_item_id?: string
+          quantity_counted?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_claim_orders_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "reward_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_claims: {
+        Row: {
+          achieved_at: string
+          achieved_quantity: number
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          beneficiary_type: string
+          campaign_id: string
+          created_at: string
+          delivered_at: string | null
+          delivery_notes: string | null
+          doctor_id: string | null
+          id: string
+          mr_id: string | null
+          pharmacy_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          achieved_at?: string
+          achieved_quantity?: number
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_type: string
+          campaign_id: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          pharmacy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          achieved_at?: string
+          achieved_quantity?: number
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_type?: string
+          campaign_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          doctor_id?: string | null
+          id?: string
+          mr_id?: string | null
+          pharmacy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_claims_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "reward_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secondary_sales: {
         Row: {
           created_at: string
