@@ -1,114 +1,127 @@
 
-# Reward Campaigns (Gamification & Motivation)
+# Reminders System
 
-A flexible system where admins create reward campaigns (e.g. "Order 200 Lubrikey Drops → get a trolley"), the system auto-tracks customer progress, and admins approve & mark rewards as delivered. Campaigns can be created/paused any month — so "sometime something, sometime nothing" is fully supported.
+A single inbox for everything an MR or Admin needs to act on — doctor birthdays/anniversaries, follow-up visits (next call), tour-plan nudges, and payment/order follow-ups. Auto-generated **and** manually created. Surfaced via in-app bell, **device push notifications**, and Dashboard.
 
 ## Concept
 
 ```text
-Admin creates Campaign            Customer/Pharmacy orders
-   (product, qty, reward)   ───►    accumulate over time
-                                          │
-                                          ▼
-                              Progress auto-calculated
-                                          │
-                            qty reached ──┴── not reached
-                                  │              │
-                                  ▼              ▼
-                           Claim created     Keep tracking
-                           (status: pending)
-                                  │
-                                  ▼
-                        Admin reviews & approves
-                                  │
-                                  ▼
-                        Mark as Delivered + notes
+Auto sources                          Manual entry
+─────────────                         ─────────────
+• doctor birthday / anniversary       After a call → "Next call in?"
+• tour_plan_days for today              user picks date (max +30 days)
+• orders unpaid > 15 days             Quick "+ Reminder" anywhere
+• stale pharmacies (30d no order)       (doctor / pharmacy / custom)
+         │                                   │
+         └──────────► reminders table ◄──────┘
+                            │
+        Daily edge fn (pg_cron 07:00 IST)
+                            │
+   ┌────────────────────────┼─────────────────────────┐
+   ▼                        ▼                         ▼
+ In-app bell          Device push                Dashboard widget
+ (notifications)    (Capacitor Local             "Today's Reminders"
+                     Notifications)              + /dashboard/reminders
 ```
 
-## Data model (3 new tables)
+## Data model
 
-**1. `reward_campaigns`** — admin defines a campaign
-- `id`, `name` (e.g. "Lubrikey Trolley Offer")
-- `product_id` (FK products) — which product to track
-- `target_quantity` (int) — e.g. 200
-- `reward_description` (text) — e.g. "Branded Trolley"
-- `reward_image_url` (optional)
-- `beneficiary_type` ('pharmacy' | 'doctor') — who earns it
-- `start_date`, `end_date` — campaign window
-- `is_active` (bool)
-- `created_by`, timestamps
+**New table `reminders`**
+- `id`, `user_id`, `created_by`
+- `source` enum: `birthday | anniversary | next_call | tour_plan | payment | order_followup | custom`
+- `is_auto` bool
+- `title`, `note`
+- `remind_date` (date), `remind_time` (time, default 09:00)
+- `entity_type` (`doctor | pharmacy | order | none`), `entity_id`
+- `link` (deep link)
+- `status` enum: `pending | done | dismissed | snoozed`
+- `snoozed_until`, `completed_at`, `completed_by`
+- `device_notification_id` (int, nullable — id returned by Capacitor schedule, used to cancel)
+- timestamps
 
-**2. `reward_claims`** — auto-generated when threshold reached
-- `id`, `campaign_id`
-- `beneficiary_type`, `pharmacy_id` / `doctor_id`
-- `mr_id` (the MR whose orders triggered it — for credit)
-- `achieved_quantity`, `achieved_at`
-- `status` ('pending' | 'approved' | 'rejected' | 'delivered')
-- `approved_by`, `approved_at`, `admin_notes`
-- `delivered_at`, `delivery_notes`
+**Validation trigger**: for manual `next_call` reminders, enforce `remind_date <= created_at::date + interval '30 days'` (raise exception otherwise). Birthdays/anniversaries are auto and exempt.
 
-**3. `reward_claim_orders`** (audit) — which order_items contributed
-- `claim_id`, `order_item_id`, `quantity_counted`
+**RLS**: user owns their reminders; admins see all.
 
-## How progress is calculated
+## Next-call (follow-up) flow
 
-A SQL view `reward_campaign_progress` aggregates `order_items.quantity` per `(campaign, beneficiary)` within campaign window. When `SUM(quantity) >= target_quantity` and no active claim exists, a trigger on `order_items` insert creates a `reward_claims` row with status `pending` and notifies admins. Sample/scheme quantities are excluded by default (sales-only) — configurable per campaign later if needed.
+After an MR closes a call/visit on the Daily Working screen, a small inline section appears:
+
+```
+Next call for Dr. X?
+[ Tomorrow ] [ +3d ] [ +7d ] [ +15d ] [ +30d ] [ Pick date ]
+Note (optional): ___________
+[ Skip ]   [ Save reminder ]
+```
+
+- Date picker is capped at `today + 30 days` (max 1 month rule).
+- Saving inserts a `next_call` reminder for the same MR linked to that doctor.
+- Same control also appears as **"Set next call"** button on Doctor detail page.
+
+## Device push notifications (Capacitor Local Notifications)
+
+- Install `@capacitor/local-notifications`; request permission in existing `usePermissions` hook.
+- New helper `src/lib/deviceNotifications.ts`:
+  - `scheduleReminder(reminder)` → schedules at `remind_date + remind_time`, stores returned id in `device_notification_id`.
+  - `cancelReminder(reminder)` when done/dismissed/snoozed.
+  - `rescheduleAll()` on app start — syncs DB → device queue (handles reinstall).
+- On native devices: tapping the notification deep-links into the reminder's `link`.
+- On web: falls back to in-app bell only.
+- Daily edge function still creates the in-app `notifications` row for non-mobile sessions.
+
+## Auto-generation (daily edge function + pg_cron 01:30 UTC = 07:00 IST)
+
+`supabase/functions/generate-reminders/index.ts` upserts pending reminders for the next 7 days, idempotent by `(source, entity_id, remind_date, user_id)`:
+
+1. **Birthday / Anniversary** — per doctor in next 7 days, one reminder per assigned MR.
+2. **Tour plan today** — for approved `tour_plan_days` with `visit_date = today`.
+3. **Payment follow-up** — orders `payment_status='pending'` older than 15 days.
+4. **Stale pharmacy** — pharmacies with no order in 30 days (weekly).
 
 ## UI
 
-**New page: `src/pages/Rewards.tsx`** at `/dashboard/rewards`
-- **Tab 1 — Campaigns** (admin only create/edit; MRs read-only)
-  - Card list with product, target qty, reward, window, active toggle
-  - "New Campaign" dialog (product picker, qty, reward, beneficiary type, dates)
-- **Tab 2 — Progress** (live progress bars per beneficiary per campaign — visible to MRs for their own pharmacies/doctors, admins see all)
-- **Tab 3 — Claims** (pending/approved/delivered)
-  - Admin: approve / reject / mark delivered, add notes
-  - MR: view claims for their beneficiaries
-- **Tab 4 — Leaderboard** (top pharmacies/doctors by claims earned this FY)
+**1. `src/pages/Reminders.tsx`** at `/dashboard/reminders`
+- Tabs: **Today · Upcoming (7d) · Overdue · Done**
+- Row: source icon, title, target chip, date, actions: Mark Done · Snooze (1d/3d/7d) · Dismiss · open entity link
+- Floating `+ New Reminder` dialog (type, target picker, date capped +30d for next_call, time, note)
+- Admin: "All Users" filter
 
-**Entry points**
-- Sidebar: new "Rewards 🎁" item under main nav (admin + MR)
-- Home Dashboard 2.0: small widget "Active Campaigns (3) · Pending Claims (2)"
-- Pharmacy/Doctor detail pages: "Reward Progress" section showing each active campaign with progress bar
+**2. Dashboard widget** — "🔔 Today's Reminders (N)", top 5 + View all.
 
-**Notifications** (uses existing `notifications` table + `notifyAdmins`)
-- Admin: "🎁 New reward claim — Pharmacy X reached 200 Lubrikey Drops"
-- MR: "Your pharmacy X earned the Trolley reward!"
-- MR/Pharmacy: at 50%, 75%, 100% milestones (encouragement nudges)
+**3. Bell integration** — existing `NotificationBell` already shows `notifications` rows; the edge fn inserts there at fire time.
+
+**4. Quick-add entry points**
+- Daily Working call card → "Set next call" (the +30d capped picker)
+- Doctor detail page → "Set next call"
+- Pharmacy detail page → "Set payment follow-up"
+
+**5. Sidebar** — "Reminders 🔔" item with pending-today badge.
 
 ## Files to create / edit
 
 **Create**
-- `supabase/migrations/<ts>_reward_campaigns.sql` — 3 tables, RLS, GRANTs, trigger fn `check_reward_claim()` on `order_items` insert, view `reward_campaign_progress`
-- `src/pages/Rewards.tsx`
-- `src/components/rewards/CampaignForm.tsx`
-- `src/components/rewards/CampaignCard.tsx`
-- `src/components/rewards/ClaimsTable.tsx`
-- `src/components/rewards/ProgressList.tsx`
-- `src/components/rewards/RewardLeaderboard.tsx`
+- `supabase/migrations/<ts>_reminders.sql` — table + enums + validation trigger (30-day cap) + RLS + grants + indexes
+- `supabase/functions/generate-reminders/index.ts` + pg_cron schedule (insert tool)
+- `src/pages/Reminders.tsx`
+- `src/components/reminders/ReminderForm.tsx`
+- `src/components/reminders/ReminderList.tsx`
+- `src/components/reminders/NextCallPicker.tsx` (capped +30d, quick-chips)
+- `src/hooks/useReminders.ts`
+- `src/lib/deviceNotifications.ts` (Capacitor Local Notifications wrapper)
 
 **Edit**
-- `src/App.tsx` — lazy route `/rewards`
-- `src/components/dashboard/DashboardLayout.tsx` — sidebar entry (Gift icon)
-- `src/pages/Dashboard.tsx` — Rewards widget
-- `src/pages/DoctorDetails.tsx` & `src/pages/Pharmacies.tsx` — progress section
-- `src/components/layout/GlobalSearch.tsx` — index campaigns
+- `package.json` — add `@capacitor/local-notifications`
+- `src/hooks/usePermissions.tsx` — request notification permission
+- `src/App.tsx` — lazy route + call `rescheduleAll()` on mount
+- `src/components/dashboard/DashboardLayout.tsx` — sidebar entry + badge
+- `src/pages/Dashboard.tsx` — Today's Reminders widget
+- `src/pages/DoctorDetails.tsx`, `src/pages/Pharmacies.tsx`, `src/components/daily-working/*` — quick-add
+- `src/components/doctors/UpcomingReminders.tsx` — read from reminders table
 
-## RLS summary
-- `reward_campaigns`: admin manage; authenticated read
-- `reward_claims`: admin manage all; MR can view claims where `mr_id = auth.uid()` OR for their assigned pharmacies/doctors
-- `reward_claim_orders`: admin manage; MR view their own
+## After install
+Native push requires `npx cap sync` on the user's local repo — call it out once code is in.
 
-## What you (admin) control monthly
-- Create new campaigns any time → "sometime something"
-- Leave a month with no active campaign → "sometime nothing"
-- Pause via `is_active=false` without losing history
-- Reward can be anything (text + optional photo) — trolley, gift voucher, trip, cash bonus, etc.
-
-## Out of scope (can add later)
-- Tier rewards (e.g. 100 qty = Pen, 200 qty = Trolley, 500 qty = Trip)
-- Multi-product "basket" campaigns
-- Budget caps per campaign
-- WhatsApp/SMS auto-notify to pharmacy when reward earned (uses Twilio you chose earlier)
-
-Shall I proceed with this plan, or would you like to adjust scope (e.g. start with single-tier only, skip leaderboard, add tiers from day 1)?
+## Out of scope (later)
+- Server-side FCM/APNs push (only needed if app is killed; Local Notifications cover scheduled fires)
+- WhatsApp/SMS via Twilio
+- Recurring reminders (weekly/monthly)

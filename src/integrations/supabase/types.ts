@@ -1109,6 +1109,72 @@ export type Database = {
           },
         ]
       }
+      reminders: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string
+          device_notification_id: number | null
+          entity_id: string | null
+          entity_type: Database["public"]["Enums"]["reminder_entity_type"]
+          id: string
+          is_auto: boolean
+          link: string | null
+          note: string | null
+          remind_date: string
+          remind_time: string
+          snoozed_until: string | null
+          source: Database["public"]["Enums"]["reminder_source"]
+          status: Database["public"]["Enums"]["reminder_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string
+          device_notification_id?: number | null
+          entity_id?: string | null
+          entity_type?: Database["public"]["Enums"]["reminder_entity_type"]
+          id?: string
+          is_auto?: boolean
+          link?: string | null
+          note?: string | null
+          remind_date: string
+          remind_time?: string
+          snoozed_until?: string | null
+          source?: Database["public"]["Enums"]["reminder_source"]
+          status?: Database["public"]["Enums"]["reminder_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string
+          device_notification_id?: number | null
+          entity_id?: string | null
+          entity_type?: Database["public"]["Enums"]["reminder_entity_type"]
+          id?: string
+          is_auto?: boolean
+          link?: string | null
+          note?: string | null
+          remind_date?: string
+          remind_time?: string
+          snoozed_until?: string | null
+          source?: Database["public"]["Enums"]["reminder_source"]
+          status?: Database["public"]["Enums"]["reminder_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reward_campaigns: {
         Row: {
           beneficiary_type: string
@@ -1561,6 +1627,16 @@ export type Database = {
     Enums: {
       edit_request_status: "pending" | "approved" | "rejected"
       expense_status: "pending" | "approved" | "rejected"
+      reminder_entity_type: "doctor" | "pharmacy" | "order" | "none"
+      reminder_source:
+        | "birthday"
+        | "anniversary"
+        | "next_call"
+        | "tour_plan"
+        | "payment"
+        | "order_followup"
+        | "custom"
+      reminder_status: "pending" | "done" | "dismissed" | "snoozed"
       tour_plan_status: "draft" | "locked" | "approved"
       user_role: "admin" | "mr"
     }
@@ -1692,6 +1768,17 @@ export const Constants = {
     Enums: {
       edit_request_status: ["pending", "approved", "rejected"],
       expense_status: ["pending", "approved", "rejected"],
+      reminder_entity_type: ["doctor", "pharmacy", "order", "none"],
+      reminder_source: [
+        "birthday",
+        "anniversary",
+        "next_call",
+        "tour_plan",
+        "payment",
+        "order_followup",
+        "custom",
+      ],
+      reminder_status: ["pending", "done", "dismissed", "snoozed"],
       tour_plan_status: ["draft", "locked", "approved"],
       user_role: ["admin", "mr"],
     },
