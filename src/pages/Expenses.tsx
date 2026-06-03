@@ -369,6 +369,104 @@ const Expenses = () => {
           </div>
         )}
 
+        {isAdmin && (
+          <div className="flex gap-2 justify-end">
+            <Button onClick={() => setShowForm(!showForm)} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+              <Plus className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              Add Admin Expense
+            </Button>
+          </div>
+        )}
+
+        {showForm && isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Add Admin Expense</CardTitle>
+              <CardDescription>Record business expenses like MR salary, rent, utilities. Auto-approved.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={adminForm.handleSubmit(onAdminSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_expense_date">Expense Date *</Label>
+                    <Input
+                      id="admin_expense_date"
+                      type="date"
+                      {...adminForm.register('expense_date', { required: 'Date is required' })}
+                    />
+                    {adminForm.formState.errors.expense_date && (
+                      <p className="text-sm text-destructive">{adminForm.formState.errors.expense_date.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_expense_type">Category *</Label>
+                    <Controller
+                      name="expense_type"
+                      control={adminForm.control}
+                      rules={{ required: 'Category is required' }}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border shadow-md z-50 max-h-[200px] overflow-y-auto">
+                            {ADMIN_EXPENSE_CATEGORIES.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {adminForm.formState.errors.expense_type && (
+                      <p className="text-sm text-destructive">{adminForm.formState.errors.expense_type.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_amount">Amount (₹) *</Label>
+                    <Input
+                      id="admin_amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...adminForm.register('amount', {
+                        required: 'Amount is required',
+                        min: { value: 0.01, message: 'Amount must be greater than 0' },
+                        valueAsNumber: true,
+                      })}
+                      placeholder="0.00"
+                    />
+                    {adminForm.formState.errors.amount && (
+                      <p className="text-sm text-destructive">{adminForm.formState.errors.amount.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="admin_description">Description / Notes</Label>
+                    <Textarea
+                      id="admin_description"
+                      {...adminForm.register('description')}
+                      placeholder="e.g. MR John's salary for May, Office rent, etc."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" disabled={submitting}>
+                    {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Expense
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
       {showForm && !isAdmin && (
         <Card>
           <CardHeader>
