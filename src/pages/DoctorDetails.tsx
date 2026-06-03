@@ -194,10 +194,13 @@ const DoctorDetails = () => {
                   <p className="text-xs md:text-sm text-muted-foreground">{doctor.specialty}</p>
                 </div>
               </div>
-              <Button onClick={() => navigate('/dashboard/doctors')} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
-                <ArrowLeft className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
-                Back
-              </Button>
+              <div className="flex items-center gap-2">
+                <NextCallPicker doctorId={doctor.id} entityName={doctor.name} link={`/dashboard/doctors/${doctor.id}`} />
+                <Button onClick={() => navigate('/dashboard/doctors')} size="sm" className="h-9 md:h-10 text-xs md:text-sm">
+                  <ArrowLeft className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  Back
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-3 pt-0 md:p-6 md:pt-0 space-y-4 md:space-y-6">
