@@ -97,6 +97,46 @@ const Expenses = () => {
     }
   });
 
+  const adminForm = useForm<AdminExpenseFormData>({
+    defaultValues: {
+      expense_date: new Date().toISOString().split('T')[0],
+      expense_type: '',
+      amount: 0,
+      description: '',
+    }
+  });
+
+  const onAdminSubmit = async (data: AdminExpenseFormData) => {
+    try {
+      setSubmitting(true);
+      const { error } = await supabase.from('expenses').insert([{
+        expense_date: data.expense_date,
+        expense_type: data.expense_type,
+        amount: Number(data.amount),
+        description: data.description,
+        mr_id: profile?.id,
+        status: 'approved',
+        approved_by: profile?.id,
+        approved_at: new Date().toISOString(),
+      }]);
+      if (error) throw error;
+      toast({ title: "Admin Expense Added ✅", description: "Expense recorded and auto-approved." });
+      adminForm.reset({
+        expense_date: new Date().toISOString().split('T')[0],
+        expense_type: '',
+        amount: 0,
+        description: '',
+      });
+      setShowForm(false);
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error adding admin expense:', error);
+      toast({ title: "Error", description: "Failed to add expense", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchAreas();
