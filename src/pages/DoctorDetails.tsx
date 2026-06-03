@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/layout/PageHeader';
 import PrescriptionTracking from '@/components/doctors/PrescriptionTracking';
 import VisitNotes from '@/components/doctors/VisitNotes';
+import NextCallPicker from '@/components/reminders/NextCallPicker';
 
 interface Doctor {
   id: string;
