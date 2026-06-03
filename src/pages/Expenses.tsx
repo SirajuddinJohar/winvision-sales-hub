@@ -58,6 +58,25 @@ interface ExpenseFormData {
   description: string;
 }
 
+interface AdminExpenseFormData {
+  expense_date: string;
+  expense_type: string;
+  amount: number;
+  description: string;
+}
+
+const ADMIN_EXPENSE_CATEGORIES = [
+  'MR Salary',
+  'Office Rent',
+  'Utilities',
+  'Marketing',
+  'Travel (Admin)',
+  'Office Supplies',
+  'Professional Fees',
+  'Maintenance',
+  'Miscellaneous',
+];
+
 const Expenses = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
