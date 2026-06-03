@@ -1,13 +1,14 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { rescheduleAllReminders, initNotificationTapHandler } from "@/lib/deviceNotifications";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -47,6 +48,7 @@ const Purchases = lazy(() => import("./pages/Purchases"));
 const Incentives = lazy(() => import("./pages/Incentives"));
 const ProductAnalytics = lazy(() => import("./pages/ProductAnalytics"));
 const Rewards = lazy(() => import("./pages/Rewards"));
+const Reminders = lazy(() => import("./pages/Reminders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -75,6 +77,17 @@ const PermissionInitializer = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const ReminderInitializer = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!user?.id) return;
+    rescheduleAllReminders(user.id);
+    initNotificationTapHandler((path) => navigate(path));
+  }, [user?.id, navigate]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -83,6 +96,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ReminderInitializer />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -128,6 +142,7 @@ const App = () => (
                   <Route path="financial-year" element={<FinancialYear />} />
                   <Route path="product-analytics" element={<ProductAnalytics />} />
                   <Route path="rewards" element={<Rewards />} />
+                  <Route path="reminders" element={<Reminders />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />
