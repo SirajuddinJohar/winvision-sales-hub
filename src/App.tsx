@@ -77,6 +77,17 @@ const PermissionInitializer = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const ReminderInitializer = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!user?.id) return;
+    rescheduleAllReminders(user.id);
+    initNotificationTapHandler((path) => navigate(path));
+  }, [user?.id, navigate]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -85,6 +96,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ReminderInitializer />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
