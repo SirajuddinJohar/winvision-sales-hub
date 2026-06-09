@@ -86,3 +86,38 @@ export const initNotificationTapHandler = (navigate: (path: string) => void) => 
     if (link) navigate(link);
   }).catch(() => {});
 };
+
+// Subscribe to realtime reminders for this user; schedules/fires notifications immediately on assignment.
+export const subscribeToIncomingReminders = (userId: string) => {
+  const channel = supabase
+    .channel(`reminders-rt-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'reminders', filter: `user_id=eq.${userId}` },
+      async (payload) => {
+        const r = payload.new as ReminderRow & { remind_date: string; remind_time: string };
+        const when = new Date(`${r.remind_date}T${r.remind_time || '09:00'}`);
+        // Fire immediate banner if due now/past; otherwise schedule for the future time.
+        if (isNative()) {
+          await ensureNotificationPermission();
+          if (when.getTime() <= Date.now() + 60_000) {
+            try {
+              await LocalNotifications.schedule({
+                notifications: [{
+                  id: idFromUuid(r.id),
+                  title: r.title,
+                  body: r.note || 'New reminder assigned to you',
+                  schedule: { at: new Date(Date.now() + 1000) },
+                  extra: { reminderId: r.id, link: r.link },
+                }],
+              });
+            } catch (e) { console.error('immediate schedule failed', e); }
+          } else {
+            await scheduleReminder(r as ReminderRow);
+          }
+        }
+      },
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+};
