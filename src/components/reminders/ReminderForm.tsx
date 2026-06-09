@@ -88,6 +88,20 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
             <Label>Title</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Visit Dr. Sharma" />
           </div>
+          {isAdmin && (
+            <div>
+              <Label>Assign to MR</Label>
+              <Select value={assigneeId || 'self'} onValueChange={(v) => setAssigneeId(v === 'self' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Myself" /></SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  <SelectItem value="self">Myself (admin)</SelectItem>
+                  {mrs.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Target</Label>
