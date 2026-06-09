@@ -9,6 +9,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { rescheduleAllReminders, initNotificationTapHandler, subscribeToIncomingReminders } from "@/lib/deviceNotifications";
+import { registerDevicePush } from "@/lib/pushTokens";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -84,6 +85,7 @@ const ReminderInitializer = () => {
     if (!user?.id) return;
     rescheduleAllReminders(user.id);
     initNotificationTapHandler((path) => navigate(path));
+    registerDevicePush(user.id);
     const unsub = subscribeToIncomingReminders(user.id);
     return () => { unsub?.(); };
   }, [user?.id, navigate]);
