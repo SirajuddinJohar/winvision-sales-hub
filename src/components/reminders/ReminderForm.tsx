@@ -12,6 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateReminder, ReminderSource } from '@/hooks/useReminders';
 import { supabase } from '@/integrations/supabase/client';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface Props {
   open: boolean;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const ReminderForm = ({ open, onOpenChange }: Props) => {
+  const { isAdmin } = useRoleAccess();
   const [source, setSource] = useState<ReminderSource>('custom');
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
@@ -26,8 +28,10 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
   const [time, setTime] = useState('09:00');
   const [entityType, setEntityType] = useState<'doctor' | 'pharmacy' | 'none'>('none');
   const [entityId, setEntityId] = useState<string>('');
+  const [assigneeId, setAssigneeId] = useState<string>('');
   const [doctors, setDoctors] = useState<{id: string; name: string}[]>([]);
   const [pharmacies, setPharmacies] = useState<{id: string; name: string}[]>([]);
+  const [mrs, setMrs] = useState<{id: string; name: string}[]>([]);
 
   const create = useCreateReminder();
 
@@ -35,13 +39,19 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
     if (!open) return;
     supabase.from('doctors').select('id,name').order('name').limit(500).then(({data}) => setDoctors(data || []));
     supabase.from('pharmacies').select('id,name').order('name').limit(500).then(({data}) => setPharmacies(data || []));
-  }, [open]);
+    if (isAdmin) {
+      supabase.from('user_roles').select('user_id, users:user_id(id,name)').eq('role', 'mr').then(({data}) => {
+        const list = (data || []).map((r: any) => ({ id: r.users?.id, name: r.users?.name })).filter(u => u.id);
+        setMrs(list);
+      });
+    }
+  }, [open, isAdmin]);
 
   const today = new Date(); today.setHours(0,0,0,0);
   const max = source === 'next_call' ? new Date(today.getTime() + 30*86400000) : new Date(today.getTime() + 365*86400000);
 
   const reset = () => {
-    setSource('custom'); setTitle(''); setNote(''); setDate(undefined); setTime('09:00'); setEntityType('none'); setEntityId('');
+    setSource('custom'); setTitle(''); setNote(''); setDate(undefined); setTime('09:00'); setEntityType('none'); setEntityId(''); setAssigneeId('');
   };
 
   const save = async () => {
@@ -52,6 +62,7 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
       source, title, note: note || null,
       remind_date: format(date, 'yyyy-MM-dd'), remind_time: time,
       entity_type: entityType, entity_id: entityId || null, link,
+      user_id: isAdmin && assigneeId ? assigneeId : undefined,
     });
     reset(); onOpenChange(false);
   };
@@ -77,6 +88,20 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
             <Label>Title</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Visit Dr. Sharma" />
           </div>
+          {isAdmin && (
+            <div>
+              <Label>Assign to MR</Label>
+              <Select value={assigneeId || 'self'} onValueChange={(v) => setAssigneeId(v === 'self' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Myself" /></SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  <SelectItem value="self">Myself (admin)</SelectItem>
+                  {mrs.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Target</Label>
