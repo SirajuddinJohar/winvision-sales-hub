@@ -84,6 +84,8 @@ const ReminderInitializer = () => {
     if (!user?.id) return;
     rescheduleAllReminders(user.id);
     initNotificationTapHandler((path) => navigate(path));
+    const unsub = subscribeToIncomingReminders(user.id);
+    return () => { unsub?.(); };
   }, [user?.id, navigate]);
   return null;
 };
