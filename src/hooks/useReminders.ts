@@ -70,6 +70,16 @@ export const useCreateReminder = () => {
       };
       const { data, error } = await supabase.from('reminders').insert(payload).select().single();
       if (error) throw error;
+      // If admin assigned to a different user, drop an in-app notification so their bell pings immediately.
+      if (payload.user_id !== user!.id) {
+        await supabase.from('notifications').insert({
+          user_id: payload.user_id,
+          title: `New reminder: ${payload.title}`,
+          message: payload.note || `Scheduled for ${payload.remind_date} ${payload.remind_time}`,
+          type: 'info',
+          link: payload.link,
+        });
+      }
       await scheduleReminder(data as any);
       return data as Reminder;
     },
