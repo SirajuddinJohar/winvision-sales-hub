@@ -12,6 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateReminder, ReminderSource } from '@/hooks/useReminders';
 import { supabase } from '@/integrations/supabase/client';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface Props {
   open: boolean;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const ReminderForm = ({ open, onOpenChange }: Props) => {
+  const { isAdmin } = useRoleAccess();
   const [source, setSource] = useState<ReminderSource>('custom');
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
@@ -26,8 +28,10 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
   const [time, setTime] = useState('09:00');
   const [entityType, setEntityType] = useState<'doctor' | 'pharmacy' | 'none'>('none');
   const [entityId, setEntityId] = useState<string>('');
+  const [assigneeId, setAssigneeId] = useState<string>('');
   const [doctors, setDoctors] = useState<{id: string; name: string}[]>([]);
   const [pharmacies, setPharmacies] = useState<{id: string; name: string}[]>([]);
+  const [mrs, setMrs] = useState<{id: string; name: string}[]>([]);
 
   const create = useCreateReminder();
 
