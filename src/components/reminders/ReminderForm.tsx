@@ -39,13 +39,19 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
     if (!open) return;
     supabase.from('doctors').select('id,name').order('name').limit(500).then(({data}) => setDoctors(data || []));
     supabase.from('pharmacies').select('id,name').order('name').limit(500).then(({data}) => setPharmacies(data || []));
-  }, [open]);
+    if (isAdmin) {
+      supabase.from('user_roles').select('user_id, users:user_id(id,name)').eq('role', 'mr').then(({data}) => {
+        const list = (data || []).map((r: any) => ({ id: r.users?.id, name: r.users?.name })).filter(u => u.id);
+        setMrs(list);
+      });
+    }
+  }, [open, isAdmin]);
 
   const today = new Date(); today.setHours(0,0,0,0);
   const max = source === 'next_call' ? new Date(today.getTime() + 30*86400000) : new Date(today.getTime() + 365*86400000);
 
   const reset = () => {
-    setSource('custom'); setTitle(''); setNote(''); setDate(undefined); setTime('09:00'); setEntityType('none'); setEntityId('');
+    setSource('custom'); setTitle(''); setNote(''); setDate(undefined); setTime('09:00'); setEntityType('none'); setEntityId(''); setAssigneeId('');
   };
 
   const save = async () => {
@@ -56,6 +62,7 @@ const ReminderForm = ({ open, onOpenChange }: Props) => {
       source, title, note: note || null,
       remind_date: format(date, 'yyyy-MM-dd'), remind_time: time,
       entity_type: entityType, entity_id: entityId || null, link,
+      user_id: isAdmin && assigneeId ? assigneeId : undefined,
     });
     reset(); onOpenChange(false);
   };
