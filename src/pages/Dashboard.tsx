@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/layout/PageHeader';
 import UpcomingReminders from '@/components/doctors/UpcomingReminders';
 import MRDailyWorkingDashboard from '@/components/admin/MRDailyWorkingDashboard';
+import MRHome from '@/components/dashboard/MRHome';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
