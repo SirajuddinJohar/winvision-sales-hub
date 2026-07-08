@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/layout/PageHeader';
 import UpcomingReminders from '@/components/doctors/UpcomingReminders';
 import MRDailyWorkingDashboard from '@/components/admin/MRDailyWorkingDashboard';
+import MRHome from '@/components/dashboard/MRHome';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -111,6 +112,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
+
+  // MRs get a task-focused home; admins keep the full analytics dashboard.
+  if (profile && !isAdmin) return <MRHome />;
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', isAdmin],
