@@ -1,127 +1,68 @@
 
-# Reminders System
+# Systematization Roadmap
 
-A single inbox for everything an MR or Admin needs to act on — doctor birthdays/anniversaries, follow-up visits (next call), tour-plan nudges, and payment/order follow-ups. Auto-generated **and** manually created. Surfaced via in-app bell, **device push notifications**, and Dashboard.
+Goal: make the app less complicated to use, faster, safer, and easier to maintain. Delivered in 4 focused phases so we ship value each release instead of one giant rewrite.
 
-## Concept
+---
 
-```text
-Auto sources                          Manual entry
-─────────────                         ─────────────
-• doctor birthday / anniversary       After a call → "Next call in?"
-• tour_plan_days for today              user picks date (max +30 days)
-• orders unpaid > 15 days             Quick "+ Reminder" anywhere
-• stale pharmacies (30d no order)       (doctor / pharmacy / custom)
-         │                                   │
-         └──────────► reminders table ◄──────┘
-                            │
-        Daily edge fn (pg_cron 07:00 IST)
-                            │
-   ┌────────────────────────┼─────────────────────────┐
-   ▼                        ▼                         ▼
- In-app bell          Device push                Dashboard widget
- (notifications)    (Capacitor Local             "Today's Reminders"
-                     Notifications)              + /dashboard/reminders
-```
+## Phase 1 — Simplify navigation & daily flow (UX)
 
-## Data model
+The sidebar has ~30 routes; MRs get lost. We collapse into a role-aware, task-first shell.
 
-**New table `reminders`**
-- `id`, `user_id`, `created_by`
-- `source` enum: `birthday | anniversary | next_call | tour_plan | payment | order_followup | custom`
-- `is_auto` bool
-- `title`, `note`
-- `remind_date` (date), `remind_time` (time, default 09:00)
-- `entity_type` (`doctor | pharmacy | order | none`), `entity_id`
-- `link` (deep link)
-- `status` enum: `pending | done | dismissed | snoozed`
-- `snoozed_until`, `completed_at`, `completed_by`
-- `device_notification_id` (int, nullable — id returned by Capacitor schedule, used to cancel)
-- timestamps
+- **Reorganize sidebar into 5 groups** (role-aware):
+  - *Today* — Daily Working, Reminders, Tour Plan
+  - *Customers* — Doctors, Pharmacies, Distributors
+  - *Sales* — Orders, Products, Rewards
+  - *Reports* — My Performance, Call/Expense/Monthly, Financial Year
+  - *Admin* — Master hub, Purchases, Incentives, Targets, Working Areas, Tour Plan Requests (admin-only)
+- **MR "Home" redesign**: Dashboard becomes a task list — Today's plan, Pending calls, Today's reminders, Quick actions (New order / New expense / Set next call). Remove charts MRs don't act on.
+- **Unified page shell**: single `PageHeader` (title, breadcrumb, primary action, filters slot) applied to every page. Consistent empty/loading/error states via a shared `<DataState/>` component.
+- **Global "+" quick-add FAB** on mobile: Order, Expense, Reminder, Sample — the 4 things MRs do daily.
+- **Search everywhere**: extend `GlobalSearch` to cover doctors, pharmacies, orders, reminders with keyboard shortcut.
 
-**Validation trigger**: for manual `next_call` reminders, enforce `remind_date <= created_at::date + interval '30 days'` (raise exception otherwise). Birthdays/anniversaries are auto and exempt.
+## Phase 2 — Performance & data loading
 
-**RLS**: user owns their reminders; admins see all.
+- **Server-side pagination + search** for the heavy lists: Orders, Doctors, Pharmacies, Reminders, Expenses (currently capped at 1000 rows).
+- **Consolidated RPCs** for dashboards to replace 6–10 parallel queries: `get_mr_dashboard(user_id)`, `get_admin_dashboard()`, `get_doctor_summary(doctor_id)`. Returns everything in one round-trip.
+- **Add missing indexes** after running `slow_queries` — likely on `orders(mr_id, order_date)`, `daily_working(mr_id, work_date)`, `reminders(user_id, remind_date, status)`.
+- **React Query keys audit**: standardize keys, enable selective invalidation instead of refetching whole pages.
+- **Route-level code splitting review** + prefetch on hover for sidebar links.
 
-## Next-call (follow-up) flow
+## Phase 3 — Security & RLS hardening
 
-After an MR closes a call/visit on the Daily Working screen, a small inline section appears:
+- Run `supabase--linter` and `security--run_security_scan`; fix every critical finding.
+- **Audit every RLS policy** against the "MRs see own, admins see all" rule — use only `has_role()` / `get_current_user_role()` security-definer functions (no table self-references).
+- **Tighten GRANTs**: drop `anon` on all authenticated-only tables.
+- **Audit log table** (`audit_log`) with trigger on sensitive tables: orders, targets, user_roles, reward_claims, area_doctor_delete_requests. Admin-only viewer page.
+- **Rate-limit + input validation** on all edge functions (`generate-reminders`, `send-reminder-push`).
+- Move any remaining client-side role checks to server-side `has_role()`.
 
-```
-Next call for Dr. X?
-[ Tomorrow ] [ +3d ] [ +7d ] [ +15d ] [ +30d ] [ Pick date ]
-Note (optional): ___________
-[ Skip ]   [ Save reminder ]
-```
+## Phase 4 — Code architecture & consistency
 
-- Date picker is capped at `today + 30 days` (max 1 month rule).
-- Saving inserts a `next_call` reminder for the same MR linked to that doctor.
-- Same control also appears as **"Set next call"** button on Doctor detail page.
+- **Folder restructure** by feature, not type:
+  ```text
+  src/features/
+    doctors/  { pages, components, hooks, api }
+    orders/
+    reminders/
+    ...
+  src/shared/ { ui, hooks, lib }
+  ```
+- **One form pattern**: react-hook-form + zod schema per entity, shared `<EntityForm/>` wrapper. Kills duplication across DoctorForm, PharmacyForm, DistributorForm, OrderForm, ReminderForm.
+- **One data-hook pattern**: `useEntityList`, `useEntity`, `useEntityMutations` generated per resource — replaces ad-hoc `supabase.from(...)` calls scattered in pages.
+- **Design tokens audit**: remove any hardcoded colors, ensure everything uses semantic tokens from `index.css`.
+- **TypeScript strictness**: enable `noUncheckedIndexedAccess`, fix `any` usages.
+- **Docs**: single `ARCHITECTURE.md` mapping features → tables → policies → edge fns, so future changes stay consistent.
 
-## Device push notifications (Capacitor Local Notifications)
+---
 
-- Install `@capacitor/local-notifications`; request permission in existing `usePermissions` hook.
-- New helper `src/lib/deviceNotifications.ts`:
-  - `scheduleReminder(reminder)` → schedules at `remind_date + remind_time`, stores returned id in `device_notification_id`.
-  - `cancelReminder(reminder)` when done/dismissed/snoozed.
-  - `rescheduleAll()` on app start — syncs DB → device queue (handles reinstall).
-- On native devices: tapping the notification deep-links into the reminder's `link`.
-- On web: falls back to in-app bell only.
-- Daily edge function still creates the in-app `notifications` row for non-mobile sessions.
+## Suggested order & effort
 
-## Auto-generation (daily edge function + pg_cron 01:30 UTC = 07:00 IST)
+| Phase | Effort | User-visible impact |
+| --- | --- | --- |
+| 1. Navigation & daily flow | Medium | High — solves "complicated to use" |
+| 2. Performance | Medium | High — app feels fast |
+| 3. Security | Small–Medium | Low visible, high risk-reduction |
+| 4. Architecture | Large | Invisible, enables faster future work |
 
-`supabase/functions/generate-reminders/index.ts` upserts pending reminders for the next 7 days, idempotent by `(source, entity_id, remind_date, user_id)`:
-
-1. **Birthday / Anniversary** — per doctor in next 7 days, one reminder per assigned MR.
-2. **Tour plan today** — for approved `tour_plan_days` with `visit_date = today`.
-3. **Payment follow-up** — orders `payment_status='pending'` older than 15 days.
-4. **Stale pharmacy** — pharmacies with no order in 30 days (weekly).
-
-## UI
-
-**1. `src/pages/Reminders.tsx`** at `/dashboard/reminders`
-- Tabs: **Today · Upcoming (7d) · Overdue · Done**
-- Row: source icon, title, target chip, date, actions: Mark Done · Snooze (1d/3d/7d) · Dismiss · open entity link
-- Floating `+ New Reminder` dialog (type, target picker, date capped +30d for next_call, time, note)
-- Admin: "All Users" filter
-
-**2. Dashboard widget** — "🔔 Today's Reminders (N)", top 5 + View all.
-
-**3. Bell integration** — existing `NotificationBell` already shows `notifications` rows; the edge fn inserts there at fire time.
-
-**4. Quick-add entry points**
-- Daily Working call card → "Set next call" (the +30d capped picker)
-- Doctor detail page → "Set next call"
-- Pharmacy detail page → "Set payment follow-up"
-
-**5. Sidebar** — "Reminders 🔔" item with pending-today badge.
-
-## Files to create / edit
-
-**Create**
-- `supabase/migrations/<ts>_reminders.sql` — table + enums + validation trigger (30-day cap) + RLS + grants + indexes
-- `supabase/functions/generate-reminders/index.ts` + pg_cron schedule (insert tool)
-- `src/pages/Reminders.tsx`
-- `src/components/reminders/ReminderForm.tsx`
-- `src/components/reminders/ReminderList.tsx`
-- `src/components/reminders/NextCallPicker.tsx` (capped +30d, quick-chips)
-- `src/hooks/useReminders.ts`
-- `src/lib/deviceNotifications.ts` (Capacitor Local Notifications wrapper)
-
-**Edit**
-- `package.json` — add `@capacitor/local-notifications`
-- `src/hooks/usePermissions.tsx` — request notification permission
-- `src/App.tsx` — lazy route + call `rescheduleAll()` on mount
-- `src/components/dashboard/DashboardLayout.tsx` — sidebar entry + badge
-- `src/pages/Dashboard.tsx` — Today's Reminders widget
-- `src/pages/DoctorDetails.tsx`, `src/pages/Pharmacies.tsx`, `src/components/daily-working/*` — quick-add
-- `src/components/doctors/UpcomingReminders.tsx` — read from reminders table
-
-## After install
-Native push requires `npx cap sync` on the user's local repo — call it out once code is in.
-
-## Out of scope (later)
-- Server-side FCM/APNs push (only needed if app is killed; Local Notifications cover scheduled fires)
-- WhatsApp/SMS via Twilio
-- Recurring reminders (weekly/monthly)
+I recommend starting with **Phase 1** since your main complaint is "complicated to use." Approve and I'll begin with the sidebar reorg + MR home redesign, then we scope Phase 2.
