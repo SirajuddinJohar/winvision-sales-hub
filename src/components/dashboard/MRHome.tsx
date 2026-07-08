@@ -145,11 +145,12 @@ const MRHome = () => {
               {data?.plan && (
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold text-sm md:text-base">
-                      {(data.plan as any).areas?.name ?? "Area"}
+                    <div className="font-semibold text-sm md:text-base capitalize">
+                      {data.plan.work_type?.replace("_", " ") ?? "Working"}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {(data.plan.planned_doctors ?? []).length} doctors planned
+                      {Array.isArray(data.plan.selected_areas) ? data.plan.selected_areas.length : 0} area(s) planned
+                      {data.plan.working_with ? ` • with ${data.plan.working_with}` : ""}
                     </p>
                   </div>
                   <Badge variant="default">Today</Badge>
