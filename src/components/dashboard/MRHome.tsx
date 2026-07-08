@@ -28,7 +28,7 @@ const fetchMRHome = async (userId: string) => {
   const [plan, reminders, myOrders, myTargets] = await Promise.all([
     supabase
       .from("daily_working_setup")
-      .select("id, area_id, planned_doctors, areas(name)")
+      .select("id, selected_areas, work_type, working_with")
       .eq("mr_id", userId)
       .eq("work_date", today)
       .maybeSingle(),
