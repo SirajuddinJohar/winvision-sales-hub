@@ -26,6 +26,7 @@ interface DoctorFormData {
   anniversary?: string;
   tags?: string;
   notes?: string;
+  address?: string;
   prescribing_preferences?: string;
 }
 
