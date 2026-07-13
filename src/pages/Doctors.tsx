@@ -82,13 +82,28 @@ const Doctors = () => {
     return areaGroups.filter((g) => g.area.toLowerCase().includes(q));
   }, [areaGroups, searchQuery]);
 
-  const areaDoctors = useMemo(() => {
+  const areaDoctorsAll = useMemo(() => {
     if (!selectedArea) return [];
     const list = areaGroups.find((g) => g.area === selectedArea)?.docs || [];
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
     return list.filter((d) => d.name.toLowerCase().includes(q));
   }, [selectedArea, areaGroups, searchQuery]);
+
+  const categoryCounts = useMemo(() => {
+    const c = { ophthalmologist: 0, optometrist: 0 };
+    areaDoctorsAll.forEach((d) => {
+      const cat = categorizeSpecialty(d.specialty);
+      if (cat === 'ophthalmologist') c.ophthalmologist++;
+      else if (cat === 'optometrist') c.optometrist++;
+    });
+    return c;
+  }, [areaDoctorsAll]);
+
+  const areaDoctors = useMemo(() => {
+    if (category === 'all') return areaDoctorsAll;
+    return areaDoctorsAll.filter((d) => categorizeSpecialty(d.specialty) === category);
+  }, [areaDoctorsAll, category]);
 
   useEffect(() => {
     fetchDoctors();
