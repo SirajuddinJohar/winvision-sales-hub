@@ -26,6 +26,7 @@ interface DoctorFormData {
   anniversary?: string;
   tags?: string;
   notes?: string;
+  address?: string;
   prescribing_preferences?: string;
 }
 
@@ -82,6 +83,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       anniversary: doctor?.anniversary || '',
       tags: doctor?.tags?.join(', ') || '',
       notes: doctor?.notes || '',
+      address: doctor?.address || '',
       prescribing_preferences: doctor?.prescribing_preferences ? JSON.stringify(doctor.prescribing_preferences) : '',
     }
   });
@@ -142,6 +144,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         anniversary: data.anniversary || null,
         tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         notes: data.notes || null,
+        address: data.address || null,
         prescribing_preferences: data.prescribing_preferences ? JSON.parse(data.prescribing_preferences) : {},
       };
 
@@ -312,6 +315,17 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <textarea
+                id="address"
+                {...register('address')}
+                placeholder="Clinic / hospital address"
+                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
 
             <div className="space-y-2 md:col-span-2">
               <Label>Doctor Location *</Label>

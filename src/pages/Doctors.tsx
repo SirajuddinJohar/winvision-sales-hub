@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import DoctorForm from '@/components/doctors/DoctorForm';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageHeader from '@/components/layout/PageHeader';
 
 interface Doctor {
@@ -41,6 +42,20 @@ const Doctors = () => {
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [category, setCategory] = useState<'all' | 'ophthalmologist' | 'optometrist'>('all');
+
+  // Categorize a doctor by specialty tokens.
+  // Ophthalmologist: MBBS, MD, DO, DNB
+  // Optometrist: B Optom, D Optom, M Optom (any "optom" token)
+  const categorizeSpecialty = (specialty?: string): 'ophthalmologist' | 'optometrist' | 'other' => {
+    if (!specialty) return 'other';
+    const norm = specialty.toLowerCase().replace(/[.,/\\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const tokens = norm.split(' ');
+    if (tokens.some((t) => t.includes('optom'))) return 'optometrist';
+    if (tokens.some((t) => ['mbbs', 'md', 'do', 'dnb'].includes(t))) return 'ophthalmologist';
+    return 'other';
+  };
+
 
   const areaGroups = useMemo(() => {
     // Normalize area names (trim + collapse whitespace + case-insensitive key)
@@ -67,13 +82,28 @@ const Doctors = () => {
     return areaGroups.filter((g) => g.area.toLowerCase().includes(q));
   }, [areaGroups, searchQuery]);
 
-  const areaDoctors = useMemo(() => {
+  const areaDoctorsAll = useMemo(() => {
     if (!selectedArea) return [];
     const list = areaGroups.find((g) => g.area === selectedArea)?.docs || [];
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
     return list.filter((d) => d.name.toLowerCase().includes(q));
   }, [selectedArea, areaGroups, searchQuery]);
+
+  const categoryCounts = useMemo(() => {
+    const c = { ophthalmologist: 0, optometrist: 0 };
+    areaDoctorsAll.forEach((d) => {
+      const cat = categorizeSpecialty(d.specialty);
+      if (cat === 'ophthalmologist') c.ophthalmologist++;
+      else if (cat === 'optometrist') c.optometrist++;
+    });
+    return c;
+  }, [areaDoctorsAll]);
+
+  const areaDoctors = useMemo(() => {
+    if (category === 'all') return areaDoctorsAll;
+    return areaDoctorsAll.filter((d) => categorizeSpecialty(d.specialty) === category);
+  }, [areaDoctorsAll, category]);
 
   useEffect(() => {
     fetchDoctors();
@@ -185,7 +215,7 @@ const Doctors = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setSelectedArea(null); setSearchQuery(''); }}
+                onClick={() => { setSelectedArea(null); setSearchQuery(''); setCategory('all'); }}
                 className="h-9 md:h-10"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Areas
@@ -221,7 +251,7 @@ const Doctors = () => {
                 <Card
                   key={area}
                   className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => { setSelectedArea(area); setSearchQuery(''); }}
+                  onClick={() => { setSelectedArea(area); setSearchQuery(''); setCategory('all'); }}
                 >
                   <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                     <div className="flex items-center gap-3">
@@ -241,14 +271,29 @@ const Doctors = () => {
               ))}
             </div>
           )
-        ) : areaDoctors.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No doctors found</p>
-            </CardContent>
-          </Card>
         ) : (
+          <>
+            <Tabs value={category} onValueChange={(v) => setCategory(v as any)}>
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="all" className="text-xs md:text-sm">
+                  All ({areaDoctorsAll.length})
+                </TabsTrigger>
+                <TabsTrigger value="ophthalmologist" className="text-xs md:text-sm">
+                  Ophthalmologist ({categoryCounts.ophthalmologist})
+                </TabsTrigger>
+                <TabsTrigger value="optometrist" className="text-xs md:text-sm">
+                  Optometrist ({categoryCounts.optometrist})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {areaDoctors.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No doctors found</p>
+                </CardContent>
+              </Card>
+            ) : (
           <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {areaDoctors.map((doctor) => (
               <Card key={doctor.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/dashboard/doctors/${doctor.id}`)}>
@@ -359,7 +404,10 @@ const Doctors = () => {
               </Card>
             ))}
           </div>
+            )}
+          </>
         )}
+
 
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
