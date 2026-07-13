@@ -42,6 +42,20 @@ const Doctors = () => {
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [category, setCategory] = useState<'all' | 'ophthalmologist' | 'optometrist'>('all');
+
+  // Categorize a doctor by specialty tokens.
+  // Ophthalmologist: MBBS, MD, DO, DNB
+  // Optometrist: B Optom, D Optom, M Optom (any "optom" token)
+  const categorizeSpecialty = (specialty?: string): 'ophthalmologist' | 'optometrist' | 'other' => {
+    if (!specialty) return 'other';
+    const norm = specialty.toLowerCase().replace(/[.,/\\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const tokens = norm.split(' ');
+    if (tokens.some((t) => t.includes('optom'))) return 'optometrist';
+    if (tokens.some((t) => ['mbbs', 'md', 'do', 'dnb'].includes(t))) return 'ophthalmologist';
+    return 'other';
+  };
+
 
   const areaGroups = useMemo(() => {
     // Normalize area names (trim + collapse whitespace + case-insensitive key)
