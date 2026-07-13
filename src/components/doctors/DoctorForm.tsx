@@ -144,6 +144,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
         anniversary: data.anniversary || null,
         tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         notes: data.notes || null,
+        address: data.address || null,
         prescribing_preferences: data.prescribing_preferences ? JSON.parse(data.prescribing_preferences) : {},
       };
 
