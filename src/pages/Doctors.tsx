@@ -251,7 +251,7 @@ const Doctors = () => {
                 <Card
                   key={area}
                   className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => { setSelectedArea(area); setSearchQuery(''); }}
+                  onClick={() => { setSelectedArea(area); setSearchQuery(''); setCategory('all'); }}
                 >
                   <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
                     <div className="flex items-center gap-3">
