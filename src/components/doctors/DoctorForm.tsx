@@ -83,6 +83,7 @@ const DoctorForm = ({ doctor, onSuccess, onCancel }: DoctorFormProps) => {
       anniversary: doctor?.anniversary || '',
       tags: doctor?.tags?.join(', ') || '',
       notes: doctor?.notes || '',
+      address: doctor?.address || '',
       prescribing_preferences: doctor?.prescribing_preferences ? JSON.stringify(doctor.prescribing_preferences) : '',
     }
   });
