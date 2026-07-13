@@ -43,14 +43,21 @@ const Doctors = () => {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
   const areaGroups = useMemo(() => {
-    const map = new Map<string, Doctor[]>();
+    // Normalize area names (trim + collapse whitespace + case-insensitive key)
+    // to prevent duplicate area cards from minor typing differences.
+    const map = new Map<string, { display: string; docs: Doctor[] }>();
     doctors.forEach((d) => {
-      const area = d.area || 'Unassigned';
-      if (!map.has(area)) map.set(area, []);
-      map.get(area)!.push(d);
+      const raw = (d.area || 'Unassigned').replace(/\s+/g, ' ').trim() || 'Unassigned';
+      const key = raw.toLowerCase();
+      if (!map.has(key)) {
+        // Title-case display so "abc", "ABC", "Abc" all show as "Abc"
+        const display = raw.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+        map.set(key, { display, docs: [] });
+      }
+      map.get(key)!.docs.push(d);
     });
-    return Array.from(map.entries())
-      .map(([area, docs]) => ({ area, docs }))
+    return Array.from(map.values())
+      .map(({ display, docs }) => ({ area: display, docs }))
       .sort((a, b) => a.area.localeCompare(b.area));
   }, [doctors]);
 
