@@ -516,6 +516,7 @@ export type Database = {
       }
       doctors: {
         Row: {
+          address: string | null
           anniversary: string | null
           area: string
           assigned_mr_id: string | null
@@ -539,6 +540,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           anniversary?: string | null
           area: string
           assigned_mr_id?: string | null
@@ -562,6 +564,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           anniversary?: string | null
           area?: string
           assigned_mr_id?: string | null
