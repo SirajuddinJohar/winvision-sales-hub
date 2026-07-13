@@ -271,14 +271,29 @@ const Doctors = () => {
               ))}
             </div>
           )
-        ) : areaDoctors.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No doctors found</p>
-            </CardContent>
-          </Card>
         ) : (
+          <>
+            <Tabs value={category} onValueChange={(v) => setCategory(v as any)}>
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="all" className="text-xs md:text-sm">
+                  All ({areaDoctorsAll.length})
+                </TabsTrigger>
+                <TabsTrigger value="ophthalmologist" className="text-xs md:text-sm">
+                  Ophthalmologist ({categoryCounts.ophthalmologist})
+                </TabsTrigger>
+                <TabsTrigger value="optometrist" className="text-xs md:text-sm">
+                  Optometrist ({categoryCounts.optometrist})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {areaDoctors.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No doctors found</p>
+                </CardContent>
+              </Card>
+            ) : (
           <div className="grid gap-2.5 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {areaDoctors.map((doctor) => (
               <Card key={doctor.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/dashboard/doctors/${doctor.id}`)}>
