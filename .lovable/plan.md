@@ -1,68 +1,35 @@
+## Goal
+Restrict account creation to admins only. Remove public signup entirely.
 
-# Systematization Roadmap
+## Changes
 
-Goal: make the app less complicated to use, faster, safer, and easier to maintain. Delivered in 4 focused phases so we ship value each release instead of one giant rewrite.
+### 1. AuthPage (`src/components/auth/AuthPage.tsx`)
+- Remove the Tabs wrapper — show only the Sign In form.
+- Remove signup state, `handleSignUp`, role selector, demo-account creation button (uses signUp).
+- Keep "Fill Demo Credentials" buttons (they only prefill, no signup).
+- Keep Forgot Password flow.
 
----
+### 2. useAuth (`src/hooks/useAuth.tsx`)
+- Keep `signUp` in context (admin User Management still calls it), but it will no longer be reachable from the public UI.
 
-## Phase 1 — Simplify navigation & daily flow (UX)
+### 3. New Admin page: User Management (`src/pages/UserManagement.tsx`)
+- Admin-only route `/dashboard/users` (guarded via `ProtectedRoute` + `requiredRole="admin"`).
+- Lists all users with name, email, role, created date (from `users` + `user_roles`).
+- "Create Employee" dialog: name, email, temp password, role (mr/admin) → calls `supabase.auth.signUp` with metadata (existing `handle_new_user` trigger creates the `users` + `user_roles` rows).
+- Change role (admin/mr) via update to `user_roles`.
+- Show note: employee should use "Forgot Password" on first login to set their own password.
 
-The sidebar has ~30 routes; MRs get lost. We collapse into a role-aware, task-first shell.
+### 4. Routing & nav
+- Add `/dashboard/users` route in `src/App.tsx`.
+- Add "User Management" link in `DashboardLayout` sidebar under the Admin group (admin-only).
 
-- **Reorganize sidebar into 5 groups** (role-aware):
-  - *Today* — Daily Working, Reminders, Tour Plan
-  - *Customers* — Doctors, Pharmacies, Distributors
-  - *Sales* — Orders, Products, Rewards
-  - *Reports* — My Performance, Call/Expense/Monthly, Financial Year
-  - *Admin* — Master hub, Purchases, Incentives, Targets, Working Areas, Tour Plan Requests (admin-only)
-- **MR "Home" redesign**: Dashboard becomes a task list — Today's plan, Pending calls, Today's reminders, Quick actions (New order / New expense / Set next call). Remove charts MRs don't act on.
-- **Unified page shell**: single `PageHeader` (title, breadcrumb, primary action, filters slot) applied to every page. Consistent empty/loading/error states via a shared `<DataState/>` component.
-- **Global "+" quick-add FAB** on mobile: Order, Expense, Reminder, Sample — the 4 things MRs do daily.
-- **Search everywhere**: extend `GlobalSearch` to cover doctors, pharmacies, orders, reminders with keyboard shortcut.
+### 5. Database
+- No schema changes needed. `handle_new_user` trigger already provisions rows on signup.
+- Note: Supabase Auth itself still technically allows signup at the API level. Full lock-down requires disabling "Enable signups" in Supabase dashboard (Authentication → Providers → Email). Will instruct the user to toggle this off — the admin creation flow works either way because we call signUp from an authenticated admin session.
 
-## Phase 2 — Performance & data loading
+## Out of scope
+- Deleting existing auth users (requires service-role edge function — can add later if wanted).
+- Email invite flow (chose direct creation).
 
-- **Server-side pagination + search** for the heavy lists: Orders, Doctors, Pharmacies, Reminders, Expenses (currently capped at 1000 rows).
-- **Consolidated RPCs** for dashboards to replace 6–10 parallel queries: `get_mr_dashboard(user_id)`, `get_admin_dashboard()`, `get_doctor_summary(doctor_id)`. Returns everything in one round-trip.
-- **Add missing indexes** after running `slow_queries` — likely on `orders(mr_id, order_date)`, `daily_working(mr_id, work_date)`, `reminders(user_id, remind_date, status)`.
-- **React Query keys audit**: standardize keys, enable selective invalidation instead of refetching whole pages.
-- **Route-level code splitting review** + prefetch on hover for sidebar links.
-
-## Phase 3 — Security & RLS hardening
-
-- Run `supabase--linter` and `security--run_security_scan`; fix every critical finding.
-- **Audit every RLS policy** against the "MRs see own, admins see all" rule — use only `has_role()` / `get_current_user_role()` security-definer functions (no table self-references).
-- **Tighten GRANTs**: drop `anon` on all authenticated-only tables.
-- **Audit log table** (`audit_log`) with trigger on sensitive tables: orders, targets, user_roles, reward_claims, area_doctor_delete_requests. Admin-only viewer page.
-- **Rate-limit + input validation** on all edge functions (`generate-reminders`, `send-reminder-push`).
-- Move any remaining client-side role checks to server-side `has_role()`.
-
-## Phase 4 — Code architecture & consistency
-
-- **Folder restructure** by feature, not type:
-  ```text
-  src/features/
-    doctors/  { pages, components, hooks, api }
-    orders/
-    reminders/
-    ...
-  src/shared/ { ui, hooks, lib }
-  ```
-- **One form pattern**: react-hook-form + zod schema per entity, shared `<EntityForm/>` wrapper. Kills duplication across DoctorForm, PharmacyForm, DistributorForm, OrderForm, ReminderForm.
-- **One data-hook pattern**: `useEntityList`, `useEntity`, `useEntityMutations` generated per resource — replaces ad-hoc `supabase.from(...)` calls scattered in pages.
-- **Design tokens audit**: remove any hardcoded colors, ensure everything uses semantic tokens from `index.css`.
-- **TypeScript strictness**: enable `noUncheckedIndexedAccess`, fix `any` usages.
-- **Docs**: single `ARCHITECTURE.md` mapping features → tables → policies → edge fns, so future changes stay consistent.
-
----
-
-## Suggested order & effort
-
-| Phase | Effort | User-visible impact |
-| --- | --- | --- |
-| 1. Navigation & daily flow | Medium | High — solves "complicated to use" |
-| 2. Performance | Medium | High — app feels fast |
-| 3. Security | Small–Medium | Low visible, high risk-reduction |
-| 4. Architecture | Large | Invisible, enables faster future work |
-
-I recommend starting with **Phase 1** since your main complaint is "complicated to use." Approve and I'll begin with the sidebar reorg + MR home redesign, then we scope Phase 2.
+## User action required after build
+Disable public email signups in Supabase Dashboard → Authentication → Providers → Email → "Enable signups" OFF, so the API can't be hit directly either.
