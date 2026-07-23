@@ -110,6 +110,7 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: Briefcase, label: 'Master Hub', path: '/dashboard/master', roles: ['admin', 'mr'] },
       { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
       { icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] },
+      { icon: Users, label: 'User Management', path: '/dashboard/users', roles: ['admin'] },
     ],
   },
 ];
