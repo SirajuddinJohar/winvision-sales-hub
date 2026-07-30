@@ -375,6 +375,7 @@ const FinancialYear = () => {
             <p className="text-[10px] text-muted-foreground">{expenses.filter(e => e.status === 'approved').length} approved</p>
           </CardContent>
         </Card>
+        {isAdmin && (
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -387,6 +388,8 @@ const FinancialYear = () => {
             <p className="text-[10px] text-muted-foreground">{totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0}% margin</p>
           </CardContent>
         </Card>
+        )}
+
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
