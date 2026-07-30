@@ -465,7 +465,7 @@ const FinancialYear = () => {
                         <TableCell className="text-xs text-right text-orange-600">{formatCurrency(m.incentives)}</TableCell>
                         {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(m.purchases)}</TableCell>}
                         <TableCell className="text-xs text-right">{formatCurrency(m.expenses)}</TableCell>
-                        <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>
+                        {isAdmin && <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>}
                         <TableCell className="text-xs text-right">{m.orders}</TableCell>
                       </TableRow>
                     ))}
