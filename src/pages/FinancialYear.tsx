@@ -453,7 +453,7 @@ const FinancialYear = () => {
                       <TableHead className="text-xs text-right">Incentives</TableHead>
                       {isAdmin && <TableHead className="text-xs text-right">Purchases</TableHead>}
                       <TableHead className="text-xs text-right">Expenses</TableHead>
-                      <TableHead className="text-xs text-right">Profit</TableHead>
+                      {isAdmin && <TableHead className="text-xs text-right">Profit</TableHead>}
                       <TableHead className="text-xs text-right">Orders</TableHead>
                     </TableRow>
                   </TableHeader>
