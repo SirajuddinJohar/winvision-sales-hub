@@ -1,35 +1,31 @@
-## Goal
-Restrict account creation to admins only. Remove public signup entirely.
+## Problem (verified)
 
-## Changes
+MR users see empty Pharmacy and Distributor lists in Orders because of the RLS policies added during the last security hardening pass:
 
-### 1. AuthPage (`src/components/auth/AuthPage.tsx`)
-- Remove the Tabs wrapper — show only the Sign In form.
-- Remove signup state, `handleSignUp`, role selector, demo-account creation button (uses signUp).
-- Keep "Fill Demo Credentials" buttons (they only prefill, no signup).
-- Keep Forgot Password flow.
+- `pharmacies` SELECT = `is_admin() OR row exists in mr_pharmacy_assignments`. The `mr_pharmacy_assignments` table has **0 rows**, while `pharmacies` has 23 — so every MR sees zero pharmacies.
+- `Distributors` SELECT = `is_admin() OR created_by = auth.uid()`. All 3 distributors were created by the admin (`created_by` is non-null for all), so MRs see zero distributors.
+- `distributor_products` SELECT is chained to the same `created_by` check, so distributor product/PTR lists are empty for MRs too.
 
-### 2. useAuth (`src/hooks/useAuth.tsx`)
-- Keep `signUp` in context (admin User Management still calls it), but it will no longer be reachable from the public UI.
+Admins are unaffected, which matches the reported symptom.
 
-### 3. New Admin page: User Management (`src/pages/UserManagement.tsx`)
-- Admin-only route `/dashboard/users` (guarded via `ProtectedRoute` + `requiredRole="admin"`).
-- Lists all users with name, email, role, created date (from `users` + `user_roles`).
-- "Create Employee" dialog: name, email, temp password, role (mr/admin) → calls `supabase.auth.signUp` with metadata (existing `handle_new_user` trigger creates the `users` + `user_roles` rows).
-- Change role (admin/mr) via update to `user_roles`.
-- Show note: employee should use "Forgot Password" on first login to set their own password.
+## Fix
 
-### 4. Routing & nav
-- Add `/dashboard/users` route in `src/App.tsx`.
-- Add "User Management" link in `DashboardLayout` sidebar under the Admin group (admin-only).
+Treat pharmacies and distributors as shared master data readable by any signed-in employee, while keeping writes restricted.
 
-### 5. Database
-- No schema changes needed. `handle_new_user` trigger already provisions rows on signup.
-- Note: Supabase Auth itself still technically allows signup at the API level. Full lock-down requires disabling "Enable signups" in Supabase dashboard (Authentication → Providers → Email). Will instruct the user to toggle this off — the admin creation flow works either way because we call signUp from an authenticated admin session.
+Single migration:
 
-## Out of scope
-- Deleting existing auth users (requires service-role edge function — can add later if wanted).
-- Email invite flow (chose direct creation).
+1. `pharmacies`: replace the SELECT policy with one allowing all `authenticated` users to read. Keep INSERT/UPDATE as-is; delete stays admin-only.
+2. `Distributors`: replace the owner-only SELECT policy with an authenticated-read policy. Also drop the two stale leftover policies that were mistakenly copied from pharmacies onto this table (`Admins can view all pharmacies`, `MRs can view assigned pharmacies` — the latter joins `mr_pharmacy_assignments` on distributor IDs, which is meaningless). Admin-manage policies remain.
+3. `distributor_products`: replace the SELECT policy with authenticated read so PTR/qty shows for MRs; admin-manage stays.
+4. Confirm `GRANT SELECT` exists for `authenticated` on all three tables.
 
-## User action required after build
-Disable public email signups in Supabase Dashboard → Authentication → Providers → Email → "Enable signups" OFF, so the API can't be hit directly either.
+No frontend changes are needed — the pages already query these tables directly and will populate once RLS allows the read.
+
+## Notes
+
+- This intentionally widens read access from "admin + owner" to "any signed-in employee". Since the app is now closed-signup (admin-created accounts only), every authenticated user is staff. `anon` gets no access.
+- If you'd rather keep per-MR pharmacy scoping instead, the alternative is to populate `mr_pharmacy_assignments` and add an assignment UI — more work and more ongoing admin overhead. Tell me if you prefer that route.
+
+## Verification
+
+After the migration, query `pharmacies`, `Distributors`, and `distributor_products` as an MR-role session and confirm non-zero rows, then open the Orders page as an MR to confirm both dropdowns populate.
