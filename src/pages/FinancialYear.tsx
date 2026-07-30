@@ -646,7 +646,48 @@ const FinancialYear = () => {
       {/* P&L Statement (Admin only) */}
       {isAdmin && (
       <Card className="border-l-4 border-l-primary">
-...
+        <CardHeader className="p-3 md:p-4 pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><IndianRupee className="h-4 w-4" /> Profit & Loss Statement</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 md:p-4 pt-0">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-sm">Total Revenue (Sales)</span>
+              <span className="text-sm font-bold">{formatCurrency(totalSales)}</span>
+            </div>
+            {totalIncentives > 0 && (
+              <>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm">Doctor Incentives (Approved)</span>
+                  <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalIncentives)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm font-medium">Net Sales</span>
+                  <span className="text-sm font-bold">{formatCurrency(netSales)}</span>
+                </div>
+              </>
+            )}
+            {totalPurchases > 0 && (
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm">Cost of Goods (Purchases)</span>
+                <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalPurchases)}</span>
+              </div>
+            )}
+            {totalPurchases > 0 && (
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm font-medium">Gross Profit</span>
+                <span className={`text-sm font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(grossProfit)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-sm">Operating Expenses</span>
+              <span className="text-sm font-bold text-destructive">- {formatCurrency(totalExpenses)}</span>
+            </div>
+            <div className={`flex justify-between items-center py-3 rounded-lg px-3 ${netProfit >= 0 ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
+              <span className="text-sm font-bold">{netProfit >= 0 ? 'Net Profit' : 'Net Loss'}</span>
+              <span className={`text-lg font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(Math.abs(netProfit))}</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
       )}
