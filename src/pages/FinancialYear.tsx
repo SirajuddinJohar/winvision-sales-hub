@@ -375,6 +375,7 @@ const FinancialYear = () => {
             <p className="text-[10px] text-muted-foreground">{expenses.filter(e => e.status === 'approved').length} approved</p>
           </CardContent>
         </Card>
+        {isAdmin && (
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -387,6 +388,8 @@ const FinancialYear = () => {
             <p className="text-[10px] text-muted-foreground">{totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0}% margin</p>
           </CardContent>
         </Card>
+        )}
+
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -450,7 +453,7 @@ const FinancialYear = () => {
                       <TableHead className="text-xs text-right">Incentives</TableHead>
                       {isAdmin && <TableHead className="text-xs text-right">Purchases</TableHead>}
                       <TableHead className="text-xs text-right">Expenses</TableHead>
-                      <TableHead className="text-xs text-right">Profit</TableHead>
+                      {isAdmin && <TableHead className="text-xs text-right">Profit</TableHead>}
                       <TableHead className="text-xs text-right">Orders</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -462,7 +465,7 @@ const FinancialYear = () => {
                         <TableCell className="text-xs text-right text-orange-600">{formatCurrency(m.incentives)}</TableCell>
                         {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(m.purchases)}</TableCell>}
                         <TableCell className="text-xs text-right">{formatCurrency(m.expenses)}</TableCell>
-                        <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>
+                        {isAdmin && <TableCell className={`text-xs text-right font-medium ${m.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(m.profit)}</TableCell>}
                         <TableCell className="text-xs text-right">{m.orders}</TableCell>
                       </TableRow>
                     ))}
@@ -472,7 +475,7 @@ const FinancialYear = () => {
                       <TableCell className="text-xs text-right text-orange-600">{formatCurrency(totalIncentives)}</TableCell>
                       {isAdmin && <TableCell className="text-xs text-right">{formatCurrency(totalPurchases)}</TableCell>}
                       <TableCell className="text-xs text-right">{formatCurrency(totalExpenses)}</TableCell>
-                      <TableCell className={`text-xs text-right ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(netProfit)}</TableCell>
+                      {isAdmin && <TableCell className={`text-xs text-right ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(netProfit)}</TableCell>}
                       <TableCell className="text-xs text-right">{totalOrders}</TableCell>
                     </TableRow>
                   </TableBody>
@@ -640,7 +643,8 @@ const FinancialYear = () => {
         </TabsContent>
       </Tabs>
 
-      {/* P&L Statement */}
+      {/* P&L Statement (Admin only) */}
+      {isAdmin && (
       <Card className="border-l-4 border-l-primary">
         <CardHeader className="p-3 md:p-4 pb-2">
           <CardTitle className="text-sm flex items-center gap-2"><IndianRupee className="h-4 w-4" /> Profit & Loss Statement</CardTitle>
@@ -663,13 +667,13 @@ const FinancialYear = () => {
                 </div>
               </>
             )}
-            {isAdmin && totalPurchases > 0 && (
+            {totalPurchases > 0 && (
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-sm">Cost of Goods (Purchases)</span>
                 <span className="text-sm font-bold text-orange-600">- {formatCurrency(totalPurchases)}</span>
               </div>
             )}
-            {isAdmin && totalPurchases > 0 && (
+            {totalPurchases > 0 && (
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-sm font-medium">Gross Profit</span>
                 <span className={`text-sm font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>{formatCurrency(grossProfit)}</span>
@@ -686,6 +690,8 @@ const FinancialYear = () => {
           </div>
         </CardContent>
       </Card>
+      )}
+
 
       {/* Key Highlights */}
       <Card className="bg-gradient-to-r from-primary/5 to-transparent">
