@@ -12,18 +12,27 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, Users } from 'lucide-react';
 
+type AppRole = 'admin' | 'asm' | 'mr';
+
 interface Row {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'mr';
+  role: AppRole;
   created_at?: string;
 }
+
+const ROLE_LABEL: Record<AppRole, string> = {
+  admin: 'Administrator',
+  asm: 'Area Sales Manager',
+  mr: 'Medical Representative',
+};
 
 const UserManagement = () => {
   const { toast } = useToast();
   const { signUp } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
+  const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,14 +40,18 @@ const UserManagement = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'mr'>('mr');
+  const [role, setRole] = useState<AppRole>('mr');
 
   const load = async () => {
     setLoading(true);
-    const { data: users } = await supabase.from('users').select('id, name, email, created_at').order('created_at', { ascending: false });
-    const { data: roles } = await supabase.from('user_roles').select('user_id, role');
+    const [{ data: users }, { data: roles }, { data: links }] = await Promise.all([
+      supabase.from('users').select('id, name, email, created_at').order('created_at', { ascending: false }),
+      supabase.from('user_roles').select('user_id, role'),
+      supabase.from('mr_asm_assignments').select('mr_id, asm_id'),
+    ]);
     const roleMap = new Map((roles || []).map((r: any) => [r.user_id, r.role]));
-    setRows((users || []).map((u: any) => ({ ...u, role: roleMap.get(u.id) || 'mr' })));
+    setRows((users || []).map((u: any) => ({ ...u, role: (roleMap.get(u.id) as AppRole) || 'mr' })));
+    setAssignments(Object.fromEntries((links || []).map((l: any) => [l.mr_id, l.asm_id])));
     setLoading(false);
   };
 
@@ -57,7 +70,7 @@ const UserManagement = () => {
     }
   };
 
-  const changeRole = async (userId: string, newRole: 'admin' | 'mr') => {
+  const changeRole = async (userId: string, newRole: AppRole) => {
     const { error } = await supabase.from('user_roles').update({ role: newRole }).eq('user_id', userId);
     if (error) {
       toast({ title: 'Failed to update role', description: error.message, variant: 'destructive' });
@@ -66,6 +79,28 @@ const UserManagement = () => {
     toast({ title: 'Role updated' });
     load();
   };
+
+  const changeAsm = async (mrId: string, asmId: string) => {
+    if (asmId === 'none') {
+      const { error } = await supabase.from('mr_asm_assignments').delete().eq('mr_id', mrId);
+      if (error) {
+        toast({ title: 'Failed to remove ASM', description: error.message, variant: 'destructive' });
+        return;
+      }
+    } else {
+      const { error } = await supabase
+        .from('mr_asm_assignments')
+        .upsert({ mr_id: mrId, asm_id: asmId }, { onConflict: 'mr_id' });
+      if (error) {
+        toast({ title: 'Failed to assign ASM', description: error.message, variant: 'destructive' });
+        return;
+      }
+    }
+    toast({ title: 'Team assignment updated' });
+    load();
+  };
+
+  const asms = rows.filter((r) => r.role === 'asm');
 
   return (
     <div className="space-y-4">
@@ -101,10 +136,11 @@ const UserManagement = () => {
               </div>
               <div>
                 <Label>Role</Label>
-                <Select value={role} onValueChange={(v: 'admin' | 'mr') => setRole(v)}>
+                <Select value={role} onValueChange={(v: AppRole) => setRole(v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="mr">Medical Representative</SelectItem>
+                    <SelectItem value="asm">Area Sales Manager (ASM)</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
@@ -133,6 +169,7 @@ const UserManagement = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Change Role</TableHead>
+                    <TableHead>Reports To (ASM)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,16 +178,34 @@ const UserManagement = () => {
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell>{r.email}</TableCell>
                       <TableCell>
-                        <Badge variant={r.role === 'admin' ? 'default' : 'secondary'}>{r.role.toUpperCase()}</Badge>
+                        <Badge variant={r.role === 'admin' ? 'default' : r.role === 'asm' ? 'outline' : 'secondary'}>
+                          {r.role.toUpperCase()}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <Select value={r.role} onValueChange={(v: 'admin' | 'mr') => changeRole(r.id, v)}>
-                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                        <Select value={r.role} onValueChange={(v: AppRole) => changeRole(r.id, v)}>
+                          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="mr">Medical Rep</SelectItem>
-                            <SelectItem value="admin">Administrator</SelectItem>
+                            <SelectItem value="mr">{ROLE_LABEL.mr}</SelectItem>
+                            <SelectItem value="asm">{ROLE_LABEL.asm}</SelectItem>
+                            <SelectItem value="admin">{ROLE_LABEL.admin}</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        {r.role === 'mr' ? (
+                          <Select value={assignments[r.id] || 'none'} onValueChange={(v) => changeAsm(r.id, v)}>
+                            <SelectTrigger className="w-44"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Unassigned</SelectItem>
+                              {asms.map((a) => (
+                                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
