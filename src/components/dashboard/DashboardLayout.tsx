@@ -192,7 +192,7 @@ const DashboardLayout = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground tracking-tight">Winvision</h1>
               <p className="text-xs text-muted-foreground font-medium">
-                {isAdmin ? 'Admin Panel' : 'MR Dashboard'}
+                {isAdmin ? 'Admin Panel' : profile.role === 'asm' ? 'ASM Dashboard' : 'MR Dashboard'}
               </p>
             </div>
           </div>
@@ -279,7 +279,7 @@ const DashboardLayout = () => {
                 <p className="font-semibold text-xs truncate text-foreground">{profile.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{profile.email}</p>
                 <p className="text-[10px] text-primary font-semibold">
-                  {isAdmin ? 'Administrator' : 'Medical Rep'}
+                  {isAdmin ? 'Administrator' : profile.role === 'asm' ? 'Area Sales Manager' : 'Medical Rep'}
                 </p>
               </div>
             </div>

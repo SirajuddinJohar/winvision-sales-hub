@@ -114,7 +114,7 @@ const Dashboard = () => {
   const isAdmin = profile?.role === 'admin';
 
   // MRs get a task-focused home; admins keep the full analytics dashboard.
-  if (profile && !isAdmin) return <MRHome />;
+  if (profile && profile.role === 'mr') return <MRHome />;
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', isAdmin],
