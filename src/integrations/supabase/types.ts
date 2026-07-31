@@ -674,6 +674,33 @@ export type Database = {
           },
         ]
       }
+      mr_asm_assignments: {
+        Row: {
+          asm_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mr_id: string
+          updated_at: string
+        }
+        Insert: {
+          asm_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mr_id: string
+          updated_at?: string
+        }
+        Update: {
+          asm_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mr_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mr_pharmacy_assignments: {
         Row: {
           created_at: string | null
@@ -1653,6 +1680,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_asm_of: { Args: { _mr_id: string }; Returns: boolean }
     }
     Enums: {
       edit_request_status: "pending" | "approved" | "rejected"
@@ -1668,7 +1696,7 @@ export type Database = {
         | "custom"
       reminder_status: "pending" | "done" | "dismissed" | "snoozed"
       tour_plan_status: "draft" | "locked" | "approved"
-      user_role: "admin" | "mr"
+      user_role: "admin" | "mr" | "asm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1810,7 +1838,7 @@ export const Constants = {
       ],
       reminder_status: ["pending", "done", "dismissed", "snoozed"],
       tour_plan_status: ["draft", "locked", "approved"],
-      user_role: ["admin", "mr"],
+      user_role: ["admin", "mr", "asm"],
     },
   },
 } as const

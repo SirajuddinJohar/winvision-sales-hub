@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-type Role = 'admin' | 'mr';
+type Role = 'admin' | 'asm' | 'mr';
 
 interface NavItem {
   icon: any;
@@ -56,7 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Home',
     icon: Home,
     items: [
-      { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'mr'] },
+      { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'asm', 'mr'] },
     ],
   },
   {
@@ -64,9 +64,9 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Today',
     icon: Calendar,
     items: [
-      { icon: ClipboardList, label: 'Daily Working', path: '/dashboard/daily-working', roles: ['admin', 'mr'] },
-      { icon: Bell, label: 'Reminders', path: '/dashboard/reminders', roles: ['admin', 'mr'] },
-      { icon: Map, label: 'Tour Plan', path: '/dashboard/tour-plan', roles: ['admin', 'mr'] },
+      { icon: ClipboardList, label: 'Daily Working', path: '/dashboard/daily-working', roles: ['admin', 'asm', 'mr'] },
+      { icon: Bell, label: 'Reminders', path: '/dashboard/reminders', roles: ['admin', 'asm', 'mr'] },
+      { icon: Map, label: 'Tour Plan', path: '/dashboard/tour-plan', roles: ['admin', 'asm', 'mr'] },
     ],
   },
   {
@@ -74,9 +74,9 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Customers',
     icon: Users,
     items: [
-      { icon: Users, label: 'Doctors', path: '/dashboard/doctors', roles: ['admin', 'mr'] },
-      { icon: Building, label: 'Pharmacies', path: '/dashboard/pharmacies', roles: ['admin', 'mr'] },
-      { icon: Truck, label: 'Distributors', path: '/dashboard/distributors', roles: ['admin', 'mr'] },
+      { icon: Users, label: 'Doctors', path: '/dashboard/doctors', roles: ['admin', 'asm', 'mr'] },
+      { icon: Building, label: 'Pharmacies', path: '/dashboard/pharmacies', roles: ['admin', 'asm', 'mr'] },
+      { icon: Truck, label: 'Distributors', path: '/dashboard/distributors', roles: ['admin', 'asm', 'mr'] },
     ],
   },
   {
@@ -84,11 +84,11 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Sales',
     icon: ShoppingCart,
     items: [
-      { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'mr'] },
-      { icon: Package, label: 'Products', path: '/dashboard/products', roles: ['admin', 'mr'] },
-      { icon: Receipt, label: 'Expenses', path: '/dashboard/expenses', roles: ['admin', 'mr'] },
-      { icon: Gift, label: 'Rewards', path: '/dashboard/rewards', roles: ['admin', 'mr'] },
-      { icon: IndianRupee, label: 'Incentives', path: '/dashboard/incentives', roles: ['admin', 'mr'] },
+      { icon: ShoppingCart, label: 'Orders', path: '/dashboard/orders', roles: ['admin', 'asm', 'mr'] },
+      { icon: Package, label: 'Products', path: '/dashboard/products', roles: ['admin', 'asm', 'mr'] },
+      { icon: Receipt, label: 'Expenses', path: '/dashboard/expenses', roles: ['admin', 'asm', 'mr'] },
+      { icon: Gift, label: 'Rewards', path: '/dashboard/rewards', roles: ['admin', 'asm', 'mr'] },
+      { icon: IndianRupee, label: 'Incentives', path: '/dashboard/incentives', roles: ['admin', 'asm', 'mr'] },
     ],
   },
   {
@@ -96,10 +96,18 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Reports',
     icon: PieChart,
     items: [
-      { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting', roles: ['admin', 'mr'] },
-      { icon: Package, label: 'Product Analytics', path: '/dashboard/product-analytics', roles: ['admin', 'mr'] },
-      { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year', roles: ['admin', 'mr'] },
-      { icon: Target, label: 'Targets', path: '/dashboard/targets', roles: ['admin', 'mr'] },
+      { icon: BarChart3, label: 'Reporting', path: '/dashboard/reporting', roles: ['admin', 'asm', 'mr'] },
+      { icon: Package, label: 'Product Analytics', path: '/dashboard/product-analytics', roles: ['admin', 'asm', 'mr'] },
+      { icon: IndianRupee, label: 'Financial Year', path: '/dashboard/financial-year', roles: ['admin', 'asm', 'mr'] },
+      { icon: Target, label: 'Targets', path: '/dashboard/targets', roles: ['admin', 'asm', 'mr'] },
+    ],
+  },
+  {
+    key: 'team',
+    label: 'Team',
+    icon: Users,
+    items: [
+      { icon: Users, label: 'My Team', path: '/dashboard/my-team', roles: ['admin', 'asm'] },
     ],
   },
   {
@@ -107,7 +115,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Admin',
     icon: ShieldCheck,
     items: [
-      { icon: Briefcase, label: 'Master Hub', path: '/dashboard/master', roles: ['admin', 'mr'] },
+      { icon: Briefcase, label: 'Master Hub', path: '/dashboard/master', roles: ['admin', 'asm', 'mr'] },
       { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
       { icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] },
       { icon: Users, label: 'User Management', path: '/dashboard/users', roles: ['admin'] },
@@ -184,7 +192,7 @@ const DashboardLayout = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground tracking-tight">Winvision</h1>
               <p className="text-xs text-muted-foreground font-medium">
-                {isAdmin ? 'Admin Panel' : 'MR Dashboard'}
+                {isAdmin ? 'Admin Panel' : profile.role === 'asm' ? 'ASM Dashboard' : 'MR Dashboard'}
               </p>
             </div>
           </div>
@@ -271,7 +279,7 @@ const DashboardLayout = () => {
                 <p className="font-semibold text-xs truncate text-foreground">{profile.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{profile.email}</p>
                 <p className="text-[10px] text-primary font-semibold">
-                  {isAdmin ? 'Administrator' : 'Medical Rep'}
+                  {isAdmin ? 'Administrator' : profile.role === 'asm' ? 'Area Sales Manager' : 'Medical Rep'}
                 </p>
               </div>
             </div>
