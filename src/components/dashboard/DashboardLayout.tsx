@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-type Role = 'admin' | 'mr';
+type Role = 'admin' | 'asm' | 'mr';
 
 interface NavItem {
   icon: any;
