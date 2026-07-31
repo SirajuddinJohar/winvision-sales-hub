@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'mr';
+  requiredRole?: 'admin' | 'asm' | 'mr';
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {

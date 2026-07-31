@@ -103,11 +103,19 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: 'team',
+    label: 'Team',
+    icon: Users,
+    items: [
+      { icon: Users, label: 'My Team', path: '/dashboard/my-team', roles: ['admin', 'asm'] },
+    ],
+  },
+  {
     key: 'admin',
     label: 'Admin',
     icon: ShieldCheck,
     items: [
-      { icon: Briefcase, label: 'Master Hub', path: '/dashboard/master', roles: ['admin', 'mr'] },
+      { icon: Briefcase, label: 'Master Hub', path: '/dashboard/master', roles: ['admin', 'asm', 'mr'] },
       { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
       { icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] },
       { icon: Users, label: 'User Management', path: '/dashboard/users', roles: ['admin'] },
