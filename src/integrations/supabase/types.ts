@@ -1668,7 +1668,7 @@ export type Database = {
         | "custom"
       reminder_status: "pending" | "done" | "dismissed" | "snoozed"
       tour_plan_status: "draft" | "locked" | "approved"
-      user_role: "admin" | "mr"
+      user_role: "admin" | "mr" | "asm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1810,7 +1810,7 @@ export const Constants = {
       ],
       reminder_status: ["pending", "done", "dismissed", "snoozed"],
       tour_plan_status: ["draft", "locked", "approved"],
-      user_role: ["admin", "mr"],
+      user_role: ["admin", "mr", "asm"],
     },
   },
 } as const
