@@ -197,6 +197,12 @@ const MyTeam = () => {
                         <div className="font-medium text-sm">{m.name}</div>
                         <div className="text-[11px] text-muted-foreground">{m.email}</div>
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-xs">
+                          {asms.find((a: any) => a.id === m.asmId)?.name || <span className="text-muted-foreground">Unassigned</span>}
+                        </TableCell>
+                      )}
+
                       <TableCell className="text-right">{m.workingDays}</TableCell>
                       <TableCell className="text-right">{m.calls}</TableCell>
                       <TableCell className="text-right">{m.orderCount}</TableCell>
