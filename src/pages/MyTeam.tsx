@@ -126,7 +126,9 @@ const MyTeam = () => {
             <Select value={asmFilter} onValueChange={setAsmFilter}>
               <SelectTrigger className="w-44"><SelectValue placeholder="All ASMs" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All ASMs</SelectItem>
+                <SelectItem value="all">All MRs</SelectItem>
+                <SelectItem value="unassigned">Unassigned MRs</SelectItem>
+
                 {asms.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
               </SelectContent>
             </Select>
