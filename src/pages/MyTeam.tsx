@@ -178,6 +178,8 @@ const MyTeam = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>MR</TableHead>
+                    {isAdmin && <TableHead>Reports To</TableHead>}
+
                     <TableHead className="text-right">Working Days</TableHead>
                     <TableHead className="text-right">Calls</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
