@@ -674,6 +674,77 @@ export type Database = {
           },
         ]
       }
+      joint_work_confirmations: {
+        Row: {
+          asm_id: string
+          created_at: string
+          id: string
+          mr_id: string
+          scanned_at: string
+          session_id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          asm_id: string
+          created_at?: string
+          id?: string
+          mr_id: string
+          scanned_at?: string
+          session_id: string
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          asm_id?: string
+          created_at?: string
+          id?: string
+          mr_id?: string
+          scanned_at?: string
+          session_id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "joint_work_confirmations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "joint_work_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      joint_work_sessions: {
+        Row: {
+          asm_id: string
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          asm_id: string
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Update: {
+          asm_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       mr_asm_assignments: {
         Row: {
           asm_id: string
