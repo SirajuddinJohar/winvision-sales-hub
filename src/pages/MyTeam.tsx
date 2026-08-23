@@ -51,11 +51,19 @@ const MyTeam = () => {
     queryKey: ['my-team', profile?.id, isAdmin, asmFilter, month],
     enabled: !!profile?.id,
     queryFn: async () => {
-      let q = supabase.from('mr_asm_assignments').select('mr_id, asm_id');
-      if (!isAdmin) q = q.eq('asm_id', profile!.id);
-      else if (asmFilter !== 'all') q = q.eq('asm_id', asmFilter);
-      const { data: links } = await q;
-      const mrIds = (links || []).map((l: any) => l.mr_id);
+      const { data: allLinks } = await supabase.from('mr_asm_assignments').select('mr_id, asm_id');
+      const links = allLinks || [];
+
+      let mrIds: string[] = [];
+      if (isAdmin) {
+        const { data: mrRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'mr');
+        const allMrIds = (mrRoles || []).map((r: any) => r.user_id);
+        if (asmFilter === 'all') mrIds = allMrIds;
+        else if (asmFilter === 'unassigned') mrIds = allMrIds.filter((id) => !links.some((l: any) => l.mr_id === id));
+        else mrIds = links.filter((l: any) => l.asm_id === asmFilter).map((l: any) => l.mr_id);
+      } else {
+        mrIds = links.filter((l: any) => l.asm_id === profile!.id).map((l: any) => l.mr_id);
+      }
       if (!mrIds.length) return { members: [] as any[] };
 
       const [{ data: users }, { data: orders }, { data: expenses }, { data: working }, { data: targets }] =
@@ -67,7 +75,6 @@ const MyTeam = () => {
           supabase.from('targets').select('mr_id, target_value, achieved_value, target_month').in('mr_id', mrIds).eq('target_month', start),
         ]);
 
-      const asmName = new Map<string, string>();
       const members = (users || []).map((u: any) => {
         const sales = (orders || []).filter((o: any) => o.mr_id === u.id).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
         const orderCount = (orders || []).filter((o: any) => o.mr_id === u.id).length;
@@ -77,7 +84,7 @@ const MyTeam = () => {
         const tgt = (targets || []).filter((t: any) => t.mr_id === u.id).reduce((s: number, t: any) => s + Number(t.target_value || 0), 0);
         return {
           ...u,
-          asmId: (links || []).find((l: any) => l.mr_id === u.id)?.asm_id,
+          asmId: links.find((l: any) => l.mr_id === u.id)?.asm_id,
           sales,
           orderCount,
           expenses: exp,
@@ -92,6 +99,7 @@ const MyTeam = () => {
       return { members };
     },
   });
+
 
   const members = data?.members || [];
   const totals = members.reduce(
@@ -118,7 +126,9 @@ const MyTeam = () => {
             <Select value={asmFilter} onValueChange={setAsmFilter}>
               <SelectTrigger className="w-44"><SelectValue placeholder="All ASMs" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All ASMs</SelectItem>
+                <SelectItem value="all">All MRs</SelectItem>
+                <SelectItem value="unassigned">Unassigned MRs</SelectItem>
+
                 {asms.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -168,6 +178,8 @@ const MyTeam = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>MR</TableHead>
+                    {isAdmin && <TableHead>Reports To</TableHead>}
+
                     <TableHead className="text-right">Working Days</TableHead>
                     <TableHead className="text-right">Calls</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
@@ -185,6 +197,12 @@ const MyTeam = () => {
                         <div className="font-medium text-sm">{m.name}</div>
                         <div className="text-[11px] text-muted-foreground">{m.email}</div>
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-xs">
+                          {asms.find((a: any) => a.id === m.asmId)?.name || <span className="text-muted-foreground">Unassigned</span>}
+                        </TableCell>
+                      )}
+
                       <TableCell className="text-right">{m.workingDays}</TableCell>
                       <TableCell className="text-right">{m.calls}</TableCell>
                       <TableCell className="text-right">{m.orderCount}</TableCell>
