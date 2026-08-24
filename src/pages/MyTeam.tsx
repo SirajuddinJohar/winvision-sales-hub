@@ -231,6 +231,11 @@ const MyTeam = () => {
                         ) : '—'}
                       </TableCell>
                       <TableCell className="text-right">{fmtINR(m.expenses)}</TableCell>
+                      <TableCell className="text-right text-xs">
+                        {m.jointDays} day{m.jointDays === 1 ? '' : 's'}
+                        {m.jointToday && <Badge className="ml-1.5 text-[10px]">Today</Badge>}
+                      </TableCell>
+
                       <TableCell className="text-xs">
                         {m.lastActivity ? new Date(m.lastActivity).toLocaleDateString('en-IN') : 'No activity'}
                       </TableCell>
