@@ -805,6 +805,9 @@ const DailyWorking = () => {
         </Card>
       )}
 
+      {todaySetup?.work_type === 'on_field' && workingWith === 'manager' && <JointWorkScanner />}
+
+
       {/* Call Stats */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card className="p-3 md:p-4">
