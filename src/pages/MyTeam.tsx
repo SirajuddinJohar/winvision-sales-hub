@@ -200,7 +200,9 @@ const MyTeam = () => {
                     <TableHead className="text-right">Target</TableHead>
                     <TableHead className="text-right">Ach %</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
+                    <TableHead className="text-right">Joint Work</TableHead>
                     <TableHead>Last Activity</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
