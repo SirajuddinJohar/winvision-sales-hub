@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Users, ShoppingCart, Receipt, ClipboardList, IndianRupee } from 'lucide-react';
+import JointWorkQR from '@/components/team/JointWorkQR';
+
 
 const fmtINR = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
@@ -66,14 +68,17 @@ const MyTeam = () => {
       }
       if (!mrIds.length) return { members: [] as any[] };
 
-      const [{ data: users }, { data: orders }, { data: expenses }, { data: working }, { data: targets }] =
+      const [{ data: users }, { data: orders }, { data: expenses }, { data: working }, { data: targets }, { data: joint }] =
         await Promise.all([
           supabase.from('users').select('id, name, email').in('id', mrIds),
           supabase.from('orders').select('mr_id, total_amount, order_date').in('mr_id', mrIds).gte('order_date', start).lte('order_date', end),
           supabase.from('expenses').select('mr_id, amount, status, expense_date').in('mr_id', mrIds).gte('expense_date', start).lte('expense_date', end),
           supabase.from('daily_working').select('mr_id, work_date, doctor_id').in('mr_id', mrIds).gte('work_date', start).lte('work_date', end),
           supabase.from('targets').select('mr_id, target_value, achieved_value, target_month').in('mr_id', mrIds).eq('target_month', start),
+          supabase.from('joint_work_confirmations').select('mr_id, work_date').in('mr_id', mrIds).gte('work_date', start).lte('work_date', end),
         ]);
+
+      const today = new Date().toISOString().slice(0, 10);
 
       const members = (users || []).map((u: any) => {
         const sales = (orders || []).filter((o: any) => o.mr_id === u.id).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
@@ -82,6 +87,7 @@ const MyTeam = () => {
         const calls = (working || []).filter((w: any) => w.mr_id === u.id);
         const lastActivity = calls.map((c: any) => c.work_date).sort().pop();
         const tgt = (targets || []).filter((t: any) => t.mr_id === u.id).reduce((s: number, t: any) => s + Number(t.target_value || 0), 0);
+        const jointRows = (joint || []).filter((j: any) => j.mr_id === u.id);
         return {
           ...u,
           asmId: links.find((l: any) => l.mr_id === u.id)?.asm_id,
@@ -93,8 +99,11 @@ const MyTeam = () => {
           target: tgt,
           achievement: tgt > 0 ? (sales / tgt) * 100 : 0,
           lastActivity,
+          jointDays: new Set(jointRows.map((j: any) => j.work_date)).size,
+          jointToday: jointRows.some((j: any) => j.work_date === today),
         };
       });
+
       members.sort((a, b) => b.sales - a.sales);
       return { members };
     },
@@ -142,6 +151,10 @@ const MyTeam = () => {
         </div>
       </div>
 
+      {!isAdmin && <JointWorkQR />}
+
+
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         <Card><CardContent className="p-3">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Team Size</p>
@@ -187,7 +200,9 @@ const MyTeam = () => {
                     <TableHead className="text-right">Target</TableHead>
                     <TableHead className="text-right">Ach %</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
+                    <TableHead className="text-right">Joint Work</TableHead>
                     <TableHead>Last Activity</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,6 +231,11 @@ const MyTeam = () => {
                         ) : '—'}
                       </TableCell>
                       <TableCell className="text-right">{fmtINR(m.expenses)}</TableCell>
+                      <TableCell className="text-right text-xs">
+                        {m.jointDays} day{m.jointDays === 1 ? '' : 's'}
+                        {m.jointToday && <Badge className="ml-1.5 text-[10px]">Today</Badge>}
+                      </TableCell>
+
                       <TableCell className="text-xs">
                         {m.lastActivity ? new Date(m.lastActivity).toLocaleDateString('en-IN') : 'No activity'}
                       </TableCell>

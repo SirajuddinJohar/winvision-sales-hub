@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import JointWorkScanner from '@/components/team/JointWorkScanner';
+
 
 interface CallTarget {
   id: string;
@@ -753,7 +755,9 @@ const DailyWorking = () => {
                         </div>
                       </div>
                     </RadioGroup>
+                    {workingWith === 'manager' && <JointWorkScanner />}
                   </div>
+
                 </>
               )}
 
@@ -800,6 +804,9 @@ const DailyWorking = () => {
           </div>
         </Card>
       )}
+
+      {todaySetup?.work_type === 'on_field' && workingWith === 'manager' && <JointWorkScanner />}
+
 
       {/* Call Stats */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
