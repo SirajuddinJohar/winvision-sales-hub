@@ -753,7 +753,9 @@ const DailyWorking = () => {
                         </div>
                       </div>
                     </RadioGroup>
+                    {workingWith === 'manager' && <JointWorkScanner />}
                   </div>
+
                 </>
               )}
 
