@@ -745,6 +745,48 @@ export type Database = {
         }
         Relationships: []
       }
+      leave_requests: {
+        Row: {
+          created_at: string
+          id: string
+          leave_date: string
+          mr_id: string
+          reason: string
+          remarks: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_role: Database["public"]["Enums"]["user_role"] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leave_date: string
+          mr_id: string
+          reason: string
+          remarks?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_role?: Database["public"]["Enums"]["user_role"] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leave_date?: string
+          mr_id?: string
+          reason?: string
+          remarks?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_role?: Database["public"]["Enums"]["user_role"] | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mr_asm_assignments: {
         Row: {
           asm_id: string
@@ -1727,6 +1769,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      asm_leave_approvals_count: {
+        Args: { _month: string; _mr_id: string }
+        Returns: number
+      }
       calculate_doctor_relationship_score: {
         Args: { doctor_id_param: string }
         Returns: number
@@ -1752,6 +1798,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_asm_of: { Args: { _mr_id: string }; Returns: boolean }
+      tour_plan_edit_count: { Args: { _tour_plan_id: string }; Returns: number }
     }
     Enums: {
       edit_request_status: "pending" | "approved" | "rejected"
