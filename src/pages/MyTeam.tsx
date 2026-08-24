@@ -68,14 +68,17 @@ const MyTeam = () => {
       }
       if (!mrIds.length) return { members: [] as any[] };
 
-      const [{ data: users }, { data: orders }, { data: expenses }, { data: working }, { data: targets }] =
+      const [{ data: users }, { data: orders }, { data: expenses }, { data: working }, { data: targets }, { data: joint }] =
         await Promise.all([
           supabase.from('users').select('id, name, email').in('id', mrIds),
           supabase.from('orders').select('mr_id, total_amount, order_date').in('mr_id', mrIds).gte('order_date', start).lte('order_date', end),
           supabase.from('expenses').select('mr_id, amount, status, expense_date').in('mr_id', mrIds).gte('expense_date', start).lte('expense_date', end),
           supabase.from('daily_working').select('mr_id, work_date, doctor_id').in('mr_id', mrIds).gte('work_date', start).lte('work_date', end),
           supabase.from('targets').select('mr_id, target_value, achieved_value, target_month').in('mr_id', mrIds).eq('target_month', start),
+          supabase.from('joint_work_confirmations').select('mr_id, work_date').in('mr_id', mrIds).gte('work_date', start).lte('work_date', end),
         ]);
+
+      const today = new Date().toISOString().slice(0, 10);
 
       const members = (users || []).map((u: any) => {
         const sales = (orders || []).filter((o: any) => o.mr_id === u.id).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
@@ -84,6 +87,7 @@ const MyTeam = () => {
         const calls = (working || []).filter((w: any) => w.mr_id === u.id);
         const lastActivity = calls.map((c: any) => c.work_date).sort().pop();
         const tgt = (targets || []).filter((t: any) => t.mr_id === u.id).reduce((s: number, t: any) => s + Number(t.target_value || 0), 0);
+        const jointRows = (joint || []).filter((j: any) => j.mr_id === u.id);
         return {
           ...u,
           asmId: links.find((l: any) => l.mr_id === u.id)?.asm_id,
@@ -95,8 +99,11 @@ const MyTeam = () => {
           target: tgt,
           achievement: tgt > 0 ? (sales / tgt) * 100 : 0,
           lastActivity,
+          jointDays: new Set(jointRows.map((j: any) => j.work_date)).size,
+          jointToday: jointRows.some((j: any) => j.work_date === today),
         };
       });
+
       members.sort((a, b) => b.sales - a.sales);
       return { members };
     },
