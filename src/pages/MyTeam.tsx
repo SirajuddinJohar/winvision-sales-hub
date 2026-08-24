@@ -142,6 +142,10 @@ const MyTeam = () => {
         </div>
       </div>
 
+      {!isAdmin && <JointWorkQR />}
+
+
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         <Card><CardContent className="p-3">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Team Size</p>
