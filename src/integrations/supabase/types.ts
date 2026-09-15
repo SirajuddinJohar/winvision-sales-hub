@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_audit_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          notes: string | null
+          request_id: string
+          request_type: string
+          reviewer_id: string | null
+          reviewer_role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_id: string
+          request_type: string
+          reviewer_id?: string | null
+          reviewer_role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_id?: string
+          request_type?: string
+          reviewer_id?: string | null
+          reviewer_role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
       area_doctor_delete_requests: {
         Row: {
           admin_notes: string | null
