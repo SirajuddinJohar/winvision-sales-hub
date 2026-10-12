@@ -31,6 +31,7 @@ import {
   ClipboardList,
   PieChart,
   ShieldCheck,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -67,6 +68,7 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: ClipboardList, label: 'Daily Working', path: '/dashboard/daily-working', roles: ['admin', 'asm', 'mr'] },
       { icon: Bell, label: 'Reminders', path: '/dashboard/reminders', roles: ['admin', 'asm', 'mr'] },
       { icon: Map, label: 'Tour Plan', path: '/dashboard/tour-plan', roles: ['admin', 'asm', 'mr'] },
+      { icon: MessageCircleQuestion, label: 'Ask Assistant', path: '/dashboard/assistant', roles: ['mr'] },
     ],
   },
   {
