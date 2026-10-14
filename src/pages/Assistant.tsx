@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { BrainCircuit, CheckCircle2, MessageCircleQuestion, RotateCcw, Send, ShieldCheck, Stethoscope } from 'lucide-react';
+import { BrainCircuit, CheckCircle2, MessageCircleQuestion, RotateCcw, ShieldCheck, Stethoscope } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,7 +26,7 @@ const readLocalMessages = (): UIMessage[] => {
 
 const Assistant = () => {
   const { session } = useAuth();
-  const initialMessages = useMemo(readLocalMessages, []);
+  const initialMessages = useMemo(() => readLocalMessages(), []);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const transport = useMemo(() => new DefaultChatTransport<UIMessage>({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
