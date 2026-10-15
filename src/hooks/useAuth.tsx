@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  profileError: string | null;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string, role: 'admin' | 'asm' | 'mr') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -38,76 +40,116 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const profileRef = useRef<UserProfile | null>(null);
+  const profileRequestId = useRef(0);
   const { toast } = useToast();
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      // Fetch user data
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .eq('id', userId)
-        .single();
+  const setCurrentProfile = (nextProfile: UserProfile | null) => {
+    profileRef.current = nextProfile;
+    setProfile(nextProfile);
+  };
 
-      if (userError) throw userError;
+  const fetchProfile = async (userId: string): Promise<UserProfile> => {
+    const [{ data: userData, error: userError }, { data: roleData, error: roleError }] = await Promise.all([
+      supabase.from('users').select('id, name, email').eq('id', userId).single(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+    ]);
 
-      // Fetch role from user_roles table
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+    if (userError) throw userError;
+    if (roleError) throw roleError;
 
-      if (roleError) throw roleError;
-
-      // Combine user data with role
-      setProfile({
-        ...userData,
-        role: roleData.role
-      });
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-    }
+    return { ...userData, role: roleData.role };
   };
 
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer profile fetching to avoid deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-        
+    let mounted = true;
+
+    const loadSessionProfile = (nextSession: Session | null, event?: string) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        profileRequestId.current += 1;
+        setCurrentProfile(null);
+        setProfileError(null);
         setLoading(false);
+        return;
+      }
+
+      const userId = nextSession.user.id;
+      if (event === 'TOKEN_REFRESHED' && profileRef.current?.id === userId) {
+        setLoading(false);
+        return;
+      }
+
+      const requestId = ++profileRequestId.current;
+      setCurrentProfile(null);
+      setProfileError(null);
+      setLoading(true);
+
+      // Defer the profile query so it does not run inside Supabase's auth callback.
+      window.setTimeout(async () => {
+        try {
+          const nextProfile = await fetchProfile(userId);
+          if (!mounted || requestId !== profileRequestId.current) return;
+          setCurrentProfile(nextProfile);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          if (!mounted || requestId !== profileRequestId.current) return;
+          setCurrentProfile(null);
+          setProfileError('Your sign-in succeeded, but your staff profile could not be loaded. Check your connection or contact an administrator.');
+        } finally {
+          if (mounted && requestId === profileRequestId.current) setLoading(false);
+        }
+      }, 0);
+    };
+
+    // Subscribe first so sign-in events cannot be missed during initial session lookup.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, nextSession) => {
+        loadSessionProfile(nextSession, event);
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(() => {
-          fetchProfile(session.user.id);
-        }, 0);
-      }
-      
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session: currentSession }, error }) => {
+        if (!mounted) return;
+        if (error) console.error('Error reading saved session:', error);
+        loadSessionProfile(currentSession);
+      })
+      .catch((error: unknown) => {
+        console.error('Error reading saved session:', error);
+        if (!mounted) return;
+        loadSessionProfile(null);
+      });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      profileRequestId.current += 1;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const refreshProfile = async () => {
+    if (!user) return;
+    const requestId = ++profileRequestId.current;
+    setLoading(true);
+    setProfileError(null);
+    try {
+      const nextProfile = await fetchProfile(user.id);
+      if (requestId !== profileRequestId.current) return;
+      setCurrentProfile(nextProfile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      if (requestId !== profileRequestId.current) return;
+      setCurrentProfile(null);
+      setProfileError('Your sign-in succeeded, but your staff profile could not be loaded. Check your connection or contact an administrator.');
+    } finally {
+      if (requestId === profileRequestId.current) setLoading(false);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -212,7 +254,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     profile,
+    profileError,
     loading,
+    refreshProfile,
     signIn,
     signUp,
     signOut,

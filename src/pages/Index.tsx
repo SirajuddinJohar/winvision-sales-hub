@@ -1,16 +1,26 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Home, Users, Truck, Building2, Package, ShoppingCart, DollarSign, Target, BarChart3, ClipboardList, CalendarDays, Database, IndianRupee } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  // Redirect to auth if not logged in
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div
+          role="status"
+          aria-label="Loading your account"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary"
+        />
+      </div>
+    );
+  }
+
   if (!user) {
-    navigate('/auth');
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
   const navigationItems = [
