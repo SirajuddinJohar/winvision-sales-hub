@@ -1,4 +1,5 @@
 - [x] Add MR assistant screen with local history and AI Gateway
 - [x] Remove Capacitor hot-reload URL and prepare production Android build
 - [x] Verify build, Android sync, and security findings
-- [ ] Fix Android sign-in blank screen and prepare refreshed APK assets
+- [x] Fix Android sign-in profile loading and add a visible recovery screen
+- [ ] Rebuild and sync Android assets for the user to compile a refreshed APK
