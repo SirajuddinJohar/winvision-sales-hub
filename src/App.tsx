@@ -76,9 +76,15 @@ const PageLoader = () => (
   </div>
 );
 
+// Ask for location/notification permission only after sign-in, so the login screen opens instantly.
+const SignedInPermissions = () => {
+  usePermissions();
+  return null;
+};
+
 const PermissionInitializer = ({ children }: { children: React.ReactNode }) => {
-  const { isRequesting } = usePermissions();
-  return <>{children}</>;
+  const { user } = useAuth();
+  return <>{user ? <SignedInPermissions /> : null}{children}</>;
 };
 
 const ReminderInitializer = () => {
@@ -86,11 +92,14 @@ const ReminderInitializer = () => {
   const navigate = useNavigate();
   useEffect(() => {
     if (!user?.id) return;
-    rescheduleAllReminders(user.id);
-    initNotificationTapHandler((path) => navigate(path));
-    registerDevicePush(user.id);
-    const unsub = subscribeToIncomingReminders(user.id);
-    return () => { unsub?.(); };
+    let unsub: (() => void) | undefined;
+    const timer = window.setTimeout(() => {
+      try { rescheduleAllReminders(user.id)?.catch?.(console.error); } catch (e) { console.error(e); }
+      try { initNotificationTapHandler((path) => navigate(path)); } catch (e) { console.error(e); }
+      registerDevicePush(user.id).catch(console.error);
+      try { unsub = subscribeToIncomingReminders(user.id) as any; } catch (e) { console.error(e); }
+    }, 1500);
+    return () => { window.clearTimeout(timer); try { unsub?.(); } catch { /* ignore */ } };
   }, [user?.id, navigate]);
   return null;
 };
