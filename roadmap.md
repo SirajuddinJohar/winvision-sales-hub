@@ -2,4 +2,4 @@
 - [x] Remove Capacitor hot-reload URL and prepare production Android build
 - [x] Verify build, Android sync, and security findings
 - [x] Fix Android sign-in profile loading and add a visible recovery screen
-- [ ] Rebuild and sync Android assets for the user to compile a refreshed APK
+- [ ] Rebuild the APK locally from the updated project (requires the user's Windows Android tools)
