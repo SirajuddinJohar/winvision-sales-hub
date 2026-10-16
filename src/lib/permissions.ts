@@ -66,11 +66,8 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     // Request permission
     const result = await PushNotifications.requestPermissions();
     
-    if (result.receive === 'granted') {
-      // Register for push notifications
-      await PushNotifications.register();
-      return true;
-    }
+    // Do not call register() here: without Firebase setup it crashes the Android app.
+    if (result.receive === 'granted') return true;
     
     return false;
   } catch (error) {

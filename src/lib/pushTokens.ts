@@ -21,8 +21,12 @@ const saveToken = async (userId: string, token: string, platform: string) => {
  * Register the current device for push notifications and store the token
  * in Supabase against the signed-in user. Safe to call on every app start.
  */
+// Remote push requires Firebase (google-services.json). Until it is added to the
+// Android project, calling PushNotifications.register() crashes the native app.
+const FIREBASE_CONFIGURED = import.meta.env.VITE_FIREBASE_PUSH_ENABLED === "true";
+
 export const registerDevicePush = async (userId: string) => {
-  if (!isNative()) return;
+  if (!isNative() || !FIREBASE_CONFIGURED) return;
   try {
     const perm = await PushNotifications.checkPermissions();
     let allowed = perm.receive === "granted";
