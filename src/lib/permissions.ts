@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface PermissionStatus {
   location: 'granted' | 'denied' | 'prompt';
@@ -52,22 +52,22 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   }
 
   try {
-    const status = await PushNotifications.checkPermissions();
+    const status = await LocalNotifications.checkPermissions();
     
-    if (status.receive === 'granted') {
+    if (status.display === 'granted') {
       return true;
     }
 
-    if (status.receive === 'denied') {
+    if (status.display === 'denied') {
       console.log('Notification permission denied');
       return false;
     }
 
     // Request permission
-    const result = await PushNotifications.requestPermissions();
+    const result = await LocalNotifications.requestPermissions();
     
     // Do not call register() here: without Firebase setup it crashes the Android app.
-    if (result.receive === 'granted') return true;
+    if (result.display === 'granted') return true;
     
     return false;
   } catch (error) {
@@ -100,12 +100,12 @@ export const checkPermissionStatus = async (): Promise<PermissionStatus> => {
   try {
     const [locationStatus, notificationStatus] = await Promise.all([
       Geolocation.checkPermissions(),
-      PushNotifications.checkPermissions()
+      LocalNotifications.checkPermissions()
     ]);
 
     return {
       location: locationStatus.location as 'granted' | 'denied' | 'prompt',
-      notifications: notificationStatus.receive as 'granted' | 'denied' | 'prompt'
+      notifications: notificationStatus.display as 'granted' | 'denied' | 'prompt'
     };
   } catch (error) {
     console.error('Error checking permissions:', error);
