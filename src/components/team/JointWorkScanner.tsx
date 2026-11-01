@@ -19,9 +19,10 @@ const todayISO = () => new Date().toISOString().split('T')[0];
 
 interface Props {
   onConfirmed?: () => void;
+  onStatus?: (managerName: string | null) => void;
 }
 
-const JointWorkScanner = ({ onConfirmed }: Props) => {
+const JointWorkScanner = ({ onConfirmed, onStatus }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -40,13 +41,17 @@ const JointWorkScanner = ({ onConfirmed }: Props) => {
       .eq('mr_id', user.id)
       .eq('work_date', todayISO())
       .order('scanned_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (data) {
       const { data: asm } = await supabase.from('users').select('name').eq('id', data.asm_id).maybeSingle();
-      setConfirmation({ ...(data as Confirmation), asm_name: asm?.name || 'Manager' });
+      const name = asm?.name || 'Manager';
+      setConfirmation({ ...(data as Confirmation), asm_name: name });
+      onStatus?.(name);
     } else {
       setConfirmation(null);
+      onStatus?.(null);
     }
     setLoading(false);
   };

@@ -299,15 +299,16 @@ const DashboardLayout = () => {
       </div>
 
       <div className="md:ml-64">
-        <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm backdrop-blur-sm bg-opacity-95">
-          <div className="flex items-center justify-between px-4 md:px-6 py-3">
+        <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm backdrop-blur-sm bg-opacity-95 pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center justify-between gap-2 px-3 md:px-6 py-2 md:py-3 min-h-[56px]">
             <Button
               variant="ghost"
-              size="sm"
-              className="md:hidden"
+              size="icon"
+              aria-label="Open menu"
+              className="md:hidden h-11 w-11 shrink-0"
               onClick={() => setSidebarOpen(true)}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-6 w-6" />
             </Button>
 
             <div className="hidden md:block">

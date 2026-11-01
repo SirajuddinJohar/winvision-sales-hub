@@ -809,7 +809,17 @@ const DailyWorking = () => {
         </Card>
       )}
 
-      {todaySetup?.work_type === 'on_field' && workingWith === 'manager' && <JointWorkScanner />}
+      {todaySetup?.work_type === 'on_field' && workingWith === 'manager' && (
+        <JointWorkScanner
+          onStatus={(name) => setJointManagerName(name)}
+          onConfirmed={() => { setActiveTab('all'); fetchTargetsAndCalls(); }}
+        />
+      )}
+      {jointManagerName && todayPlanDoctorIds.length > 0 && (
+        <p className="text-[11px] text-primary font-medium px-1">
+          Joint work with {jointManagerName} • showing only doctors of {getSelectedAreaNames().join(', ')}
+        </p>
+      )}
 
 
       {/* Call Stats */}
