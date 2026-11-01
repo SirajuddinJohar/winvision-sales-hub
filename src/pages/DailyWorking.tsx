@@ -80,6 +80,7 @@ const DailyWorking = () => {
   const [selectedWorkAreas, setSelectedWorkAreas] = useState<string[]>([]);
   const [userAreas, setUserAreas] = useState<Area[]>([]);
   const [savingSetup, setSavingSetup] = useState(false);
+  const [jointManagerName, setJointManagerName] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserLocation();
@@ -99,7 +100,10 @@ const DailyWorking = () => {
   }, [user, profile, userLocation, setupComplete, todaySetup]);
 
   useEffect(() => {
+    const areaLocked = jointManagerName !== null && todayPlanDoctorIds.length > 0;
     const filtered = targets.filter(target => {
+      // After joint-work QR scan, show only doctors of today's selected area(s)
+      if (areaLocked && target.type === 'doctor' && !target.isTodayPlan) return false;
       const matchesSearch = target.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         target.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (target.area && target.area.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -114,7 +118,7 @@ const DailyWorking = () => {
       return matchesSearch && matchesTab;
     });
     setFilteredTargets(filtered);
-  }, [targets, searchTerm, activeTab]);
+  }, [targets, searchTerm, activeTab, jointManagerName, todayPlanDoctorIds]);
 
   const fetchUserLocation = async () => {
     const location = await getCurrentLocation();
