@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.settle_doctor_advance_incentives() FROM PUBLIC, anon, authenticated;
