@@ -386,6 +386,60 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_advance_incentives: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          doctor_id: string
+          given_date: string
+          id: string
+          notes: string | null
+          settled_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          doctor_id: string
+          given_date?: string
+          id?: string
+          notes?: string | null
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          doctor_id?: string
+          given_date?: string
+          id?: string
+          notes?: string | null
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_advance_incentives_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_advance_incentives_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_incentives: {
         Row: {
           created_at: string
