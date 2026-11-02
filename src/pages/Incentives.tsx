@@ -542,6 +542,96 @@ const Incentives = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Advance recovery detail dialog */}
+        <Dialog open={!!detailAdvance} onOpenChange={(o) => { if (!o) setDetailAdvance(null); }}>
+          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-sm md:text-base">{detailAdvance?.doctor?.name || 'Doctor'} — Advance Recovery</DialogTitle>
+            </DialogHeader>
+            {detailAdvance && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Advance {formatCurrency(Number(detailAdvance.amount))} given on{' '}
+                  {new Date(detailAdvance.given_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
+                  Showing this doctor's approved sales incentives recorded after the advance.
+                </p>
+                {salesRows.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No approved incentives for this doctor since the advance yet.
+                  </p>
+                ) : (
+                  <div className="rounded-md border divide-y">
+                    {salesRows.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between px-2.5 py-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium truncate">
+                            {new Date(r.order?.order_date || r.created_at).toLocaleDateString('en-IN')} — {formatCurrency(r.order_amount)} sale
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground">{r.incentive_percentage}%</span>
+                            <StatusBadge status={r.status} />
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400">{formatCurrency(r.incentive_amount)}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-2.5 py-2 bg-muted/50">
+                      <span className="text-xs font-semibold">Total recovered</span>
+                      <span className="text-xs font-bold">{formatCurrency(advanceRecovered(detailAdvance))}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Give Advance dialog */}
+        <Dialog open={advanceDialogOpen} onOpenChange={setAdvanceDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Give Advance Incentive</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-3">
+              <div className="grid gap-1.5">
+                <Label className="text-xs">Doctor</Label>
+                <Select value={advanceForm.doctor_id} onValueChange={(v) => setAdvanceForm({ ...advanceForm, doctor_id: v })}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select doctor" /></SelectTrigger>
+                  <SelectContent className="max-h-[240px]">
+                    {doctors.map((d) => (
+                      <SelectItem key={d.id} value={d.id} className="text-xs">{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Advance Amount</Label>
+                  <Input type="number" min="1" value={advanceForm.amount} onChange={(e) => setAdvanceForm({ ...advanceForm, amount: e.target.value })} className="h-9 text-xs" />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Given Date</Label>
+                  <Input type="date" value={advanceForm.given_date} onChange={(e) => setAdvanceForm({ ...advanceForm, given_date: e.target.value })} className="h-9 text-xs" />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label className="text-xs">Notes</Label>
+                <Textarea rows={2} value={advanceForm.notes} onChange={(e) => setAdvanceForm({ ...advanceForm, notes: e.target.value })} className="text-xs" />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                The advance is recovered automatically as this doctor's incentives are approved from future sales.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setAdvanceDialogOpen(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleSaveAdvance} disabled={savingAdvance}>
+                {savingAdvance && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                Give Advance
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
