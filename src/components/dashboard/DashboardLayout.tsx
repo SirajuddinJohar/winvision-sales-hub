@@ -186,7 +186,7 @@ const DashboardLayout = () => {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] border-b border-border bg-gradient-card shrink-0">
+        <div className="p-5 pt-[max(env(safe-area-inset-top,0px),32px)] md:pt-5 border-b border-border bg-gradient-card shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-primary shadow-primary">
               <Building2 className="h-6 w-6 text-white" />
@@ -299,7 +299,7 @@ const DashboardLayout = () => {
       </div>
 
       <div className="md:ml-64">
-        <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm backdrop-blur-sm bg-opacity-95 pt-[env(safe-area-inset-top)]">
+        <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm backdrop-blur-sm bg-opacity-95 pt-[max(env(safe-area-inset-top,0px),32px)] md:pt-0">
           <div className="flex items-center justify-between gap-2 px-3 md:px-6 py-2 md:py-3 min-h-[56px]">
             <Button
               variant="ghost"
