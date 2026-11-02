@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  IndianRupee, Plus, Pencil, Trash2, Check, X, Clock, CheckCircle2, Loader2,
+  IndianRupee, Plus, Pencil, Trash2, Check, X, Clock, CheckCircle2, Loader2, Wallet, Ban, Eye,
 } from 'lucide-react';
 
 interface MRUser { id: string; name: string; email: string }
@@ -47,6 +47,27 @@ interface IncentiveRow {
   doctor?: { name: string; assigned_mr_id: string | null } | null;
   order?: { order_date: string; mr_id: string | null } | null;
 }
+
+interface AdvanceRow {
+  id: string;
+  doctor_id: string;
+  amount: number;
+  given_date: string;
+  notes: string | null;
+  status: string;
+  settled_at: string | null;
+  created_at: string;
+  doctor?: { name: string } | null;
+}
+
+const AdvanceStatusBadge = ({ status }: { status: string }) => {
+  const map: Record<string, string> = {
+    active: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    settled: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    cancelled: 'bg-muted text-muted-foreground',
+  };
+  return <Badge className={`${map[status] || ''} text-[10px] md:text-xs capitalize`}>{status}</Badge>;
+};
 
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
@@ -89,6 +110,18 @@ const Incentives = () => {
   });
   const [saving, setSaving] = useState(false);
 
+  // Advance incentives state
+  const [advances, setAdvances] = useState<AdvanceRow[]>([]);
+  const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
+  const [savingAdvance, setSavingAdvance] = useState(false);
+  const [advanceForm, setAdvanceForm] = useState({
+    doctor_id: '',
+    amount: '',
+    given_date: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
+  const [detailAdvance, setDetailAdvance] = useState<AdvanceRow | null>(null);
+
   useEffect(() => {
     fetchAll();
   }, [profile?.id, isAdmin]);
@@ -129,6 +162,14 @@ const Incentives = () => {
         .order('order_date', { ascending: false })
         .limit(500);
       setOrders(ords || []);
+
+      // Advance incentives with doctor names
+      const { data: advData, error: advErr } = await supabase
+        .from('doctor_advance_incentives')
+        .select('id, doctor_id, amount, given_date, notes, status, settled_at, created_at, doctors:doctor_id ( name )')
+        .order('created_at', { ascending: false });
+      if (advErr) throw advErr;
+      setAdvances((advData || []).map((a: any) => ({ ...a, doctor: a.doctors })) as AdvanceRow[]);
 
       // MR list (admin only)
       if (isAdmin) {
@@ -288,6 +329,71 @@ const Incentives = () => {
     }
   };
 
+  const advanceRecovered = (a: AdvanceRow) =>
+    rows
+      .filter((r) => r.doctor_id === a.doctor_id && (r.status === 'approved' || r.status === 'paid') && new Date(r.created_at) >= new Date(a.created_at))
+      .reduce((s, r) => s + Number(r.incentive_amount || 0), 0);
+
+  const openAdvanceCreate = () => {
+    setAdvanceForm({ doctor_id: '', amount: '', given_date: new Date().toISOString().split('T')[0], notes: '' });
+    setAdvanceDialogOpen(true);
+  };
+
+  const handleSaveAdvance = async () => {
+    if (!advanceForm.doctor_id || !advanceForm.amount || Number(advanceForm.amount) <= 0) {
+      toast({ title: 'Missing fields', description: 'Doctor and a positive amount are required', variant: 'destructive' });
+      return;
+    }
+    setSavingAdvance(true);
+    try {
+      const { error } = await supabase.from('doctor_advance_incentives').insert({
+        doctor_id: advanceForm.doctor_id,
+        amount: Number(advanceForm.amount),
+        given_date: advanceForm.given_date || new Date().toISOString().split('T')[0],
+        notes: advanceForm.notes || null,
+        created_by: profile?.id,
+        status: 'active',
+      });
+      if (error) throw error;
+      toast({ title: 'Advance recorded', description: "Recovery starts as this doctor's incentives are approved." });
+      setAdvanceDialogOpen(false);
+      fetchAll();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to save advance', variant: 'destructive' });
+    } finally {
+      setSavingAdvance(false);
+    }
+  };
+
+  const handleAdvanceStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase.from('doctor_advance_incentives').update({
+        status,
+        settled_at: status === 'settled' ? new Date().toISOString() : null,
+      }).eq('id', id);
+      if (error) throw error;
+      toast({ title: `Advance marked ${status}` });
+      fetchAll();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Update failed', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteAdvance = async (id: string) => {
+    try {
+      const { error } = await supabase.from('doctor_advance_incentives').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Advance deleted' });
+      fetchAll();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Delete failed', variant: 'destructive' });
+    }
+  };
+
+  const salesRows = detailAdvance
+    ? rows.filter((r) => r.doctor_id === detailAdvance.doctor_id && (r.status === 'approved' || r.status === 'paid') && new Date(r.created_at) >= new Date(detailAdvance.created_at))
+    : [];
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title="Incentives" />
@@ -348,6 +454,100 @@ const Incentives = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Advanced Incentives */}
+        <Card>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-sm md:text-lg">Advanced Incentives</CardTitle>
+              {isAdmin && (
+                <Button size="sm" className="h-8 md:h-9 text-xs" onClick={openAdvanceCreate}>
+                  <Wallet className="h-3.5 w-3.5 mr-1" /> Give Advance
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            {advances.length === 0 ? (
+              <div className="text-center py-6">
+                <Wallet className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto">
+                  No advances given yet. Give an advance to a doctor, then their approved incentives are recovered against it automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-3 md:mx-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs py-2">Date</TableHead>
+                      <TableHead className="text-xs py-2">Doctor</TableHead>
+                      <TableHead className="text-xs py-2 text-right">Advance</TableHead>
+                      <TableHead className="text-xs py-2 text-right">Recovered</TableHead>
+                      <TableHead className="text-xs py-2 text-right">Balance</TableHead>
+                      <TableHead className="text-xs py-2">Status</TableHead>
+                      <TableHead className="text-xs py-2 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {advances.map((a) => {
+                      const recovered = advanceRecovered(a);
+                      const balance = Math.max(0, Number(a.amount) - recovered);
+                      return (
+                        <TableRow key={a.id}>
+                          <TableCell className="text-xs py-2 whitespace-nowrap">
+                            {new Date(a.given_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                          </TableCell>
+                          <TableCell className="text-xs py-2 max-w-[140px] truncate">{a.doctor?.name || '—'}</TableCell>
+                          <TableCell className="text-xs py-2 text-right font-medium">{formatCurrency(Number(a.amount))}</TableCell>
+                          <TableCell className="text-xs py-2 text-right">{formatCurrency(recovered)}</TableCell>
+                          <TableCell className="text-xs py-2 text-right font-bold text-primary">{formatCurrency(balance)}</TableCell>
+                          <TableCell className="text-xs py-2"><AdvanceStatusBadge status={a.status} /></TableCell>
+                          <TableCell className="text-xs py-2">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDetailAdvance(a)} aria-label="View recovery">
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                              {isAdmin && a.status === 'active' && (
+                                <>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] text-green-600" onClick={() => handleAdvanceStatus(a.id, 'settled')}>
+                                    <CheckCircle2 className="h-3 w-3 mr-0.5" />Settle
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] text-red-600" onClick={() => handleAdvanceStatus(a.id, 'cancelled')}>
+                                    <Ban className="h-3 w-3 mr-0.5" />Cancel
+                                  </Button>
+                                </>
+                              )}
+                              {isAdmin && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete advance?</AlertDialogTitle>
+                                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteAdvance(a.id)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Filters + Add */}
         <Card>
