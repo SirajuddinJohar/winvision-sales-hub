@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,8 +26,14 @@ const AuthPage = () => {
     }
     setLoading(true);
     try {
+      // On the Android app the WebView origin is http://localhost, which
+      // cannot receive the email link — always send mobile users to the
+      // published site so the reset screen actually opens.
+      const redirectTo = Capacitor.isNativePlatform()
+        ? 'https://winvision-sales-hub.lovable.app/reset-password'
+        : `${window.location.origin}/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo,
       });
       if (error) throw error;
       toast({ title: 'Reset Link Sent!', description: 'Check your email for a password reset link.' });
