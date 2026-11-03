@@ -94,7 +94,7 @@ const MRDailyWorkingDashboard = ({ asmId }: { asmId?: string } = {}) => {
         .from('area_doctor_visits')
         .select('area_id, doctor_id, created_by');
 
-      if (advError) throw advError;
+      if (advError) console.warn('area doctor visits unavailable', advError);
 
       // Combine data
       const mrList = (usersData || []).map(user => {
