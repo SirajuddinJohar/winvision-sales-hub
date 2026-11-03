@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, ShoppingCart, Receipt, ClipboardList, IndianRupee } from 'lucide-react';
 import JointWorkQR from '@/components/team/JointWorkQR';
+import MRDailyWorkingDashboard from '@/components/admin/MRDailyWorkingDashboard';
 
 
 const fmtINR = (n: number) =>
@@ -152,6 +153,7 @@ const MyTeam = () => {
       </div>
 
       {!isAdmin && <JointWorkQR />}
+      {!isAdmin && profile?.id && <MRDailyWorkingDashboard asmId={profile.id} />}
 
 
 

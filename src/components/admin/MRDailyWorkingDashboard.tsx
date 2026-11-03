@@ -37,7 +37,7 @@ interface CallDetail {
   has_sample: boolean;
 }
 
-const MRDailyWorkingDashboard = () => {
+const MRDailyWorkingDashboard = ({ asmId }: { asmId?: string } = {}) => {
   const [mrSetups, setMrSetups] = useState<MRSetup[]>([]);
   const [areas, setAreas] = useState<AreaInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,11 +61,15 @@ const MRDailyWorkingDashboard = () => {
       
       setAreas(areasData || []);
 
-      // Fetch all MRs
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('id, name, email, role')
-        .eq('role', 'mr');
+      // Fetch MRs (ASMs only see their own team)
+      let usersQuery = supabase.from('users').select('id, name, email, role').eq('role', 'mr');
+      if (asmId) {
+        const { data: links } = await supabase.from('mr_asm_assignments').select('mr_id').eq('asm_id', asmId);
+        const ids = (links || []).map((l: any) => l.mr_id);
+        if (!ids.length) { setMrSetups([]); return; }
+        usersQuery = usersQuery.in('id', ids);
+      }
+      const { data: usersData, error: usersError } = await usersQuery;
 
       if (usersError) throw usersError;
 
