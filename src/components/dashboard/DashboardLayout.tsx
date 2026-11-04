@@ -14,6 +14,7 @@ import {
   Package,
   ShoppingCart,
   Receipt,
+  FileSpreadsheet,
   Target,
   BarChart3,
   LogOut,
@@ -121,6 +122,7 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: ShoppingCart, label: 'Purchases', path: '/dashboard/purchases', roles: ['admin'] },
       { icon: FileText, label: 'Tour Requests', path: '/dashboard/tour-plan-requests', roles: ['admin'] },
       { icon: Users, label: 'User Management', path: '/dashboard/users', roles: ['admin'] },
+      { icon: FileSpreadsheet, label: 'Data Export', path: '/dashboard/data-export', roles: ['admin'] },
     ],
   },
 ];
