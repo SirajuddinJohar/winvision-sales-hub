@@ -52,6 +52,7 @@ const Rewards = lazy(() => import("./pages/Rewards"));
 const Reminders = lazy(() => import("./pages/Reminders"));
 const Assistant = lazy(() => import("./pages/Assistant"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
+const DataExport = lazy(() => import("./pages/DataExport"));
 const MyTeam = lazy(() => import("./pages/MyTeam"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -162,6 +163,7 @@ const App = () => (
                   <Route path="assistant" element={<ProtectedRoute requiredRole="mr"><Assistant /></ProtectedRoute>} />
                   <Route path="my-team" element={<MyTeam />} />
                   <Route path="users" element={<ProtectedRoute requiredRole="admin"><UserManagement /></ProtectedRoute>} />
+                  <Route path="data-export" element={<ProtectedRoute requiredRole="admin"><DataExport /></ProtectedRoute>} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />
